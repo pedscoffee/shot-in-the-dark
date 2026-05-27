@@ -41,22 +41,24 @@
   --radius:       8px;
   --radius-sm:    5px;
   --header-h:     46px;
-  --pane-w:       440px;
-  --pane-h:       600px;
 
   /* Shadow */
-  --shadow-pane:  0 20px 60px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-pane:  0 2px 12px rgba(0,0,0,0.4);
 }
 
 /* ─── Reset ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
 body {
   background: var(--bg-base);
   font-family: var(--font-ui);
   color: var(--text-1);
-  min-height: 100vh;
-  overflow: hidden; /* pane only */
+  overflow: hidden;
 }
 
 /* ─── Scrollbar ─── */
@@ -67,33 +69,22 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 
 /* ══════════════════════════════════════
-   FLOATING PANE
+   MAIN PANE — fills the browser window
 ══════════════════════════════════════ */
 
 .sc-pane {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: var(--pane-w);
-  height: var(--pane-h);
-  min-width: 320px;
-  min-height: 220px;
+  width: 100%;
+  height: 100dvh;
+  min-width: 280px;
+  min-height: 180px;
   background: var(--bg-pane);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-pane);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  z-index: 9000;
-  transition: box-shadow 0.2s;
 }
 
-.sc-pane:focus-within {
-  box-shadow: var(--shadow-pane), 0 0 0 1px var(--accent);
-}
-
-/* Minimized state */
+/* Minimized state — collapse to header only */
 .sc-pane.sc-minimized {
   height: auto !important;
   min-height: 0 !important;
@@ -112,11 +103,9 @@ body {
   padding: 0 10px 0 14px;
   background: var(--bg-header);
   border-bottom: 1px solid var(--border);
-  cursor: grab;
   user-select: none;
   flex-shrink: 0;
 }
-.sc-header:active { cursor: grabbing; }
 
 .sc-header-left {
   display: flex;
@@ -444,7 +433,7 @@ body {
 }
 
 /* ══════════════════════════════════════
-   SETTINGS PANEL
+   SETTINGS 
 ══════════════════════════════════════ */
 
 .sc-settings {
@@ -773,33 +762,6 @@ body {
   text-transform: uppercase;
   color: var(--text-2);
 }
-
-/* ══════════════════════════════════════
-   RESIZE HANDLE
-══════════════════════════════════════ */
-.sc-resize-handle {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 18px;
-  height: 18px;
-  cursor: se-resize;
-  z-index: 30;
-}
-.sc-resize-handle::before {
-  content: '';
-  position: absolute;
-  bottom: 3px;
-  right: 3px;
-  width: 10px;
-  height: 10px;
-  background-image:
-    linear-gradient(135deg, transparent 33%, var(--text-3) 33%, var(--text-3) 40%, transparent 40%),
-    linear-gradient(135deg, transparent 55%, var(--text-3) 55%, var(--text-3) 62%, transparent 62%),
-    linear-gradient(135deg, transparent 77%, var(--text-3) 77%, var(--text-3) 84%, transparent 84%);
-  opacity: 0.4;
-}
-.sc-resize-handle:hover::before { opacity: 0.8; }
 
 /* ══════════════════════════════════════
    TOAST NOTIFICATIONS
