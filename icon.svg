@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0b0e14"/>
+  <!-- Medical cross shape (green) -->
+  <rect x="192" y="96"  width="128" height="320" rx="20" fill="#22c55e"/>
+  <rect x="96"  y="192" width="320" height="128" rx="20" fill="#22c55e"/>
+  <!-- Subtle inner highlight -->
+  <rect x="204" y="108" width="104" height="296" rx="14" fill="#26de68" opacity="0.18"/>
+  <rect x="108" y="204" width="296" height="104" rx="14" fill="#26de68" opacity="0.18"/>
+</svg>

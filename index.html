@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SmartChart — EMR note assistant with auto-template insertion">
+  <meta name="theme-color" content="#0b0e14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>SmartChart</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN FLOATING PANE
+════════════════════════════════════════════════ -->
+<div id="smartchart-pane" class="sc-pane" role="complementary" aria-label="SmartChart Note Assistant">
+
+  <!-- Header / Drag Handle -->
+  <header id="sc-header" class="sc-header" title="Drag to move">
+    <div class="sc-header-left">
+      <span class="sc-logo" aria-hidden="true">✚</span>
+      <span class="sc-title">SmartChart</span>
+      <span id="sc-match-badge" class="sc-match-badge hidden" aria-live="polite" title="Matched templates">0</span>
+    </div>
+    <div class="sc-header-right">
+      <!-- Copy button -->
+      <button id="sc-copy-btn" class="sc-btn sc-btn-icon" title="Copy note to clipboard (manual)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+      </button>
+      <!-- Settings button -->
+      <button id="sc-settings-btn" class="sc-btn sc-btn-icon" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <!-- Minimize button -->
+      <button id="sc-minimize-btn" class="sc-btn sc-btn-icon" title="Minimize">
+        <svg id="sc-min-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── MAIN BODY ─── -->
+  <div id="sc-body" class="sc-body">
+
+    <!-- Input Section -->
+    <section class="sc-input-section">
+      <div class="sc-input-label">
+        <span>Clinical One-Liner</span>
+        <button id="sc-clear-btn" class="sc-btn sc-btn-text" title="Clear input (also auto-clears after inactivity)">Clear</button>
+      </div>
+      <textarea
+        id="sc-input"
+        class="sc-input"
+        placeholder="e.g. 2yo with fever and vomiting x1 day…"
+        spellcheck="true"
+        autocomplete="off"
+        autocorrect="on"
+        rows="3"
+        aria-label="Clinical note input"
+      ></textarea>
+    </section>
+
+    <!-- Status Bar -->
+    <div id="sc-status-bar" class="sc-status-bar" aria-live="polite" aria-atomic="true">
+      <span id="sc-status-text" class="sc-status-text">Ready</span>
+      <div class="sc-status-right">
+        <span id="sc-autocopy-indicator" class="sc-autocopy-dot hidden" title="Auto-copy pending…"></span>
+      </div>
+    </div>
+
+    <!-- Preview Section -->
+    <section class="sc-preview-section" aria-label="Note preview">
+      <div class="sc-preview-tabs" role="tablist">
+        <button class="sc-tab active" data-tab="preview" role="tab" aria-selected="true">Preview</button>
+        <button class="sc-tab" data-tab="source" role="tab" aria-selected="false">Markdown</button>
+      </div>
+
+      <!-- Preview tab -->
+      <div id="sc-preview" class="sc-preview-content sc-preview-rendered" role="tabpanel">
+        <div id="sc-preview-empty" class="sc-empty-state">
+          <div class="sc-empty-inner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="sc-empty-icon">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            <span>Preview will appear here as you type</span>
+          </div>
+        </div>
+        <div id="sc-preview-rendered" class="sc-md-content hidden"></div>
+      </div>
+
+      <!-- Source tab -->
+      <div id="sc-source" class="sc-preview-content sc-preview-source hidden" role="tabpanel">
+        <pre id="sc-source-text" class="sc-source-pre"></pre>
+      </div>
+    </section>
+
+  </div><!-- /#sc-body -->
+
+  <!-- ═══════════════════════════════════════════════
+       SETTINGS PANEL (full-pane overlay)
+  ════════════════════════════════════════════════ -->
+  <div id="sc-settings" class="sc-settings hidden" role="dialog" aria-label="SmartChart Settings">
+
+    <header class="sc-settings-header">
+      <span class="sc-settings-title">Settings</span>
+      <button id="sc-settings-close" class="sc-btn sc-btn-icon" title="Close settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </header>
+
+    <nav class="sc-settings-tabs" role="tablist">
+      <button class="sc-settings-tab active" data-stab="note-template" role="tab">Note Template</button>
+      <button class="sc-settings-tab" data-stab="templates" role="tab">Templates</button>
+      <button class="sc-settings-tab" data-stab="behavior" role="tab">Behavior</button>
+    </nav>
+
+    <div id="sc-settings-body" class="sc-settings-body">
+
+      <!-- ── Tab: Note Template ── -->
+      <div id="stab-note-template" class="sc-stab-content active">
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-note-template-input">Note Structure</label>
+          <p class="sc-help-text">
+            Use <code>{input}</code> for your one-liner, <code>{templates}</code> for matched content,
+            and <code>{static:TEXT}</code> for fixed Markdown text (use <code>\n</code> for newlines).
+          </p>
+          <textarea id="sc-note-template-input" class="sc-textarea-settings" rows="8"
+            placeholder="{input}&#10;&#10;{templates}" aria-label="Note template"></textarea>
+          <div id="sc-note-template-error" class="sc-error hidden"></div>
+        </div>
+        <div class="sc-example-block">
+          <div class="sc-example-label">Example:</div>
+          <pre class="sc-example-pre">**HPI:** {input}
+
+**Educated On:**
+{templates}
+
+{static:**Follow-Up:** Return in 1 week if not improving.}</pre>
+        </div>
+        <div class="sc-btn-row">
+          <button id="sc-save-note-template" class="sc-btn sc-btn-primary">Save</button>
+          <button id="sc-reset-note-template" class="sc-btn sc-btn-ghost">Reset to Default</button>
+        </div>
+      </div>
+
+      <!-- ── Tab: Templates ── -->
+      <div id="stab-templates" class="sc-stab-content hidden">
+        <div class="sc-btn-row" style="margin-bottom:10px">
+          <button id="sc-add-template-btn" class="sc-btn sc-btn-primary">+ New Template</button>
+        </div>
+
+        <!-- Template list -->
+        <div id="sc-template-list" class="sc-template-list"></div>
+
+        <!-- Inline edit/add form (hidden until triggered) -->
+        <div id="sc-template-form" class="sc-template-form hidden">
+          <div class="sc-form-header">
+            <span id="sc-form-title-label">New Template</span>
+            <button id="sc-form-close" class="sc-btn sc-btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-name">Name</label>
+            <input type="text" id="sc-form-name" class="sc-input-settings" placeholder="e.g. Dehydration Precautions">
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-triggers">Trigger Keywords <span class="sc-muted">(comma-separated)</span></label>
+            <input type="text" id="sc-form-triggers" class="sc-input-settings"
+              placeholder="e.g. dehydration, vomiting, diarrhea">
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-content">Content <span class="sc-muted">(Markdown)</span></label>
+            <textarea id="sc-form-content" class="sc-textarea-settings" rows="4"
+              placeholder="Template body text…"></textarea>
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-priority">Priority <span class="sc-muted">(1 = first)</span></label>
+            <input type="number" id="sc-form-priority" class="sc-input-settings sc-input-narrow" value="10" min="1" max="999">
+          </div>
+          <input type="hidden" id="sc-form-id">
+          <div class="sc-btn-row">
+            <button id="sc-form-save" class="sc-btn sc-btn-primary">Save Template</button>
+            <button id="sc-form-cancel" class="sc-btn sc-btn-ghost">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Behavior ── -->
+      <div id="stab-behavior" class="sc-stab-content hidden">
+        <div class="sc-field-group">
+          <label class="sc-label">Auto-Copy</label>
+          <label class="sc-toggle-wrap">
+            <input type="checkbox" id="sc-autocopy-enabled" checked>
+            <span class="sc-toggle-track"></span>
+            <span class="sc-toggle-label">Automatically copy after inactivity</span>
+          </label>
+        </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-autocopy-delay">Auto-Copy Delay</label>
+          <p class="sc-help-text">Seconds of typing pause before auto-copying to clipboard.</p>
+          <div class="sc-range-row">
+            <input type="range" id="sc-autocopy-delay" min="0.5" max="10" step="0.5" value="1.5">
+            <span id="sc-autocopy-delay-val" class="sc-range-val">1.5s</span>
+          </div>
+        </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-autoclear-delay">Auto-Clear Delay</label>
+          <p class="sc-help-text">Seconds of inactivity before clearing the input field.</p>
+          <div class="sc-range-row">
+            <input type="range" id="sc-autoclear-delay" min="10" max="300" step="10" value="30">
+            <span id="sc-autoclear-delay-val" class="sc-range-val">30s</span>
+          </div>
+        </div>
+        <div class="sc-btn-row">
+          <button id="sc-save-behavior" class="sc-btn sc-btn-primary">Save</button>
+        </div>
+
+        <hr class="sc-divider">
+
+        <div class="sc-field-group">
+          <label class="sc-label">Data Management</label>
+          <div class="sc-btn-col">
+            <button id="sc-export-btn" class="sc-btn sc-btn-ghost sc-btn-full">Export All Data (JSON)</button>
+            <button id="sc-import-btn" class="sc-btn sc-btn-ghost sc-btn-full">Import Data (JSON)</button>
+            <button id="sc-reset-all-btn" class="sc-btn sc-btn-danger sc-btn-full">Reset All to Defaults</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#sc-settings-body -->
+  </div><!-- /#sc-settings -->
+
+  <!-- Custom resize handle -->
+  <div id="sc-resize-handle" class="sc-resize-handle" title="Drag to resize" aria-hidden="true"></div>
+
+</div><!-- /#smartchart-pane -->
+
+<!-- Toast container -->
+<div id="sc-toast-container" class="sc-toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+<!-- Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
+
+<script src="app.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>
