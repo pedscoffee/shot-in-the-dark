@@ -31,15 +31,24 @@
       <span id="sc-match-badge" class="sc-match-badge hidden" aria-live="polite" title="Matched templates">0</span>
     </div>
     <div class="sc-header-right">
+      <!-- New Patient button -->
+      <button id="sc-new-patient-btn" class="sc-btn sc-btn-icon" title="New Patient — clear input (Ctrl+Shift+N)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+          <line x1="12" y1="14" x2="12" y2="20"/>
+          <line x1="9" y1="17" x2="15" y2="17"/>
+        </svg>
+      </button>
       <!-- Copy button -->
-      <button id="sc-copy-btn" class="sc-btn sc-btn-icon" title="Copy note to clipboard (manual)">
+      <button id="sc-copy-btn" class="sc-btn sc-btn-icon" title="Copy note to clipboard (Ctrl+Shift+C)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
         </svg>
       </button>
       <!-- Settings button -->
-      <button id="sc-settings-btn" class="sc-btn sc-btn-icon" title="Settings">
+      <button id="sc-settings-btn" class="sc-btn sc-btn-icon" title="Settings (Ctrl+Shift+S)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -60,8 +69,11 @@
     <!-- Input Section -->
     <section class="sc-input-section">
       <div class="sc-input-label">
-        <span>Clinical One-Liner</span>
-        <button id="sc-clear-btn" class="sc-btn sc-btn-text" title="Clear input (also auto-clears after inactivity)">Clear</button>
+        <span>Clinical One-Liner <span class="sc-kbd-hint" title="Keyboard shortcuts: Ctrl+Shift+C to copy, Ctrl+Shift+N for new patient, Esc to close settings">⌨</span></span>
+        <div class="sc-input-label-actions">
+          <button id="sc-undo-clear-btn" class="sc-btn sc-btn-text sc-undo-btn hidden" title="Undo last auto-clear">Undo</button>
+          <button id="sc-clear-btn" class="sc-btn sc-btn-text" title="Clear input (also auto-clears after inactivity)">Clear</button>
+        </div>
       </div>
       <textarea
         id="sc-input"
@@ -88,6 +100,10 @@
       <div class="sc-preview-tabs" role="tablist">
         <button class="sc-tab active" data-tab="preview" role="tab" aria-selected="true">Preview</button>
         <button class="sc-tab" data-tab="source" role="tab" aria-selected="false">Markdown</button>
+        <div class="sc-tab-actions">
+          <button id="sc-source-labels-btn" class="sc-btn sc-btn-text sc-tab-action-btn" title="Toggle source labels showing which template each block came from">Labels</button>
+          <button id="sc-plaintext-btn" class="sc-btn sc-btn-text sc-tab-action-btn" title="Copy as plain text (strips Markdown symbols) — useful for plain-text EMR fields">Plain</button>
+        </div>
       </div>
 
       <!-- Preview tab -->
@@ -101,7 +117,8 @@
               <line x1="16" y1="17" x2="8" y2="17"/>
               <polyline points="10 9 9 9 8 9"/>
             </svg>
-            <span>Preview will appear here as you type</span>
+            <span>Type a clinical one-liner to begin</span>
+            <span class="sc-empty-hint">Try: "fever", "vomiting", "rash", "cough", "ear pain"</span>
           </div>
         </div>
         <div id="sc-preview-rendered" class="sc-md-content hidden"></div>
@@ -201,6 +218,10 @@
             <label class="sc-label" for="sc-form-priority">Priority <span class="sc-muted">(1 = first)</span></label>
             <input type="number" id="sc-form-priority" class="sc-input-settings sc-input-narrow" value="10" min="1" max="999">
           </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-category">Category <span class="sc-muted">(optional, e.g. GI, Resp, Derm)</span></label>
+            <input type="text" id="sc-form-category" class="sc-input-settings" placeholder="e.g. Respiratory, GI, Infectious">
+          </div>
           <input type="hidden" id="sc-form-id">
           <div class="sc-btn-row">
             <button id="sc-form-save" class="sc-btn sc-btn-primary">Save Template</button>
@@ -235,7 +256,21 @@
             <span id="sc-autoclear-delay-val" class="sc-range-val">30s</span>
           </div>
         </div>
-        <div class="sc-btn-row">
+        <div class="sc-toggle-row">
+          <div class="sc-toggle-info">
+            <span class="sc-toggle-label">Copy as Plain Text</span>
+            <span class="sc-toggle-desc">Strips Markdown symbols before copying. Use if your EMR paste field doesn't support rich text.</span>
+          </div>
+          <input type="checkbox" id="sc-plaintext-setting" style="flex-shrink:0;margin-top:2px;accent-color:var(--accent);width:16px;height:16px;">
+        </div>
+        <div class="sc-toggle-row">
+          <div class="sc-toggle-info">
+            <span class="sc-toggle-label">Show Source Labels in Preview</span>
+            <span class="sc-toggle-desc">Prepends [Template Name] before each matched block so you can verify which template contributed each section.</span>
+          </div>
+          <input type="checkbox" id="sc-sourcelabels-setting" style="flex-shrink:0;margin-top:2px;accent-color:var(--accent);width:16px;height:16px;">
+        </div>
+        <div class="sc-btn-row" style="margin-top:10px;">
           <button id="sc-save-behavior" class="sc-btn sc-btn-primary">Save</button>
         </div>
 

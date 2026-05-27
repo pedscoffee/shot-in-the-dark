@@ -116,25 +116,49 @@
     const formCancelBtn   = $('sc-form-cancel');
     const formCloseBtn    = $('sc-form-close');
 
-    function renderTemplateList() {
-      const sorted = [...state.templates].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+    let activeCategory = '';
 
-      if (sorted.length === 0) {
+    function renderTemplateList() {
+      const allSorted = [...state.templates].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+      const categories = [...new Set(allSorted.map(t => t.category || '').filter(Boolean))];
+
+      // Build category filter bar
+      const filterHtml = categories.length > 0 ? `
+        <div class="sc-cat-filter">
+          <button class="sc-cat-btn${activeCategory === '' ? ' active' : ''}" data-cat="">All</button>
+          ${categories.map(c => `<button class="sc-cat-btn${activeCategory === c ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
+        </div>
+      ` : '';
+
+      const sorted = activeCategory ? allSorted.filter(t => (t.category || '') === activeCategory) : allSorted;
+
+      if (allSorted.length === 0) {
         templateListEl.innerHTML =
           '<p style="color:var(--text-3);font-size:12px;text-align:center;padding:18px 0;">No templates yet. Add one above.</p>';
         return;
       }
 
-      templateListEl.innerHTML = sorted.map(t => `
+      templateListEl.innerHTML = filterHtml + (sorted.length === 0
+        ? '<p style="color:var(--text-3);font-size:12px;text-align:center;padding:18px 0;">No templates in this category.</p>'
+        : sorted.map(t => `
         <div class="sc-template-item" data-id="${esc(t.id)}">
           <div class="sc-template-info">
-            <div class="sc-template-name">${esc(t.name)}</div>
+            <div class="sc-template-name-row">
+              <span class="sc-template-name">${esc(t.name)}</span>
+              ${t.category ? `<span class="sc-template-cat-badge">${esc(t.category)}</span>` : ''}
+            </div>
             <div class="sc-template-triggers">
               ${esc(t.triggers.slice(0, 5).join(', '))}${t.triggers.length > 5 ? ' …' : ''}
             </div>
           </div>
           <span class="sc-template-priority">P${t.priority ?? '—'}</span>
           <div class="sc-template-actions">
+            <button class="sc-btn sc-btn-icon" data-action="preview" data-id="${esc(t.id)}" title="Preview template content">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
             <button class="sc-btn sc-btn-icon" data-action="edit" data-id="${esc(t.id)}" title="Edit template">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -151,16 +175,37 @@
             </button>
           </div>
         </div>
-      `).join('');
+      `).join(''));
 
-      // Attach click handlers via event delegation
+      // Category filter click handlers
+      templateListEl.querySelectorAll('.sc-cat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeCategory = btn.dataset.cat;
+          renderTemplateList();
+        });
+      });
+
+      // Template action click handlers
       templateListEl.querySelectorAll('[data-action]').forEach(btn => {
         btn.addEventListener('click', () => {
           const { action, id } = btn.dataset;
-          if (action === 'edit')   openEditForm(id);
-          if (action === 'delete') deleteTemplate(id);
+          if (action === 'edit')    openEditForm(id);
+          if (action === 'delete')  deleteTemplate(id);
+          if (action === 'preview') togglePreview(id, btn);
         });
       });
+    }
+
+    function togglePreview(id, btn) {
+      const item = btn.closest('.sc-template-item');
+      const existing = item.querySelector('.sc-template-preview-expand');
+      if (existing) { existing.remove(); return; }
+      const t = state.templates.find(t => t.id === id);
+      if (!t) return;
+      const div = document.createElement('div');
+      div.className = 'sc-template-preview-expand';
+      div.textContent = t.content;
+      item.appendChild(div);
     }
 
     /* ── Template form: open / close ── */
@@ -172,6 +217,8 @@
       formTriggers.value = '';
       formContent.value  = '';
       formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
+      const catElAdd = $('sc-form-category');
+      if (catElAdd) catElAdd.value = '';
 
       templateFormEl.classList.remove('hidden');
       templateListEl.classList.add('hidden');
@@ -188,6 +235,8 @@
       formTriggers.value = t.triggers.join(', ');
       formContent.value  = t.content;
       formPriority.value = t.priority ?? 10;
+      const catEl = $('sc-form-category');
+      if (catEl) catEl.value = t.category || '';
 
       templateFormEl.classList.remove('hidden');
       templateListEl.classList.add('hidden');
@@ -211,6 +260,8 @@
       const content     = (formContent.value || '').trim();
       const priority    = parseInt(formPriority.value, 10) || 10;
       const id          = formId.value || `tpl-${Date.now()}`;
+      const catElSave   = $('sc-form-category');
+      const category    = catElSave ? (catElSave.value || '').trim() : '';
 
       if (!name) {
         alert('Template name is required.');
@@ -229,7 +280,7 @@
       }
 
       const triggers = triggersRaw.split(',').map(s => s.trim()).filter(Boolean);
-      const template = { id, name, triggers, content, priority };
+      const template = { id, name, triggers, content, priority, ...(category ? { category } : {}) };
 
       const idx = state.templates.findIndex(t => t.id === id);
       if (idx >= 0) {
@@ -238,7 +289,8 @@
         state.templates.push(template);
       }
 
-      storage.set(STORAGE_KEYS.TEMPLATES, state.templates);
+      try { storage.set(STORAGE_KEYS.TEMPLATES, state.templates); }
+      catch(e) { showToast('Storage full — export your data first', 'error', 4000); return; }
       renderTemplateList();
       closeForm();
       showToast(`Template "${name}" saved`, 'success');
@@ -275,6 +327,10 @@
       autoCopyDelayValEl.textContent  = `${state.behavior.autoCopyDelay / 1000}s`;
       autoClearDelayEl.value          = (state.behavior.autoClearDelay / 1000).toString();
       autoClearDelayValEl.textContent = `${state.behavior.autoClearDelay / 1000}s`;
+      const ptEl = $('sc-plaintext-setting');
+      if (ptEl) ptEl.checked = !!state.behavior.plainTextCopy;
+      const slEl = $('sc-sourcelabels-setting');
+      if (slEl) slEl.checked = !!state.behavior.sourceLabels;
     }
 
     autoCopyDelayEl.addEventListener('input', () => {
@@ -288,7 +344,18 @@
       state.behavior.autoCopyEnabled  = autoCopyEnabledEl.checked;
       state.behavior.autoCopyDelay    = parseFloat(autoCopyDelayEl.value) * 1000;
       state.behavior.autoClearDelay   = parseFloat(autoClearDelayEl.value) * 1000;
-      storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
+      const ptEl2 = $('sc-plaintext-setting');
+      if (ptEl2) state.behavior.plainTextCopy = ptEl2.checked;
+      const slEl2 = $('sc-sourcelabels-setting');
+      if (slEl2) {
+        state.behavior.sourceLabels = slEl2.checked;
+        const labBtn = $('sc-source-labels-btn');
+        if (labBtn) labBtn.classList.toggle('active', slEl2.checked);
+      }
+      try { storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior); } catch(e) {
+        showToast('Storage full — export your data first', 'error', 4000); return;
+      }
+      updatePreview();
       showToast('Behavior settings saved', 'success');
     });
 

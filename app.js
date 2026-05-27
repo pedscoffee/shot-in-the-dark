@@ -110,6 +110,8 @@ const DEFAULT_BEHAVIOR = {
   autoCopyDelay:   1500,   // ms
   autoClearDelay:  30000,  // ms
   autoCopyEnabled: true,
+  plainTextCopy:   false,  // strip Markdown symbols before clipboard
+  sourceLabels:    false,  // show [Template Name] labels in preview
 };
 
 /* ════════════════════════════════════════════════
@@ -126,6 +128,7 @@ const state = {
   autoCopyTimer:   null,
   autoClearTimer:  null,
   previewDebounce: null,
+  lastClearedInput:'',   // for undo-clear
   isDragging:      false,
   isResizing:      false,
   dragOffsetX:     0,
@@ -207,8 +210,12 @@ function processStaticPlaceholders(text) {
  * Replaces {input}, {templates}, and {static:...} placeholders.
  * Strips trailing whitespace per line. Returns trimmed Markdown source.
  */
-function renderNote(input, matched, noteTemplate) {
-  const templatesStr = matched.map(t => t.content).join('\n\n');
+function renderNote(input, matched, noteTemplate, opts = {}) {
+  const showLabels = opts.sourceLabels || false;
+  const templatesStr = matched.map(t => {
+    const label = showLabels ? `**[${t.name}]**\n` : '';
+    return label + t.content;
+  }).join('\n\n');
 
   let out = noteTemplate
     .replace(/\{input\}/g, input)
@@ -227,6 +234,27 @@ function renderNote(input, matched, noteTemplate) {
   return out;
 }
 
+
+/* ════════════════════════════════════════════════
+   PLAIN TEXT STRIP (for EMRs that don't support Markdown)
+════════════════════════════════════════════════ */
+
+function stripMarkdown(md) {
+  return md
+    .replace(/#{1,6}\s+/g, '')          // headings
+    .replace(/\*\*(.+?)\*\*/g, '$1')  // bold
+    .replace(/\*(.+?)\*/g, '$1')        // italic
+    .replace(/~~(.+?)~~/g, '$1')          // strikethrough
+    .replace(/`(.+?)`/g, '$1')            // inline code
+    .replace(/^\s*[-*+]\s+/gm, '• ')   // unordered lists
+    .replace(/^\s*\d+\.\s+/gm, '')    // ordered lists
+    .replace(/^>\s+/gm, '')              // blockquotes
+    .replace(/!\[.*?\]\(.*?\)/g, '')  // images
+    .replace(/\[(.+?)\]\(.*?\)/g, '$1') // links
+    .replace(/_{1,2}(.+?)_{1,2}/g, '$1') // underscore bold/italic
+    .trim();
+}
+
 /* ════════════════════════════════════════════════
    CLIPBOARD
 ════════════════════════════════════════════════ */
@@ -242,14 +270,17 @@ function renderNote(input, matched, noteTemplate) {
  * Tier 2 — clipboard.writeText: plain Markdown if ClipboardItem unavailable.
  * Tier 3 — execCommand('copy'): last resort for very old browsers.
  */
-async function copyToClipboard(markdownText) {
+async function copyToClipboard(markdownText, forceText = false) {
   if (!markdownText || !markdownText.trim()) return false;
 
+  // If plain text mode is on (or forced), strip Markdown before writing
+  const usePlainText = forceText || (state.behavior && state.behavior.plainTextCopy);
+  const textPayload = usePlainText ? stripMarkdown(markdownText) : markdownText;
+
   // Render Markdown → HTML for the rich-text clipboard payload.
-  // Wrap in a <div> so multi-paragraph notes paste as a coherent block.
-  const renderedHtml = (typeof marked !== 'undefined')
+  const renderedHtml = (!usePlainText && typeof marked !== 'undefined')
     ? `<div>${marked.parse(markdownText)}</div>`
-    : `<pre>${markdownText}</pre>`;
+    : `<pre>${textPayload}</pre>`;
 
   // ── Tier 1: ClipboardItem (rich text) ──────────────────────────────────
   if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
@@ -257,7 +288,7 @@ async function copyToClipboard(markdownText) {
       await navigator.clipboard.write([
         new ClipboardItem({
           'text/html':  new Blob([renderedHtml],  { type: 'text/html' }),
-          'text/plain': new Blob([markdownText],  { type: 'text/plain' }),
+          'text/plain': new Blob([textPayload],   { type: 'text/plain' }),
         }),
       ]);
       return true;
@@ -267,7 +298,7 @@ async function copyToClipboard(markdownText) {
   // ── Tier 2: writeText (plain Markdown) ────────────────────────────────
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
-      await navigator.clipboard.writeText(markdownText);
+      await navigator.clipboard.writeText(textPayload);
       showToast('Copied as plain text (rich text not supported in this browser)', 'warning', 3500);
       return true;
     } catch { /* fall through */ }
@@ -276,7 +307,7 @@ async function copyToClipboard(markdownText) {
   // ── Tier 3: execCommand fallback ──────────────────────────────────────
   try {
     const ta = document.createElement('textarea');
-    ta.value = markdownText;
+    ta.value = textPayload;
     ta.setAttribute('readonly', '');
     ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
     document.body.appendChild(ta);
@@ -352,7 +383,7 @@ function updatePreview() {
   }
 
   // Build note Markdown
-  const mdSource = renderNote(input, matched, nt);
+  const mdSource = renderNote(input, matched, nt, { sourceLabels: state.behavior.sourceLabels });
   state.currentNote = mdSource;
 
   // Update source tab
@@ -366,7 +397,11 @@ function updatePreview() {
 
   // Status
   if (matched.length === 0) {
-    setStatus('No templates matched', 'idle');
+    setStatus('No templates matched — try "fever", "vomiting", "rash", "cough"', 'idle');
+    // Show a helpful no-match message in preview
+    dom.previewRendered.innerHTML = '<div class="sc-no-match-msg"><span class="sc-no-match-icon">🔍</span><span>No templates matched your input.</span><span class="sc-no-match-hint">Try words like: <em>fever, rash, vomiting, cough, ear pain, strep, injury…</em></span></div>';
+    dom.previewEmpty.classList.add('hidden');
+    dom.previewRendered.classList.remove('hidden');
   } else {
     setStatus(
       `${matched.length} template${matched.length !== 1 ? 's' : ''} matched: ${matched.map(t => t.name).join(', ')}`,
@@ -424,17 +459,28 @@ function scheduleAutoClear() {
   if (!dom.input.value.trim()) return;
 
   state.autoClearTimer = setTimeout(() => {
-    clearInput();
-    showToast('Input cleared (inactivity)', 'warning', 3000);
+    clearInput(true);
+    showToast('Input cleared (inactivity) — tap Undo to restore', 'warning', 4000);
   }, state.behavior.autoClearDelay);
 }
 
-function clearInput() {
+function clearInput(saveForUndo = false) {
+  if (saveForUndo && dom.input.value.trim()) {
+    state.lastClearedInput = dom.input.value;
+    // Show undo button briefly
+    if (dom.undoClearBtn) {
+      dom.undoClearBtn.classList.remove('hidden');
+      clearTimeout(state.undoClearTimer);
+      state.undoClearTimer = setTimeout(() => {
+        dom.undoClearBtn.classList.add('hidden');
+        state.lastClearedInput = '';
+      }, 8000);
+    }
+  }
   dom.input.value = '';
   state.currentInput = '';
   clearTimeout(state.autoClearTimer);
   cancelAutoCopy();
-  // auto-resize textarea back
   dom.input.style.height = 'auto';
   debouncedUpdate();
 }
@@ -705,6 +751,10 @@ function init() {
   dom.settingsClose    = $('sc-settings-close');
   dom.resizeHandle     = $('sc-resize-handle');
   dom.toastContainer   = $('sc-toast-container');
+  dom.newPatientBtn    = $('sc-new-patient-btn');
+  dom.undoClearBtn     = $('sc-undo-clear-btn');
+  dom.sourceLabelsBtnEl= $('sc-source-labels-btn');
+  dom.plainTextBtn     = $('sc-plaintext-btn');
 
   // Load persisted data
   loadState();
@@ -763,10 +813,100 @@ function init() {
     dom.settingsPanel.classList.add('hidden');
   });
 
-  /* ── Keyboard shortcut: Escape closes settings ── */
+  /* ── New Patient ── */
+  if (dom.newPatientBtn) {
+    dom.newPatientBtn.addEventListener('click', () => {
+      clearInput(true);
+      showToast('New patient — input cleared', 'success', 1800);
+      dom.input.focus();
+    });
+  }
+
+  /* ── Undo Clear ── */
+  if (dom.undoClearBtn) {
+    dom.undoClearBtn.addEventListener('click', () => {
+      if (state.lastClearedInput) {
+        dom.input.value = state.lastClearedInput;
+        state.currentInput = state.lastClearedInput;
+        state.lastClearedInput = '';
+        autoResizeTextarea(dom.input);
+        debouncedUpdate();
+        dom.undoClearBtn.classList.add('hidden');
+        clearTimeout(state.undoClearTimer);
+        showToast('Input restored', 'success', 1800);
+      }
+    });
+  }
+
+  /* ── Source Labels toggle ── */
+  if (dom.sourceLabelsBtnEl) {
+    dom.sourceLabelsBtnEl.addEventListener('click', () => {
+      state.behavior.sourceLabels = !state.behavior.sourceLabels;
+      dom.sourceLabelsBtnEl.classList.toggle('active', state.behavior.sourceLabels);
+      dom.sourceLabelsBtnEl.title = state.behavior.sourceLabels
+        ? 'Source labels ON — click to hide'
+        : 'Source labels OFF — click to show which template each block came from';
+      storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
+      updatePreview();
+    });
+    // Restore state
+    if (state.behavior.sourceLabels) {
+      dom.sourceLabelsBtnEl.classList.add('active');
+    }
+  }
+
+  /* ── Plain Text toggle ── */
+  if (dom.plainTextBtn) {
+    dom.plainTextBtn.addEventListener('click', async () => {
+      if (!state.currentNote.trim()) { showToast('Nothing to copy yet', 'warning'); return; }
+      cancelAutoCopy();
+      const ok = await copyToClipboard(state.currentNote, true);
+      if (ok) {
+        showToast('✓ Copied as plain text', 'success');
+        setStatus('Copied as plain text ✓', 'matched');
+      }
+    });
+  }
+
+  /* ── Keyboard shortcuts ── */
   document.addEventListener('keydown', (e) => {
+    // Escape: close settings
     if (e.key === 'Escape' && !dom.settingsPanel.classList.contains('hidden')) {
       dom.settingsPanel.classList.add('hidden');
+      return;
+    }
+    // Ctrl/Cmd + Shift + C: copy note
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+      e.preventDefault();
+      if (state.currentNote.trim()) {
+        cancelAutoCopy();
+        copyToClipboard(state.currentNote).then(ok => {
+          if (ok) { showToast('✓ Copied to clipboard', 'success'); setStatus('Copied to clipboard ✓', 'matched'); }
+        });
+      } else { showToast('Nothing to copy yet', 'warning'); }
+      return;
+    }
+    // Ctrl/Cmd + Shift + N: new patient
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+      e.preventDefault();
+      clearInput(true);
+      showToast('New patient — input cleared', 'success', 1800);
+      dom.input.focus();
+      return;
+    }
+    // Ctrl/Cmd + Shift + S: open settings
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+      e.preventDefault();
+      const isOpen = !dom.settingsPanel.classList.contains('hidden');
+      dom.settingsPanel.classList.toggle('hidden', isOpen);
+      if (!isOpen && window.SmartChartSettings) window.SmartChartSettings.open();
+      return;
+    }
+    // Ctrl/Cmd + Shift + F: focus input
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+      e.preventDefault();
+      dom.input.focus();
+      return;
     }
   });
 
@@ -795,4 +935,6 @@ window.SmartChart = {
   showToast,
   renderNote,
   matchTemplates,
+  stripMarkdown,
+  clearInput,
 };
