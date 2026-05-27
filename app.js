@@ -1,13 +1,13 @@
 /**
  * SmartChart — app.js
  * Core logic: template matching, note rendering, clipboard,
- * draggable/resizable pane, auto-copy, auto-clear, state persistence.
+ * focus mode, auto-copy, auto-clear, state persistence.
  *
  * Design decisions:
  *  - Copies Markdown source text (not HTML) to clipboard
  *  - Debounce preview: 300ms | Auto-copy: 1.5s | Auto-clear: 30s
- *  - Custom resize handle (more reliable than CSS resize on fixed pane)
- *  - Pane state (position/size/minimized) stored in localStorage
+ *  - Pane fills the browser window
+ *  - Focus mode hides everything below the input for EMR side-by-side use
  */
 
 'use strict';
@@ -24,6 +24,14 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_NOTE_TEMPLATE = `{input}\n\n{templates}`;
+
+const DEFAULT_FOLLOW_UP_OPTIONS = [
+  'Follow up as needed for new or worsening symptoms.',
+  'Follow up in 2-3 days if symptoms are not improving.',
+  'Follow up in 1 week if symptoms persist.',
+  'Return sooner for worsening pain, fever, breathing trouble, dehydration, or other concerns.',
+  'Go to the emergency room for severe symptoms or any life-threatening concern.',
+];
 
 /** Default clinical templates for pediatric/family medicine. */
 const DEFAULT_TEMPLATES = [
@@ -120,9 +128,10 @@ const DEFAULT_BEHAVIOR = {
 
 const state = {
   noteTemplate:    DEFAULT_NOTE_TEMPLATE,
-  templates:       structuredClone ? structuredClone(DEFAULT_TEMPLATES) : JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
+  templates:       typeof structuredClone === 'function' ? structuredClone(DEFAULT_TEMPLATES) : JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
   behavior:        Object.assign({}, DEFAULT_BEHAVIOR),
   currentInput:    '',
+  quickText:       '',
   currentNote:     '',        // Final Markdown string ready for clipboard
   matchedTemplates:[],
   autoCopyTimer:   null,
@@ -178,15 +187,26 @@ function debounce(fn, ms) {
 
 /**
  * matchTemplates(input) → Template[]
- * Case-insensitive partial keyword matching. No regex.
+ * Case-insensitive trigger matching with word boundaries.
  * Multiple matches appended in priority order.
  */
+function escapeRegExp(str) {
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function triggerMatches(input, trigger) {
+  const normalized = String(trigger || '').trim().toLowerCase();
+  if (!normalized) return false;
+  const escaped = escapeRegExp(normalized).replace(/\s+/g, '\\s+');
+  return new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`, 'i').test(input);
+}
+
 function matchTemplates(input) {
   if (!input || !input.trim()) return [];
   const lower = input.toLowerCase();
   return state.templates
     .filter(t => Array.isArray(t.triggers) &&
-      t.triggers.some(trigger => lower.includes(trigger.toLowerCase()))
+      t.triggers.some(trigger => triggerMatches(lower, trigger))
     )
     .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
 }
@@ -207,19 +227,26 @@ function processStaticPlaceholders(text) {
 
 /**
  * renderNote(input, matched, noteTemplate) → Markdown string
- * Replaces {input}, {templates}, and {static:...} placeholders.
+ * Replaces {input}, {templates}, {quick}, and {static:...} placeholders.
  * Strips trailing whitespace per line. Returns trimmed Markdown source.
  */
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
+  const quickText = opts.quickText || '';
   const templatesStr = matched.map(t => {
     const label = showLabels ? `**[${t.name}]**\n` : '';
     return label + t.content;
   }).join('\n\n');
+  const hasQuickPlaceholder = noteTemplate.includes('{quick}');
 
   let out = noteTemplate
     .replace(/\{input\}/g, input)
-    .replace(/\{templates\}/g, templatesStr);
+    .replace(/\{templates\}/g, templatesStr)
+    .replace(/\{quick\}/g, quickText);
+
+  if (quickText && !hasQuickPlaceholder) {
+    out = [out, quickText].filter(Boolean).join('\n\n');
+  }
 
   out = processStaticPlaceholders(out);
 
@@ -349,6 +376,7 @@ function showToast(message, type = 'success', duration = 2200) {
 
 function updatePreview() {
   const input = state.currentInput;
+  const hasInput = input.trim() || state.quickText.trim();
 
   // Validate note template first
   const nt = state.noteTemplate;
@@ -357,7 +385,7 @@ function updatePreview() {
     return;
   }
 
-  if (!input.trim()) {
+  if (!hasInput) {
     // Clear state
     state.matchedTemplates = [];
     state.currentNote = '';
@@ -383,7 +411,10 @@ function updatePreview() {
   }
 
   // Build note Markdown
-  const mdSource = renderNote(input, matched, nt, { sourceLabels: state.behavior.sourceLabels });
+  const mdSource = renderNote(input, matched, nt, {
+    sourceLabels: state.behavior.sourceLabels,
+    quickText: state.quickText,
+  });
   state.currentNote = mdSource;
 
   // Update source tab
@@ -396,12 +427,14 @@ function updatePreview() {
   dom.previewRendered.classList.remove('hidden');
 
   // Status
-  if (matched.length === 0) {
+  if (matched.length === 0 && input.trim()) {
     setStatus('No templates matched — try "fever", "vomiting", "rash", "cough"', 'idle');
     // Show a helpful no-match message in preview
     dom.previewRendered.innerHTML = '<div class="sc-no-match-msg"><span class="sc-no-match-icon">🔍</span><span>No templates matched your input.</span><span class="sc-no-match-hint">Try words like: <em>fever, rash, vomiting, cough, ear pain, strep, injury…</em></span></div>';
     dom.previewEmpty.classList.add('hidden');
     dom.previewRendered.classList.remove('hidden');
+  } else if (matched.length === 0) {
+    setStatus('Follow-up statement ready', 'matched');
   } else {
     setStatus(
       `${matched.length} template${matched.length !== 1 ? 's' : ''} matched: ${matched.map(t => t.name).join(', ')}`,
@@ -479,6 +512,8 @@ function clearInput(saveForUndo = false) {
   }
   dom.input.value = '';
   state.currentInput = '';
+  state.quickText = '';
+  clearQuickInputs();
   clearTimeout(state.autoClearTimer);
   cancelAutoCopy();
   dom.input.style.height = 'auto';
@@ -490,60 +525,25 @@ function clearInput(saveForUndo = false) {
 ════════════════════════════════════════════════ */
 
 function savePaneState() {
-  const pane = dom.pane;
   storage.set(STORAGE_KEYS.PANE_STATE, {
-    left:      pane.style.left  || '',
-    top:       pane.style.top   || '',
-    right:     pane.style.right || '',
-    width:     pane.offsetWidth  + 'px',
-    height:    pane.offsetHeight + 'px',
-    minimized: pane.classList.contains('sc-minimized'),
+    focusMode: dom.pane.classList.contains('sc-focus-mode'),
   });
 }
 
 function restorePaneState() {
   const s = storage.get(STORAGE_KEYS.PANE_STATE);
   if (!s) return;
-  const pane = dom.pane;
-
-  if (s.left)  { pane.style.left  = s.left;  pane.style.right = 'auto'; }
-  if (s.top)   { pane.style.top   = s.top; }
-  if (s.width) { pane.style.width = s.width; }
-  if (s.height && !s.minimized) pane.style.height = s.height;
-  if (s.minimized) applyMinimize(true);
-
-  // Clamp to viewport after restore
-  requestAnimationFrame(clampPaneToViewport);
+  applyFocusMode(!!(s.focusMode || s.minimized));
 }
 
-function clampPaneToViewport() {
-  const pane = dom.pane;
-  const rect = pane.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-
-  let x = rect.left;
-  let y = rect.top;
-  const w = pane.offsetWidth;
-  const h = pane.offsetHeight;
-
-  if (x + w > vw) x = Math.max(0, vw - w);
-  if (y + h > vh) y = Math.max(0, vh - h);
-  if (x < 0) x = 0;
-  if (y < 0) y = 0;
-
-  pane.style.left  = x + 'px';
-  pane.style.top   = y + 'px';
-  pane.style.right = 'auto';
-}
+function clampPaneToViewport() {}
 
 /* ════════════════════════════════════════════════
    DRAG — move pane by header
 ════════════════════════════════════════════════ */
 
 function initDrag() {
-  dom.header.addEventListener('mousedown', onDragStart);
-  dom.header.addEventListener('touchstart', onDragTouchStart, { passive: false });
+  dom.header.removeAttribute('title');
 }
 
 function onDragStart(e) {
@@ -614,6 +614,8 @@ document.addEventListener('touchend', () => {
 
 function initResize() {
   const handle = dom.resizeHandle;
+  if (!handle) return;
+  handle.hidden = true;
 
   handle.addEventListener('mousedown', (e) => {
     state.isResizing = true;
@@ -643,29 +645,108 @@ function initResize() {
 }
 
 /* ════════════════════════════════════════════════
-   MINIMIZE / EXPAND
+   FOCUS MODE
 ════════════════════════════════════════════════ */
 
-function applyMinimize(minimized) {
+function applyFocusMode(enabled) {
   const pane = dom.pane;
   const btn  = dom.minimizeBtn;
   const icon = dom.minIcon;
 
-  pane.classList.toggle('sc-minimized', minimized);
+  pane.classList.toggle('sc-focus-mode', enabled);
 
-  if (minimized) {
-    icon.innerHTML = '<polyline points="6 9 12 15 18 9" stroke-linecap="round" stroke-linejoin="round"/>';
-    btn.title = 'Expand';
+  if (enabled) {
+    icon.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+    btn.title = 'Exit focus mode';
+    btn.setAttribute('aria-label', 'Exit focus mode');
   } else {
-    icon.innerHTML = '<line x1="5" y1="12" x2="19" y2="12"/>';
-    btn.title = 'Minimize';
+    icon.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+    btn.title = 'Focus mode';
+    btn.setAttribute('aria-label', 'Focus mode');
   }
 }
 
-function toggleMinimize() {
-  const minimized = !dom.pane.classList.contains('sc-minimized');
-  applyMinimize(minimized);
+function toggleFocusMode() {
+  const enabled = !dom.pane.classList.contains('sc-focus-mode');
+  applyFocusMode(enabled);
   savePaneState();
+}
+
+function applyMinimize(minimized) {
+  applyFocusMode(minimized);
+}
+
+function toggleMinimize() {
+  toggleFocusMode();
+}
+
+/* ════════════════════════════════════════════════
+   QUICK INSERTS / FOLLOW-UP LIST
+════════════════════════════════════════════════ */
+
+function formatDateOffset(days = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toLocaleDateString(undefined, { month: '2-digit', day: '2-digit', year: 'numeric' });
+}
+
+function formatTimeNow() {
+  return new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+function insertAtCursor(textarea, text) {
+  const start = textarea.selectionStart ?? textarea.value.length;
+  const end = textarea.selectionEnd ?? textarea.value.length;
+  const before = textarea.value.slice(0, start);
+  const after = textarea.value.slice(end);
+  const prefix = before && !/\s$/.test(before) ? ' ' : '';
+  textarea.value = before + prefix + text + after;
+  const cursor = before.length + prefix.length + text.length;
+  textarea.setSelectionRange(cursor, cursor);
+  textarea.focus();
+}
+
+function updateInputFromQuickInsert(text) {
+  insertAtCursor(dom.input, text);
+  state.currentInput = dom.input.value;
+  autoResizeTextarea(dom.input);
+  updatePreview();
+  scheduleAutoClear();
+}
+
+function selectedFollowUpOptions() {
+  if (!dom.followUpSelect) return [];
+  return Array.from(dom.followUpSelect.selectedOptions).map(option => option.value).filter(Boolean);
+}
+
+function joinFollowUpOptions(options, mode) {
+  if (mode === 'lines') return options.map(option => `- ${option}`).join('\n');
+  if (mode === 'paragraphs') return options.join('\n\n');
+  if (mode === 'sentence') return options.join(' ');
+  if (mode === 'and') {
+    if (options.length < 3) return options.join(' and ');
+    return `${options.slice(0, -1).join(', ')}, and ${options[options.length - 1]}`;
+  }
+  if (mode === 'or') {
+    if (options.length < 3) return options.join(' or ');
+    return `${options.slice(0, -1).join(', ')}, or ${options[options.length - 1]}`;
+  }
+  if (mode === 'nor') {
+    if (options.length < 3) return options.join(' nor ');
+    return `${options.slice(0, -1).join(', ')}, nor ${options[options.length - 1]}`;
+  }
+  return options.join(', ');
+}
+
+function updateQuickText() {
+  const options = selectedFollowUpOptions();
+  const mode = dom.followUpJoin ? dom.followUpJoin.value : 'lines';
+  state.quickText = options.length ? `**Follow-Up:**\n${joinFollowUpOptions(options, mode)}` : '';
+  updatePreview();
+}
+
+function clearQuickInputs() {
+  if (dom.followUpSelect) Array.from(dom.followUpSelect.options).forEach(option => { option.selected = false; });
 }
 
 /* ════════════════════════════════════════════════
@@ -755,6 +836,9 @@ function init() {
   dom.undoClearBtn     = $('sc-undo-clear-btn');
   dom.sourceLabelsBtnEl= $('sc-source-labels-btn');
   dom.plainTextBtn     = $('sc-plaintext-btn');
+  dom.quickInsertBar   = $('sc-quick-insert-bar');
+  dom.followUpSelect   = $('sc-followup-select');
+  dom.followUpJoin     = $('sc-followup-join');
 
   // Load persisted data
   loadState();
@@ -804,6 +888,10 @@ function init() {
 
   /* ── Settings open ── */
   dom.settingsBtn.addEventListener('click', () => {
+    if (dom.pane.classList.contains('sc-focus-mode')) {
+      applyFocusMode(false);
+      savePaneState();
+    }
     dom.settingsPanel.classList.remove('hidden');
     if (window.SmartChartSettings) window.SmartChartSettings.open();
   });
@@ -868,6 +956,34 @@ function init() {
     });
   }
 
+  /* ── Quick inserts and follow-up dropdown ── */
+  if (dom.quickInsertBar) {
+    dom.quickInsertBar.querySelectorAll('[data-insert]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const insert = btn.dataset.insert;
+        if (insert === 'today') updateInputFromQuickInsert(formatDateOffset(0));
+        if (insert === 'now') updateInputFromQuickInsert(formatTimeNow());
+        if (insert === 'tomorrow') updateInputFromQuickInsert(formatDateOffset(1));
+        if (insert === '2days') updateInputFromQuickInsert(formatDateOffset(2));
+        if (insert === '1week') updateInputFromQuickInsert(formatDateOffset(7));
+        if (insert === 'bullet') updateInputFromQuickInsert('\n- ');
+      });
+    });
+  }
+
+  if (dom.followUpSelect) {
+    DEFAULT_FOLLOW_UP_OPTIONS.forEach(text => {
+      const option = document.createElement('option');
+      option.value = text;
+      option.textContent = text;
+      dom.followUpSelect.appendChild(option);
+    });
+    dom.followUpSelect.addEventListener('change', updateQuickText);
+  }
+  if (dom.followUpJoin) {
+    dom.followUpJoin.addEventListener('change', updateQuickText);
+  }
+
   /* ── Keyboard shortcuts ── */
   document.addEventListener('keydown', (e) => {
     // Escape: close settings
@@ -898,6 +1014,10 @@ function init() {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
       e.preventDefault();
       const isOpen = !dom.settingsPanel.classList.contains('hidden');
+      if (!isOpen && dom.pane.classList.contains('sc-focus-mode')) {
+        applyFocusMode(false);
+        savePaneState();
+      }
       dom.settingsPanel.classList.toggle('hidden', isOpen);
       if (!isOpen && window.SmartChartSettings) window.SmartChartSettings.open();
       return;
@@ -930,6 +1050,7 @@ window.SmartChart = {
   STORAGE_KEYS,
   DEFAULT_NOTE_TEMPLATE,
   DEFAULT_TEMPLATES,
+  DEFAULT_FOLLOW_UP_OPTIONS,
   DEFAULT_BEHAVIOR,
   updatePreview,
   showToast,

@@ -64,6 +64,7 @@
     const noteTemplateError = $('sc-note-template-error');
     const saveNoteBtn       = $('sc-save-note-template');
     const resetNoteBtn      = $('sc-reset-note-template');
+    const noteTemplateTools = $('sc-note-template-tools');
 
     function loadNoteTemplateTab() {
       noteTemplateInput.value = state.noteTemplate;
@@ -96,6 +97,23 @@
       showToast('Note template reset to default', 'success');
       updatePreview();
     });
+
+    if (noteTemplateTools) {
+      noteTemplateTools.querySelectorAll('[data-snippet]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const snippet = btn.dataset.snippet || '';
+          const start = noteTemplateInput.selectionStart ?? noteTemplateInput.value.length;
+          const end = noteTemplateInput.selectionEnd ?? noteTemplateInput.value.length;
+          const before = noteTemplateInput.value.slice(0, start);
+          const after = noteTemplateInput.value.slice(end);
+          const prefix = before && !before.endsWith('\n') ? '\n' : '';
+          noteTemplateInput.value = before + prefix + snippet + after;
+          const cursor = before.length + prefix.length + snippet.length;
+          noteTemplateInput.setSelectionRange(cursor, cursor);
+          noteTemplateInput.focus();
+        });
+      });
+    }
 
     /* ════════════════════════════════════════════════
        TAB: TEMPLATES — LIST

@@ -54,10 +54,13 @@
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       </button>
-      <!-- Minimize button -->
-      <button id="sc-minimize-btn" class="sc-btn sc-btn-icon" title="Minimize">
+      <!-- Focus mode button -->
+      <button id="sc-minimize-btn" class="sc-btn sc-btn-icon" title="Focus mode" aria-label="Focus mode">
         <svg id="sc-min-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <line x1="5" y1="12" x2="19" y2="12"/>
+          <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+          <path d="M16 3h3a2 2 0 0 1 2 2v3"/>
+          <path d="M8 21H5a2 2 0 0 1-2-2v-3"/>
+          <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
         </svg>
       </button>
     </div>
@@ -85,6 +88,27 @@
         rows="3"
         aria-label="Clinical note input"
       ></textarea>
+      <div id="sc-quick-insert-bar" class="sc-quick-insert-bar" aria-label="Quick inserts">
+        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="today" title="Insert today's date">Today</button>
+        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="now" title="Insert current time">Now</button>
+        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="tomorrow" title="Insert tomorrow's date">+1d</button>
+        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="2days" title="Insert date 2 days from today">+2d</button>
+        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="1week" title="Insert date 1 week from today">+1w</button>
+        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="bullet" title="Insert a Markdown bullet">Bullet</button>
+      </div>
+      <div class="sc-followup-builder" aria-label="Follow-up statement builder">
+        <label class="sc-followup-label" for="sc-followup-select">Follow-Up</label>
+        <select id="sc-followup-select" class="sc-followup-select" multiple size="3" title="Select one or more follow-up statements"></select>
+        <select id="sc-followup-join" class="sc-followup-join" title="Choose how selected statements are combined">
+          <option value="lines">Bullets</option>
+          <option value="comma">Comma list</option>
+          <option value="and">Comma + and</option>
+          <option value="or">Comma + or</option>
+          <option value="nor">Comma + nor</option>
+          <option value="sentence">Sentence</option>
+          <option value="paragraphs">Paragraphs</option>
+        </select>
+      </div>
     </section>
 
     <!-- Status Bar -->
@@ -160,8 +184,14 @@
           <label class="sc-label" for="sc-note-template-input">Note Structure</label>
           <p class="sc-help-text">
             Use <code>{input}</code> for your one-liner, <code>{templates}</code> for matched content,
-            and <code>{static:TEXT}</code> for fixed Markdown text (use <code>\n</code> for newlines).
+            <code>{quick}</code> for selected follow-up text, and <code>{static:TEXT}</code> for fixed Markdown text.
           </p>
+          <div id="sc-note-template-tools" class="sc-template-tools" aria-label="Template helpers">
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="- " title="Insert a bullet line">Bullet</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="1. " title="Insert a numbered line">Numbered</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{quick}" title="Insert selected follow-up text">Follow-Up</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{static:Today's date: }" title="Insert a static text placeholder">Static</button>
+          </div>
           <textarea id="sc-note-template-input" class="sc-textarea-settings" rows="8"
             placeholder="{input}&#10;&#10;{templates}" aria-label="Note template"></textarea>
           <div id="sc-note-template-error" class="sc-error hidden"></div>
@@ -173,7 +203,7 @@
 **Educated On:**
 {templates}
 
-{static:**Follow-Up:** Return in 1 week if not improving.}</pre>
+{quick}</pre>
         </div>
         <div class="sc-btn-row">
           <button id="sc-save-note-template" class="sc-btn sc-btn-primary">Save</button>
