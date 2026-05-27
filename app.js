@@ -232,24 +232,51 @@ function renderNote(input, matched, noteTemplate) {
 ════════════════════════════════════════════════ */
 
 /**
- * copyToClipboard(text) → Promise<boolean>
- * Copies Markdown source. Falls back to execCommand on API failure.
+ * copyToClipboard(markdownText) → Promise<boolean>
+ *
+ * Writes RICH TEXT (HTML) to the clipboard so content pastes with formatting
+ * (bold, italics, lists, etc.) into EMR rich-text fields.
+ *
+ * Tier 1 — ClipboardItem API: writes both text/html and text/plain so the
+ *           receiving app can pick the richer format it supports.
+ * Tier 2 — clipboard.writeText: plain Markdown if ClipboardItem unavailable.
+ * Tier 3 — execCommand('copy'): last resort for very old browsers.
  */
-async function copyToClipboard(text) {
-  if (!text || !text.trim()) return false;
+async function copyToClipboard(markdownText) {
+  if (!markdownText || !markdownText.trim()) return false;
 
-  // Primary: Clipboard API
+  // Render Markdown → HTML for the rich-text clipboard payload.
+  // Wrap in a <div> so multi-paragraph notes paste as a coherent block.
+  const renderedHtml = (typeof marked !== 'undefined')
+    ? `<div>${marked.parse(markdownText)}</div>`
+    : `<pre>${markdownText}</pre>`;
+
+  // ── Tier 1: ClipboardItem (rich text) ──────────────────────────────────
+  if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html':  new Blob([renderedHtml],  { type: 'text/html' }),
+          'text/plain': new Blob([markdownText],  { type: 'text/plain' }),
+        }),
+      ]);
+      return true;
+    } catch { /* permission denied or unsupported — fall through */ }
+  }
+
+  // ── Tier 2: writeText (plain Markdown) ────────────────────────────────
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(markdownText);
+      showToast('Copied as plain text (rich text not supported in this browser)', 'warning', 3500);
       return true;
     } catch { /* fall through */ }
   }
 
-  // Fallback: execCommand
+  // ── Tier 3: execCommand fallback ──────────────────────────────────────
   try {
     const ta = document.createElement('textarea');
-    ta.value = text;
+    ta.value = markdownText;
     ta.setAttribute('readonly', '');
     ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
     document.body.appendChild(ta);
@@ -258,7 +285,7 @@ async function copyToClipboard(text) {
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     if (!ok) throw new Error('execCommand returned false');
-    showToast('Copied (fallback)', 'warning');
+    showToast('Copied (legacy fallback)', 'warning');
     return true;
   } catch {
     showToast('Copy failed — please select and copy manually', 'error', 4000);
