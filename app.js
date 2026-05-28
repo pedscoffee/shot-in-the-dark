@@ -303,11 +303,12 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
 
   out = processStaticPlaceholders(out);
 
-  // Clean up: strip trailing whitespace per line
+  // Clean up: strip trailing whitespace per line, collapse >2 blank lines
   out = out
     .split('\n')
-    .map(line => line === '' ? '' : line.trimEnd())
-    .join('\n');
+    .map(line => line.trimEnd())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n');
 
   // Trim only leading whitespace, preserve trailing blank lines from template
   out = out.trimStart();

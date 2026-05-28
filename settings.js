@@ -66,14 +66,6 @@
     const resetNoteBtn      = $('sc-reset-note-template');
     const noteTemplateTools = $('sc-note-template-tools');
 
-    // Handle Enter key to insert <br> instead of default behavior
-    noteTemplateInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        document.execCommand('insertHTML', false, '<br>');
-      }
-    });
-
     function editorHtmlToMarkdown(html) {
       let temp = document.createElement('div');
       temp.innerHTML = html;
@@ -98,12 +90,10 @@
       }
 
       let md = traverse(temp);
-
+      
       // Cleanup whitespace and newlines
+      md = md.replace(/\n{3,}/g, '\n\n').trim();
       md = md.replace(/\n- \n/g, '\n- ');
-
-      // Trim only leading whitespace, preserve trailing blank lines from template
-      md = md.trimStart();
 
       // Unescape standard entities
       md = md.replace(/&nbsp;/g, ' ');
@@ -132,13 +122,12 @@
           out.push(`<li>${line.replace(/^[-*]\s+/, '')}</li>`);
         } else {
           if (inList) { out.push('</ul>'); inList = false; }
-          // Preserve empty lines by ensuring they get a <br>
           out.push(`${line}<br>`);
         }
       }
       if (inList) out.push('</ul>');
 
-      html = out.join('');
+      html = out.join('').replace(/<br>$/, '');
       html = html.replace(/<\/ul><br>/g, '</ul>');
 
       return html;
