@@ -2,7 +2,7 @@
 
 **Stateless, client-side PWA for auto-inserting templated text into EMR notes.**
 
-No backend. No PHI storage. HIPAA-compliant by design — all data stays in your browser's `localStorage`.
+[Shot-in-the-dark](https://pedscoffee.github.io/shot-in-the-dark/)
 
 ---
 
@@ -13,44 +13,6 @@ No backend. No PHI storage. HIPAA-compliant by design — all data stays in your
 3. Matching templates appear instantly in the preview.
 4. After **1.5 seconds of inactivity**, the note is **auto-copied** to your clipboard.
 5. **Paste directly into your EMR.**
-
----
-
-## Deployment to GitHub Pages
-
-1. Create a new GitHub repository (e.g. `smartchart`).
-2. Copy all files into the repo root:
-   ```
-   index.html
-   styles.css
-   app.js
-   settings.js
-   manifest.json
-   sw.js
-   icon.svg
-   README.md
-   ```
-3. Push to GitHub.
-4. Go to **Settings → Pages → Source**: select `main` branch, root `/`.
-5. Your app is live at `https://YOUR_USERNAME.github.io/smartchart/`.
-
-> **HTTPS is required** for the Clipboard API and Service Worker (PWA) to work. GitHub Pages provides HTTPS automatically.
-
----
-
-## File Structure
-
-```
-smartchart/
-├── index.html      Main UI — floating pane, input, preview, settings overlay
-├── app.js          Core logic — matching, rendering, clipboard, drag/resize, timers
-├── settings.js     Settings panel — template CRUD, note template, behavior
-├── styles.css      All styling — clinical dark theme (Sora + IBM Plex Mono)
-├── manifest.json   PWA manifest — "Add to Home Screen" support
-├── sw.js           Service worker — offline caching
-├── icon.svg        App icon
-└── README.md       This file
-```
 
 ---
 
