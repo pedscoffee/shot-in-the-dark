@@ -4,7 +4,7 @@
  * Cache name is versioned; update CACHE_NAME to invalidate on deploy.
  */
 
-const CACHE_NAME = 'smartchart-v2.1';
+const CACHE_NAME = 'smartchart-v2.2';
 
 /* Assets to pre-cache on install */
 const PRECACHE_ASSETS = [

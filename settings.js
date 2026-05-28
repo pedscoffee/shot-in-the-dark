@@ -32,7 +32,7 @@
     const {
       state, dom, storage, STORAGE_KEYS,
       DEFAULT_NOTE_TEMPLATE, DEFAULT_TEMPLATES, DEFAULT_BEHAVIOR,
-      showToast, updatePreview,
+      showToast, updatePreview, attachSmartTextareaBehavior,
     } = App;
 
     /* ════════════════════════════════════════════════
@@ -70,6 +70,10 @@
       noteTemplateInput.value = state.noteTemplate;
       noteTemplateError.classList.add('hidden');
       noteTemplateError.textContent = '';
+    }
+
+    if (typeof attachSmartTextareaBehavior === 'function') {
+      attachSmartTextareaBehavior(noteTemplateInput, () => {});
     }
 
     saveNoteBtn.addEventListener('click', () => {
@@ -128,7 +132,12 @@
     const formId          = $('sc-form-id');
     const formName        = $('sc-form-name');
     const formTriggers    = $('sc-form-triggers');
+    const formType        = $('sc-form-type');
     const formContent     = $('sc-form-content');
+    const formDropdownFields = $('sc-form-dropdown-fields');
+    const formDropdownLabel = $('sc-form-dropdown-label');
+    const formOptions     = $('sc-form-options');
+    const formJoin        = $('sc-form-join');
     const formPriority    = $('sc-form-priority');
     const formSaveBtn     = $('sc-form-save');
     const formCancelBtn   = $('sc-form-cancel');
@@ -164,6 +173,7 @@
             <div class="sc-template-name-row">
               <span class="sc-template-name">${esc(t.name)}</span>
               ${t.category ? `<span class="sc-template-cat-badge">${esc(t.category)}</span>` : ''}
+              ${t.type === 'dropdown' ? '<span class="sc-template-cat-badge">Dropdown</span>' : ''}
             </div>
             <div class="sc-template-triggers">
               ${esc(t.triggers.slice(0, 5).join(', '))}${t.triggers.length > 5 ? ' …' : ''}
@@ -222,8 +232,16 @@
       if (!t) return;
       const div = document.createElement('div');
       div.className = 'sc-template-preview-expand';
-      div.textContent = t.content;
+      div.textContent = t.type === 'dropdown'
+        ? `Dropdown options:\n${(t.options || []).map(o => `- ${o}`).join('\n')}`
+        : t.content;
       item.appendChild(div);
+    }
+
+    function updateTemplateTypeFields() {
+      const isDropdown = formType.value === 'dropdown';
+      formDropdownFields.classList.toggle('hidden', !isDropdown);
+      formContent.closest('.sc-field-group').classList.toggle('hidden', isDropdown);
     }
 
     /* ── Template form: open / close ── */
@@ -233,10 +251,15 @@
       formId.value       = '';
       formName.value     = '';
       formTriggers.value = '';
+      formType.value     = 'text';
       formContent.value  = '';
+      formDropdownLabel.value = '';
+      formOptions.value = '';
+      formJoin.value = 'lines';
       formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
       const catElAdd = $('sc-form-category');
       if (catElAdd) catElAdd.value = '';
+      updateTemplateTypeFields();
 
       templateFormEl.classList.remove('hidden');
       templateListEl.classList.add('hidden');
@@ -251,10 +274,15 @@
       formId.value       = t.id;
       formName.value     = t.name;
       formTriggers.value = t.triggers.join(', ');
-      formContent.value  = t.content;
+      formType.value     = t.type === 'dropdown' ? 'dropdown' : 'text';
+      formContent.value  = t.content || '';
+      formDropdownLabel.value = t.label || t.name;
+      formOptions.value = (t.options || []).join('\n');
+      formJoin.value = t.join || 'lines';
       formPriority.value = t.priority ?? 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = t.category || '';
+      updateTemplateTypeFields();
 
       templateFormEl.classList.remove('hidden');
       templateListEl.classList.add('hidden');
@@ -267,15 +295,22 @@
     }
 
     addTemplateBtn.addEventListener('click', openAddForm);
+    formType.addEventListener('change', updateTemplateTypeFields);
     formCancelBtn.addEventListener('click', closeForm);
     formCloseBtn.addEventListener('click', closeForm);
+
+    if (typeof attachSmartTextareaBehavior === 'function') {
+      attachSmartTextareaBehavior(formContent, () => {});
+    }
 
     /* ── Template form: save ── */
 
     formSaveBtn.addEventListener('click', () => {
       const name        = (formName.value || '').trim();
       const triggersRaw = (formTriggers.value || '').trim();
+      const type        = formType.value === 'dropdown' ? 'dropdown' : 'text';
       const content     = (formContent.value || '').trim();
+      const options     = (formOptions.value || '').split('\n').map(s => s.trim()).filter(Boolean);
       const priority    = parseInt(formPriority.value, 10) || 10;
       const id          = formId.value || `tpl-${Date.now()}`;
       const catElSave   = $('sc-form-category');
@@ -291,14 +326,31 @@
         formTriggers.focus();
         return;
       }
-      if (!content) {
+      if (type === 'text' && !content) {
         alert('Template content cannot be empty.');
         formContent.focus();
         return;
       }
+      if (type === 'dropdown' && options.length === 0) {
+        alert('Dropdown templates need at least one option.');
+        formOptions.focus();
+        return;
+      }
 
       const triggers = triggersRaw.split(',').map(s => s.trim()).filter(Boolean);
-      const template = { id, name, triggers, content, priority, ...(category ? { category } : {}) };
+      const template = type === 'dropdown'
+        ? {
+            id,
+            name,
+            type,
+            triggers,
+            label: (formDropdownLabel.value || '').trim() || name,
+            options,
+            join: formJoin.value || 'lines',
+            priority,
+            ...(category ? { category } : {}),
+          }
+        : { id, name, triggers, content, priority, ...(category ? { category } : {}) };
 
       const idx = state.templates.findIndex(t => t.id === id);
       if (idx >= 0) {

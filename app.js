@@ -25,92 +25,80 @@ const STORAGE_KEYS = {
 
 const DEFAULT_NOTE_TEMPLATE = `{input}\n\n{templates}`;
 
-const DEFAULT_FOLLOW_UP_OPTIONS = [
-  'Follow up as needed for new or worsening symptoms.',
-  'Follow up in 2-3 days if symptoms are not improving.',
-  'Follow up in 1 week if symptoms persist.',
-  'Return sooner for worsening pain, fever, breathing trouble, dehydration, or other concerns.',
-  'Go to the emergency room for severe symptoms or any life-threatening concern.',
-];
-
-/** Default clinical templates for pediatric/family medicine. */
+/** Default templates sourced from templates.txt. */
 const DEFAULT_TEMPLATES = [
   {
-    id: 'dehydration',
-    name: 'Dehydration Precautions',
-    triggers: ['dehydration', 'vomiting', 'diarrhea', 'decreased urination', 'not drinking', 'poor intake', 'poor po'],
-    content: 'Patient is at risk for **dehydration**, which may warrant emergency room evaluation or hospital admission for IV fluid resuscitation. Signs of serious dehydration to watch for: no tears when crying, no wet diapers or urination for >8 hours, sunken eyes or fontanelle, extreme lethargy or irritability, or dry/tacky mucous membranes. Encourage small, frequent sips of Pedialyte or clear fluids.',
+    id: 'well-child-health-maintenance',
+    name: 'Well Child / Health Maintenance',
+    triggers: ['well child', 'well-child', 'well visit', 'health maintenance', 'checkup', 'check-up', 'annual exam', 'physical', 'preventive'],
+    content: 'All forms, labs, immunizations, and patient concerns reviewed and addressed appropriately. Screening questions, past medical history, past social history, medications, and growth chart reviewed. Age-appropriate anticipatory guidance reviewed and printed in AVS. Parent questions addressed.',
     priority: 1,
   },
   {
-    id: 'fever',
-    name: 'Fever Management',
-    triggers: ['fever', 'febrile', 'temperature', 'febrile', 'hot', 'temp'],
-    content: 'Fever is the body\'s natural response to infection. Treat discomfort with **acetaminophen** (Tylenol) or **ibuprofen** (Motrin/Advil — if age ≥6 months) per weight-based dosing. Do not alternate unless directed. Return to the ER or call our office if: fever exceeds 104°F (40°C), persists beyond 5 days, or the patient appears very ill, inconsolable, or has difficulty breathing.',
+    id: 'illness-supportive-care',
+    name: 'Illness Supportive Care',
+    triggers: ['illness', 'sick', 'fever', 'cough', 'congestion', 'runny nose', 'uri', 'cold', 'rash', 'sore throat', 'strep', 'ear pain', 'earache', 'otitis', 'vomiting', 'diarrhea', 'dehydration', 'trouble breathing', 'shortness of breath', 'wheezing'],
+    content: 'Recommended supportive care with OTC medications as needed. Return precautions given including increasing pain, worsening fever, dehydration, new symptoms, prolonged symptoms, worsening symptoms, and other concerns. Caregiver expressed understanding and agreement with treatment plan.',
     priority: 2,
   },
   {
-    id: 'upper-respiratory',
-    name: 'Upper Respiratory Illness',
-    triggers: ['cough', 'congestion', 'runny nose', 'uri', 'cold', 'upper respiratory', 'snot', 'mucus', 'nasal drainage'],
-    content: 'Upper respiratory infections are most commonly **viral** and do not respond to antibiotics. Recommended supportive care: saline nasal rinses or drops, honey for cough in children >1 year (1 tsp as needed), cool-mist humidifier, and rest. Symptoms may last **7–14 days**. Return if breathing becomes labored or fast, symptoms worsen significantly after day 5, high fever develops, or ear pain begins.',
+    id: 'injury-supportive-care',
+    name: 'Injury Supportive Care',
+    triggers: ['injury', 'laceration', 'cut', 'wound', 'trauma', 'bruise', 'contusion', 'sprain', 'strain', 'abrasion', 'scrape', 'fracture'],
+    content: 'Recommended supportive care with Tylenol, Motrin, rest, ice, compression, elevation, and gradual return to activity as appropriate. Return precautions given including increasing pain, swelling, or failure to improve.',
     priority: 3,
   },
   {
-    id: 'sore-throat',
-    name: 'Sore Throat / Pharyngitis',
-    triggers: ['sore throat', 'pharyngitis', 'strep', 'throat pain', 'throat'],
-    content: 'Sore throats are most often **viral** and self-limited. If strep throat is confirmed by rapid antigen test or throat culture, a full course of prescribed antibiotics is necessary—do not stop early even if symptoms improve. Supportive care: warm salt water gargles, throat lozenges, and appropriate analgesics. Return immediately if unable to swallow, drooling, muffled "hot potato" voice, or difficulty breathing develops.',
+    id: 'ear-infection-risk',
+    name: 'Ear Infection Risk',
+    triggers: ['ear infection', 'otitis', 'otitis media', 'ear pain', 'earache', 'ear ache'],
+    content: 'Risk of untreated otitis media includes persistent pain and fever, hearing loss, and mastoiditis.',
     priority: 4,
   },
   {
-    id: 'ear-infection',
-    name: 'Ear Infection (Otitis Media)',
-    triggers: ['ear pain', 'earache', 'ear ache', 'otitis', 'ear infection', 'ear pulling', 'otalgia'],
-    content: 'Ear infections may be viral or bacterial. If antibiotics are prescribed, complete the **full course** as directed. Pain management: acetaminophen or ibuprofen per weight-based dosing; a warm compress over the ear may improve comfort. Return if: fever persists more than 48 hours after starting antibiotics, pain worsens rather than improves, or drainage develops from the ear canal.',
+    id: 'strep-test-risk',
+    name: 'Strep Test Risk',
+    triggers: ['strep test', 'rapid strep', 'throat culture', 'strep throat', 'strep'],
+    content: 'Risk of untreated strep throat includes rheumatic fever and peritonsillar abscess. This problem is moderate risk due to pending lab results which may necessitate further pharmacologic management.',
     priority: 5,
   },
   {
-    id: 'gi-illness',
-    name: 'Gastrointestinal Illness',
-    triggers: ['gastroenteritis', 'stomach bug', 'stomach flu', 'nausea', 'vomiting', 'diarrhea', 'gi illness', 'stomach virus', 'zofran', 'ondansetron'],
-    content: 'Most gastrointestinal illnesses are **viral** and self-limited, typically resolving in 3–7 days. Prioritize hydration with small, frequent sips of Pedialyte or clear fluids—avoid juice and sports drinks. Once vomiting subsides, advance diet gradually; the BRAT diet (bananas, rice, applesauce, toast) may ease diarrhea. Return if unable to keep any fluids down for >8 hours, signs of dehydration develop, blood appears in stool, or symptoms persist beyond 7 days.',
+    id: 'dehydration-risk',
+    name: 'Dehydration Risk',
+    triggers: ['dehydration', 'vomiting', 'diarrhea', 'decreased urination', 'not drinking', 'poor intake', 'poor po'],
+    content: 'Patient is at risk for dehydration, which would warrant emergency room care or admission for IV fluids.',
     priority: 6,
   },
   {
-    id: 'rash',
-    name: 'Rash / Skin Irritation',
-    triggers: ['rash', 'hives', 'urticaria', 'eczema', 'dermatitis', 'itching', 'itchy', 'pruritus'],
-    content: 'Avoid scratching to prevent secondary bacterial skin infection; trim nails short. Hydrocortisone 1% cream may be applied to itchy areas up to twice daily (avoid face and groin unless directed). Keep skin moisturized with a fragrance-free emollient after bathing. For hives or allergic reactions, an oral antihistamine — cetirizine (Zyrtec) or diphenhydramine (Benadryl) — may provide relief. Return **immediately** if: rash spreads rapidly, involves the lips, eyes, or mouth, causes significant facial swelling, or is accompanied by difficulty breathing or throat tightness.',
+    id: 'respiratory-distress-risk',
+    name: 'Respiratory Distress Risk',
+    triggers: ['trouble breathing', 'difficulty breathing', 'shortness of breath', 'respiratory distress', 'wheezing', 'labored breathing'],
+    content: 'Patient is at risk for worsening respiratory distress and clinical deterioration, which would need emergency room care or hospital admission.',
     priority: 7,
   },
   {
-    id: 'well-child',
-    name: 'Well Child Visit',
-    triggers: ['well child', 'well-child', 'well visit', 'checkup', 'check-up', 'annual exam', 'physical exam', 'routine visit', 'preventive'],
-    content: 'Routine well-child visit completed today. Growth parameters, developmental milestones, and nutritional status reviewed and appropriate for age. Immunizations updated per the current CDC/ACIP schedule. Anticipatory guidance provided regarding age-appropriate nutrition, sleep hygiene, screen time limits, car seat and home safety, and developmental expectations. Next well-child visit scheduled per AAP Bright Futures guidelines.',
+    id: 'pcmh-reminder',
+    name: 'PCMH Reminder',
+    triggers: ['adhd', 'weight', 'obesity', 'strep throat'],
+    content: 'PCMH Reminder',
     priority: 8,
   },
   {
-    id: 'injury',
-    name: 'Minor Injury / Wound Care',
-    triggers: ['laceration', 'cut', 'wound', 'injury', 'trauma', 'bruise', 'contusion', 'sprain', 'strain', 'abrasion', 'scrape'],
-    content: 'Wound care instructions: keep the area **clean and dry**. Change dressings once daily or whenever soiled. Monitor closely for signs of infection: increasing redness, warmth, swelling, purulent (cloudy/yellow-green) discharge, or red streaks extending from the wound edge. If sutures or steri-strips were placed, keep dry for the first 24–48 hours. Return for suture removal as directed, or sooner if signs of infection or wound dehiscence develop.',
-    priority: 9,
-  },
-  {
-    id: 'antibiotic',
-    name: 'Antibiotic Instructions',
-    triggers: ['antibiotic', 'amoxicillin', 'augmentin', 'azithromycin', 'zpack', 'z-pack', 'penicillin', 'cephalexin', 'keflex', 'trimethoprim', 'bactrim'],
-    content: 'Complete the **full course** of antibiotics exactly as prescribed, even if symptoms improve before the course is finished. Do not share, skip doses, or save leftover medication. GI upset (nausea, loose stools) is common — take with food to reduce stomach irritation. If a rash, hives, facial or tongue swelling, or difficulty breathing develops at any point, **stop the medication immediately** and call our office or go to the nearest emergency room.',
-    priority: 10,
-  },
-  {
-    id: 'return-precautions',
-    name: 'General Return Precautions',
-    triggers: ['return precautions', 'return to er', 'emergency precautions'],
-    content: '**Return to the emergency room or call 911** for any of the following: difficulty breathing or rapid breathing, significant change in mental status or responsiveness, persistent high fever >104°F unresponsive to medication, uncontrolled bleeding, severe or rapidly worsening pain, or any symptom that seems life-threatening. **Call our office** for questions, symptoms not improving as expected, or any new concerns.',
-    priority: 11,
+    id: 'follow-up',
+    name: 'Follow-Up Dropdown',
+    type: 'dropdown',
+    triggers: ['follow up', 'follow-up', 'followup'],
+    label: 'Follow-Up',
+    join: 'lines',
+    options: [
+      'Follow up as needed for new or worsening symptoms.',
+      'Follow up in 2-3 days if symptoms are not improving.',
+      'Follow up in 1 week if symptoms persist.',
+      'Return sooner for worsening pain, fever, breathing trouble, dehydration, or other concerns.',
+      'Go to the emergency room for severe symptoms or any life-threatening concern.',
+    ],
+    priority: 20,
+    category: 'Dropdown',
   },
 ];
 
@@ -131,9 +119,10 @@ const state = {
   templates:       typeof structuredClone === 'function' ? structuredClone(DEFAULT_TEMPLATES) : JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
   behavior:        Object.assign({}, DEFAULT_BEHAVIOR),
   currentInput:    '',
-  quickText:       '',
   currentNote:     '',        // Final Markdown string ready for clipboard
   matchedTemplates:[],
+  activeDropdowns: [],
+  dropdownSelections: {},
   autoCopyTimer:   null,
   autoClearTimer:  null,
   previewDebounce: null,
@@ -211,6 +200,45 @@ function matchTemplates(input) {
     .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
 }
 
+function isDropdownTemplate(t) {
+  return t && t.type === 'dropdown';
+}
+
+function getTemplateById(id) {
+  return state.templates.find(t => t.id === id);
+}
+
+function getDropdownSelection(id) {
+  if (!state.dropdownSelections[id]) {
+    state.dropdownSelections[id] = { values: [], join: null };
+  }
+  return state.dropdownSelections[id];
+}
+
+function collectDropdownIdsFromText(text, ids = new Set(), seen = new Set()) {
+  String(text || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
+    if (seen.has(id)) return '';
+    seen.add(id);
+    const tpl = getTemplateById(id);
+    if (isDropdownTemplate(tpl)) ids.add(id);
+    if (tpl && tpl.content) collectDropdownIdsFromText(tpl.content, ids, seen);
+    return '';
+  });
+  return ids;
+}
+
+function collectActiveDropdowns(matched) {
+  const ids = new Set();
+  matched.forEach(t => {
+    if (isDropdownTemplate(t)) ids.add(t.id);
+    collectDropdownIdsFromText(t.content, ids);
+  });
+  return [...ids]
+    .map(id => getTemplateById(id))
+    .filter(isDropdownTemplate)
+    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+}
+
 /* ════════════════════════════════════════════════
    NOTE RENDERING
 ════════════════════════════════════════════════ */
@@ -225,28 +253,62 @@ function processStaticPlaceholders(text) {
   );
 }
 
+function joinTemplateOptions(options, mode) {
+  if (mode === 'lines') return options.map(option => `- ${option}`).join('\n');
+  if (mode === 'paragraphs') return options.join('\n\n');
+  if (mode === 'sentence') return options.join(' ');
+  if (mode === 'and') {
+    if (options.length < 3) return options.join(' and ');
+    return `${options.slice(0, -1).join(', ')}, and ${options[options.length - 1]}`;
+  }
+  if (mode === 'or') {
+    if (options.length < 3) return options.join(' or ');
+    return `${options.slice(0, -1).join(', ')}, or ${options[options.length - 1]}`;
+  }
+  if (mode === 'nor') {
+    if (options.length < 3) return options.join(' nor ');
+    return `${options.slice(0, -1).join(', ')}, nor ${options[options.length - 1]}`;
+  }
+  return options.join(', ');
+}
+
+function renderDropdownValue(t) {
+  const selection = getDropdownSelection(t.id);
+  const selected = Array.isArray(selection.values) ? selection.values : [];
+  if (selected.length === 0) return '';
+  const join = selection.join || t.join || 'lines';
+  return `**${t.label || t.name}:**\n${joinTemplateOptions(selected, join)}`;
+}
+
+function renderTemplateContent(t, seen = new Set()) {
+  if (!t) return '';
+  if (isDropdownTemplate(t)) return renderDropdownValue(t);
+  if (seen.has(t.id)) return '';
+  seen.add(t.id);
+  return String(t.content || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
+    const dropdown = getTemplateById(id);
+    return isDropdownTemplate(dropdown) ? renderDropdownValue(dropdown) : '';
+  });
+}
+
 /**
  * renderNote(input, matched, noteTemplate) → Markdown string
- * Replaces {input}, {templates}, {quick}, and {static:...} placeholders.
+ * Replaces {input}, {templates}, dropdown placeholders, and {static:...}.
  * Strips trailing whitespace per line. Returns trimmed Markdown source.
  */
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
-  const quickText = opts.quickText || '';
   const templatesStr = matched.map(t => {
+    const content = renderTemplateContent(t);
+    if (!content.trim()) return '';
     const label = showLabels ? `**[${t.name}]**\n` : '';
-    return label + t.content;
-  }).join('\n\n');
-  const hasQuickPlaceholder = noteTemplate.includes('{quick}');
+    return label + content;
+  }).filter(Boolean).join('\n\n');
 
   let out = noteTemplate
     .replace(/\{input\}/g, input)
     .replace(/\{templates\}/g, templatesStr)
-    .replace(/\{quick\}/g, quickText);
-
-  if (quickText && !hasQuickPlaceholder) {
-    out = [out, quickText].filter(Boolean).join('\n\n');
-  }
+    .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContent(getTemplateById(id)));
 
   out = processStaticPlaceholders(out);
 
@@ -370,13 +432,80 @@ function showToast(message, type = 'success', duration = 2200) {
   }, duration);
 }
 
+function renderDropdownControls(dropdowns) {
+  if (!dom.previewRendered || dropdowns.length === 0) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'sc-dropdown-template-list';
+
+  dropdowns.forEach(t => {
+    const selection = getDropdownSelection(t.id);
+    const card = document.createElement('div');
+    card.className = 'sc-dropdown-template';
+    card.dataset.dropdownId = t.id;
+
+    const header = document.createElement('div');
+    header.className = 'sc-dropdown-template-header';
+    header.textContent = t.label || t.name;
+
+    const controls = document.createElement('div');
+    controls.className = 'sc-dropdown-template-controls';
+
+    const select = document.createElement('select');
+    select.className = 'sc-dropdown-template-select';
+    select.multiple = true;
+    select.size = Math.min(Math.max((t.options || []).length, 3), 6);
+    (t.options || []).forEach(optionText => {
+      const option = document.createElement('option');
+      option.value = optionText;
+      option.textContent = optionText;
+      option.selected = (selection.values || []).includes(optionText);
+      select.appendChild(option);
+    });
+
+    const join = document.createElement('select');
+    join.className = 'sc-dropdown-template-join';
+    [
+      ['lines', 'Bullets'],
+      ['comma', 'Comma list'],
+      ['and', 'Comma + and'],
+      ['or', 'Comma + or'],
+      ['nor', 'Comma + nor'],
+      ['sentence', 'Sentence'],
+      ['paragraphs', 'Paragraphs'],
+    ].forEach(([value, label]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      option.selected = value === (selection.join || t.join || 'lines');
+      join.appendChild(option);
+    });
+
+    const onChange = () => {
+      state.dropdownSelections[t.id] = {
+        values: Array.from(select.selectedOptions).map(option => option.value),
+        join: join.value,
+      };
+      updatePreview();
+    };
+    select.addEventListener('change', onChange);
+    join.addEventListener('change', onChange);
+
+    controls.append(select, join);
+    card.append(header, controls);
+    wrap.appendChild(card);
+  });
+
+  dom.previewRendered.appendChild(wrap);
+}
+
 /* ════════════════════════════════════════════════
    PREVIEW RENDERING
 ════════════════════════════════════════════════ */
 
 function updatePreview() {
   const input = state.currentInput;
-  const hasInput = input.trim() || state.quickText.trim();
+  const hasInput = input.trim();
 
   // Validate note template first
   const nt = state.noteTemplate;
@@ -388,6 +517,7 @@ function updatePreview() {
   if (!hasInput) {
     // Clear state
     state.matchedTemplates = [];
+    state.activeDropdowns = [];
     state.currentNote = '';
     dom.matchBadge.classList.add('hidden');
     dom.previewEmpty.classList.remove('hidden');
@@ -401,6 +531,7 @@ function updatePreview() {
   // Match templates
   const matched = matchTemplates(input);
   state.matchedTemplates = matched;
+  state.activeDropdowns = collectActiveDropdowns(matched);
 
   // Update match badge
   if (matched.length > 0) {
@@ -413,7 +544,6 @@ function updatePreview() {
   // Build note Markdown
   const mdSource = renderNote(input, matched, nt, {
     sourceLabels: state.behavior.sourceLabels,
-    quickText: state.quickText,
   });
   state.currentNote = mdSource;
 
@@ -423,18 +553,17 @@ function updatePreview() {
   // Update preview tab (render HTML from Markdown)
   const html = marked.parse(mdSource);
   dom.previewRendered.innerHTML = html;
+  renderDropdownControls(state.activeDropdowns);
   dom.previewEmpty.classList.add('hidden');
   dom.previewRendered.classList.remove('hidden');
 
   // Status
   if (matched.length === 0 && input.trim()) {
-    setStatus('No templates matched — try "fever", "vomiting", "rash", "cough"', 'idle');
+    setStatus('No templates matched — try "illness", "injury", "otitis", "strep", or "follow up"', 'idle');
     // Show a helpful no-match message in preview
-    dom.previewRendered.innerHTML = '<div class="sc-no-match-msg"><span class="sc-no-match-icon">🔍</span><span>No templates matched your input.</span><span class="sc-no-match-hint">Try words like: <em>fever, rash, vomiting, cough, ear pain, strep, injury…</em></span></div>';
+    dom.previewRendered.innerHTML = '<div class="sc-no-match-msg"><span class="sc-no-match-icon">🔍</span><span>No templates matched your input.</span><span class="sc-no-match-hint">Try words like: <em>illness, injury, otitis, strep, dehydration, trouble breathing, follow up…</em></span></div>';
     dom.previewEmpty.classList.add('hidden');
     dom.previewRendered.classList.remove('hidden');
-  } else if (matched.length === 0) {
-    setStatus('Follow-up statement ready', 'matched');
   } else {
     setStatus(
       `${matched.length} template${matched.length !== 1 ? 's' : ''} matched: ${matched.map(t => t.name).join(', ')}`,
@@ -464,6 +593,7 @@ function scheduleAutoCopy() {
   cancelAutoCopy();
   if (!state.behavior.autoCopyEnabled) return;
   if (!state.currentNote.trim()) return;
+  if (state.activeDropdowns.some(t => getDropdownSelection(t.id).values.length === 0)) return;
 
   dom.autoCopyIndicator.classList.remove('hidden');
 
@@ -512,8 +642,8 @@ function clearInput(saveForUndo = false) {
   }
   dom.input.value = '';
   state.currentInput = '';
-  state.quickText = '';
-  clearQuickInputs();
+  state.activeDropdowns = [];
+  state.dropdownSelections = {};
   clearTimeout(state.autoClearTimer);
   cancelAutoCopy();
   dom.input.style.height = 'auto';
@@ -681,7 +811,7 @@ function toggleMinimize() {
 }
 
 /* ════════════════════════════════════════════════
-   QUICK INSERTS / FOLLOW-UP LIST
+   INPUT EXPANSIONS
 ════════════════════════════════════════════════ */
 
 function formatDateOffset(days = 0) {
@@ -694,59 +824,60 @@ function formatTimeNow() {
   return new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
 
-function insertAtCursor(textarea, text) {
-  const start = textarea.selectionStart ?? textarea.value.length;
-  const end = textarea.selectionEnd ?? textarea.value.length;
-  const before = textarea.value.slice(0, start);
-  const after = textarea.value.slice(end);
-  const prefix = before && !/\s$/.test(before) ? ' ' : '';
-  textarea.value = before + prefix + text + after;
-  const cursor = before.length + prefix.length + text.length;
-  textarea.setSelectionRange(cursor, cursor);
-  textarea.focus();
+function applyDotExpansions(el) {
+  const cursor = el.selectionStart ?? el.value.length;
+  const before = el.value.slice(0, cursor);
+  const after = el.value.slice(cursor);
+  const replacements = {
+    '.today': formatDateOffset(0),
+    '.now': formatTimeNow(),
+    '.tomorrow': formatDateOffset(1),
+    '.2d': formatDateOffset(2),
+    '.1w': formatDateOffset(7),
+  };
+  const match = before.match(/(^|[\s(])(\.(?:today|now|tomorrow|2d|1w))$/i);
+  if (!match) return false;
+  const token = match[2].toLowerCase();
+  const replacement = replacements[token];
+  if (!replacement) return false;
+  const start = cursor - match[2].length;
+  el.value = el.value.slice(0, start) + replacement + after;
+  const nextCursor = start + replacement.length;
+  el.setSelectionRange(nextCursor, nextCursor);
+  return true;
 }
 
-function updateInputFromQuickInsert(text) {
-  insertAtCursor(dom.input, text);
-  state.currentInput = dom.input.value;
-  autoResizeTextarea(dom.input);
-  updatePreview();
-  scheduleAutoClear();
+function applyBulletExpansion(el) {
+  const cursor = el.selectionStart ?? el.value.length;
+  const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
+  const lineBeforeCursor = el.value.slice(lineStart, cursor);
+  if (lineBeforeCursor !== '-') return false;
+  el.value = el.value.slice(0, cursor) + ' ' + el.value.slice(cursor);
+  el.setSelectionRange(cursor + 1, cursor + 1);
+  return true;
 }
 
-function selectedFollowUpOptions() {
-  if (!dom.followUpSelect) return [];
-  return Array.from(dom.followUpSelect.selectedOptions).map(option => option.value).filter(Boolean);
-}
+function attachSmartTextareaBehavior(el, onChange) {
+  el.addEventListener('input', () => {
+    applyDotExpansions(el);
+    applyBulletExpansion(el);
+    onChange();
+  });
 
-function joinFollowUpOptions(options, mode) {
-  if (mode === 'lines') return options.map(option => `- ${option}`).join('\n');
-  if (mode === 'paragraphs') return options.join('\n\n');
-  if (mode === 'sentence') return options.join(' ');
-  if (mode === 'and') {
-    if (options.length < 3) return options.join(' and ');
-    return `${options.slice(0, -1).join(', ')}, and ${options[options.length - 1]}`;
-  }
-  if (mode === 'or') {
-    if (options.length < 3) return options.join(' or ');
-    return `${options.slice(0, -1).join(', ')}, or ${options[options.length - 1]}`;
-  }
-  if (mode === 'nor') {
-    if (options.length < 3) return options.join(' nor ');
-    return `${options.slice(0, -1).join(', ')}, nor ${options[options.length - 1]}`;
-  }
-  return options.join(', ');
-}
-
-function updateQuickText() {
-  const options = selectedFollowUpOptions();
-  const mode = dom.followUpJoin ? dom.followUpJoin.value : 'lines';
-  state.quickText = options.length ? `**Follow-Up:**\n${joinFollowUpOptions(options, mode)}` : '';
-  updatePreview();
-}
-
-function clearQuickInputs() {
-  if (dom.followUpSelect) Array.from(dom.followUpSelect.options).forEach(option => { option.selected = false; });
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const cursor = el.selectionStart ?? el.value.length;
+    const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
+    const line = el.value.slice(lineStart, cursor);
+    const bulletMatch = line.match(/^(\s*[-*]\s+)/);
+    if (!bulletMatch) return;
+    e.preventDefault();
+    const insert = '\n' + bulletMatch[1];
+    el.value = el.value.slice(0, cursor) + insert + el.value.slice(el.selectionEnd ?? cursor);
+    const nextCursor = cursor + insert.length;
+    el.setSelectionRange(nextCursor, nextCursor);
+    onChange();
+  });
 }
 
 /* ════════════════════════════════════════════════
@@ -827,7 +958,6 @@ function init() {
   dom.settingsBtn      = $('sc-settings-btn');
   dom.minimizeBtn      = $('sc-minimize-btn');
   dom.minIcon          = $('sc-min-icon');
-  dom.clearBtn         = $('sc-clear-btn');
   dom.settingsPanel    = $('sc-settings');
   dom.settingsClose    = $('sc-settings-close');
   dom.resizeHandle     = $('sc-resize-handle');
@@ -836,9 +966,6 @@ function init() {
   dom.undoClearBtn     = $('sc-undo-clear-btn');
   dom.sourceLabelsBtnEl= $('sc-source-labels-btn');
   dom.plainTextBtn     = $('sc-plaintext-btn');
-  dom.quickInsertBar   = $('sc-quick-insert-bar');
-  dom.followUpSelect   = $('sc-followup-select');
-  dom.followUpJoin     = $('sc-followup-join');
 
   // Load persisted data
   loadState();
@@ -857,7 +984,7 @@ function init() {
   initPreviewTabs();
 
   /* ── Input ── */
-  dom.input.addEventListener('input', () => {
+  attachSmartTextareaBehavior(dom.input, () => {
     state.currentInput = dom.input.value;
     autoResizeTextarea(dom.input);
     cancelAutoCopy();
@@ -879,9 +1006,6 @@ function init() {
       setStatus('Copied to clipboard ✓', 'matched');
     }
   });
-
-  /* ── Clear ── */
-  dom.clearBtn.addEventListener('click', clearInput);
 
   /* ── Minimize ── */
   dom.minimizeBtn.addEventListener('click', toggleMinimize);
@@ -956,34 +1080,6 @@ function init() {
     });
   }
 
-  /* ── Quick inserts and follow-up dropdown ── */
-  if (dom.quickInsertBar) {
-    dom.quickInsertBar.querySelectorAll('[data-insert]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const insert = btn.dataset.insert;
-        if (insert === 'today') updateInputFromQuickInsert(formatDateOffset(0));
-        if (insert === 'now') updateInputFromQuickInsert(formatTimeNow());
-        if (insert === 'tomorrow') updateInputFromQuickInsert(formatDateOffset(1));
-        if (insert === '2days') updateInputFromQuickInsert(formatDateOffset(2));
-        if (insert === '1week') updateInputFromQuickInsert(formatDateOffset(7));
-        if (insert === 'bullet') updateInputFromQuickInsert('\n- ');
-      });
-    });
-  }
-
-  if (dom.followUpSelect) {
-    DEFAULT_FOLLOW_UP_OPTIONS.forEach(text => {
-      const option = document.createElement('option');
-      option.value = text;
-      option.textContent = text;
-      dom.followUpSelect.appendChild(option);
-    });
-    dom.followUpSelect.addEventListener('change', updateQuickText);
-  }
-  if (dom.followUpJoin) {
-    dom.followUpJoin.addEventListener('change', updateQuickText);
-  }
-
   /* ── Keyboard shortcuts ── */
   document.addEventListener('keydown', (e) => {
     // Escape: close settings
@@ -1050,7 +1146,6 @@ window.SmartChart = {
   STORAGE_KEYS,
   DEFAULT_NOTE_TEMPLATE,
   DEFAULT_TEMPLATES,
-  DEFAULT_FOLLOW_UP_OPTIONS,
   DEFAULT_BEHAVIOR,
   updatePreview,
   showToast,
@@ -1058,4 +1153,5 @@ window.SmartChart = {
   matchTemplates,
   stripMarkdown,
   clearInput,
+  attachSmartTextareaBehavior,
 };

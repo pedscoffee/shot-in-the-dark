@@ -75,7 +75,6 @@
         <span>Clinical One-Liner <span class="sc-kbd-hint" title="Keyboard shortcuts: Ctrl+Shift+C to copy, Ctrl+Shift+N for new patient, Esc to close settings">⌨</span></span>
         <div class="sc-input-label-actions">
           <button id="sc-undo-clear-btn" class="sc-btn sc-btn-text sc-undo-btn hidden" title="Undo last auto-clear">Undo</button>
-          <button id="sc-clear-btn" class="sc-btn sc-btn-text" title="Clear input (also auto-clears after inactivity)">Clear</button>
         </div>
       </div>
       <textarea
@@ -88,27 +87,6 @@
         rows="3"
         aria-label="Clinical note input"
       ></textarea>
-      <div id="sc-quick-insert-bar" class="sc-quick-insert-bar" aria-label="Quick inserts">
-        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="today" title="Insert today's date">Today</button>
-        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="now" title="Insert current time">Now</button>
-        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="tomorrow" title="Insert tomorrow's date">+1d</button>
-        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="2days" title="Insert date 2 days from today">+2d</button>
-        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="1week" title="Insert date 1 week from today">+1w</button>
-        <button class="sc-btn sc-btn-text sc-quick-btn" data-insert="bullet" title="Insert a Markdown bullet">Bullet</button>
-      </div>
-      <div class="sc-followup-builder" aria-label="Follow-up statement builder">
-        <label class="sc-followup-label" for="sc-followup-select">Follow-Up</label>
-        <select id="sc-followup-select" class="sc-followup-select" multiple size="3" title="Select one or more follow-up statements"></select>
-        <select id="sc-followup-join" class="sc-followup-join" title="Choose how selected statements are combined">
-          <option value="lines">Bullets</option>
-          <option value="comma">Comma list</option>
-          <option value="and">Comma + and</option>
-          <option value="or">Comma + or</option>
-          <option value="nor">Comma + nor</option>
-          <option value="sentence">Sentence</option>
-          <option value="paragraphs">Paragraphs</option>
-        </select>
-      </div>
     </section>
 
     <!-- Status Bar -->
@@ -184,12 +162,12 @@
           <label class="sc-label" for="sc-note-template-input">Note Structure</label>
           <p class="sc-help-text">
             Use <code>{input}</code> for your one-liner, <code>{templates}</code> for matched content,
-            <code>{quick}</code> for selected follow-up text, and <code>{static:TEXT}</code> for fixed Markdown text.
+            <code>{dropdown:template-id}</code> to nest dropdown templates, and <code>{static:TEXT}</code> for fixed Markdown text.
           </p>
           <div id="sc-note-template-tools" class="sc-template-tools" aria-label="Template helpers">
             <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="- " title="Insert a bullet line">Bullet</button>
             <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="1. " title="Insert a numbered line">Numbered</button>
-            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{quick}" title="Insert selected follow-up text">Follow-Up</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{dropdown:follow-up}" title="Nest the follow-up dropdown">Follow-Up</button>
             <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{static:Today's date: }" title="Insert a static text placeholder">Static</button>
           </div>
           <textarea id="sc-note-template-input" class="sc-textarea-settings" rows="8"
@@ -201,9 +179,7 @@
           <pre class="sc-example-pre">**HPI:** {input}
 
 **Educated On:**
-{templates}
-
-{quick}</pre>
+{templates}</pre>
         </div>
         <div class="sc-btn-row">
           <button id="sc-save-note-template" class="sc-btn sc-btn-primary">Save</button>
@@ -240,9 +216,39 @@
               placeholder="e.g. dehydration, vomiting, diarrhea">
           </div>
           <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-type">Template Type</label>
+            <select id="sc-form-type" class="sc-input-settings">
+              <option value="text">Text</option>
+              <option value="dropdown">Dropdown</option>
+            </select>
+          </div>
+          <div class="sc-field-group">
             <label class="sc-label" for="sc-form-content">Content <span class="sc-muted">(Markdown)</span></label>
             <textarea id="sc-form-content" class="sc-textarea-settings" rows="4"
-              placeholder="Template body text…"></textarea>
+              placeholder="Template body text. Use {dropdown:template-id} to nest a dropdown."></textarea>
+          </div>
+          <div id="sc-form-dropdown-fields" class="hidden">
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-dropdown-label">Dropdown Label</label>
+              <input type="text" id="sc-form-dropdown-label" class="sc-input-settings" placeholder="e.g. Follow-Up">
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-options">Dropdown Options <span class="sc-muted">(one per line)</span></label>
+              <textarea id="sc-form-options" class="sc-textarea-settings" rows="5"
+                placeholder="Follow up as needed&#10;Return sooner for worsening symptoms"></textarea>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-join">Default Join</label>
+              <select id="sc-form-join" class="sc-input-settings">
+                <option value="lines">Bullets</option>
+                <option value="comma">Comma list</option>
+                <option value="and">Comma + and</option>
+                <option value="or">Comma + or</option>
+                <option value="nor">Comma + nor</option>
+                <option value="sentence">Sentence</option>
+                <option value="paragraphs">Paragraphs</option>
+              </select>
+            </div>
           </div>
           <div class="sc-field-group">
             <label class="sc-label" for="sc-form-priority">Priority <span class="sc-muted">(1 = first)</span></label>
