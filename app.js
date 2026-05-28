@@ -1,4 +1,4 @@
-/**
+/** 
  * SmartChart — app.js
  * Core logic: template matching, note rendering, clipboard,
  * focus mode, auto-copy, auto-clear, state persistence.
@@ -23,7 +23,7 @@ const STORAGE_KEYS = {
   BEHAVIOR:      'sc_behavior',
 };
 
-const DEFAULT_NOTE_TEMPLATE = `{input}<br>{templates}`;
+const DEFAULT_NOTE_TEMPLATE = `{input}\n\n{templates}`;
 
 /** Default templates sourced from templates.txt. */
 const DEFAULT_TEMPLATES = [
@@ -103,30 +103,26 @@ const DEFAULT_TEMPLATES = [
 ];
 
 const DEFAULT_BEHAVIOR = {
-  autoCopyDelay:   1500,   // ms
-  autoClearDelay:  30000,  // ms
+  autoCopyDelay:   1500,
+  autoClearDelay:  30000,
   autoCopyEnabled: true,
-  plainTextCopy:   false,  // strip Markdown symbols before clipboard
-  sourceLabels:    false,  // show [Template Name] labels in preview
+  plainTextCopy:   false,
+  sourceLabels:    false,
 };
-
-/* ════════════════════════════════════════════════
-   APPLICATION STATE
-════════════════════════════════════════════════ */
 
 const state = {
   noteTemplate:    DEFAULT_NOTE_TEMPLATE,
   templates:       typeof structuredClone === 'function' ? structuredClone(DEFAULT_TEMPLATES) : JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
   behavior:        Object.assign({}, DEFAULT_BEHAVIOR),
   currentInput:    '',
-  currentNote:     '',        // Final Markdown string ready for clipboard
+  currentNote:     '',
   matchedTemplates:[],
   activeDropdowns: [],
   dropdownSelections: {},
   autoCopyTimer:   null,
   autoClearTimer:  null,
   previewDebounce: null,
-  lastClearedInput:'',   // for undo-clear
+  lastClearedInput:'',
   isDragging:      false,
   isResizing:      false,
   dragOffsetX:     0,
@@ -137,17 +133,8 @@ const state = {
   resizeStartH:    0,
 };
 
-/* ════════════════════════════════════════════════
-   DOM CACHE
-════════════════════════════════════════════════ */
-
 const $ = id => document.getElementById(id);
-
-const dom = {};  // populated in init()
-
-/* ════════════════════════════════════════════════
-   LOCAL STORAGE HELPERS
-════════════════════════════════════════════════ */
+const dom = {};
 
 const storage = {
   get(key, fallback = null) {
@@ -161,24 +148,11 @@ const storage = {
   },
 };
 
-/* ════════════════════════════════════════════════
-   UTILITIES
-════════════════════════════════════════════════ */
-
 function debounce(fn, ms) {
   let t = null;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
-/* ════════════════════════════════════════════════
-   TEMPLATE MATCHING
-════════════════════════════════════════════════ */
-
-/**
- * matchTemplates(input) → Template[]
- * Case-insensitive trigger matching with word boundaries.
- * Multiple matches appended in priority order.
- */
 function escapeRegExp(str) {
   return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -227,14 +201,6 @@ function collectDropdownIdsFromText(text, ids = new Set(), seen = new Set()) {
   return ids;
 }
 
-/* ════════════════════════════════════════════════
-   NOTE RENDERING
-════════════════════════════════════════════════ */
-
-/**
- * processStaticPlaceholders(text) → string
- * Replaces {static:TEXT} with TEXT, handling <br> tags for line breaks.
- */
 function processStaticPlaceholders(text) {
   return text.replace(/\{static:([^}]*)\}/g, (_, content) =>
     content.replace(/<br>/gi, '\n')
@@ -282,13 +248,32 @@ function renderTemplateContent(t, seen = new Set()) {
 /**
  * renderNote(input, matched, noteTemplate) → Markdown string
  * Replaces {input}, {templates}, dropdown placeholders, and {static:...}.
- * Strips trailing whitespace per line. Returns trimmed Markdown source.
+ *
+ * Override logic: if the note template wraps {templates} in Markdown
+ * formatting, that formatting acts as a global override for the same
+ * formatting type on individual template content.
  */
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
+  const wrapMatch = noteTemplate.match(/(\*{1,2}|_{1,2})\{templates\}(\*{1,2}|_{1,2})/);
+  const hasOverride = !!(wrapMatch && wrapMatch[1] === wrapMatch[2]);
+
   const templatesStr = matched.map(t => {
-    const content = renderTemplateContent(t);
+    let content = renderTemplateContent(t);
     if (!content.trim()) return '';
+
+    if (hasOverride) {
+      if (wrapMatch[1] === '**') {
+        content = content.replace(/\*\*([\s\S]*?)\*\*/g, '$1');
+      } else if (wrapMatch[1] === '*') {
+        content = content.replace(/(?<!\*)\*(?!\*)([\s\S]*?)(?<!\*)\*(?!\*)/g, '$1');
+      } else if (wrapMatch[1] === '__') {
+        content = content.replace(/__([\s\S]*?)__/g, '$1');
+      } else if (wrapMatch[1] === '_') {
+        content = content.replace(/(?<!_)_(?!_)([\s\S]*?)(?<!_)_(?!_)/g, '$1');
+      }
+    }
+
     const label = showLabels ? `**[${t.name}]**\n` : '';
     return label + content;
   }).filter(Boolean).join('\n\n');
@@ -300,7 +285,6 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
 
   out = processStaticPlaceholders(out);
 
-  // Clean up: strip trailing whitespace per line, collapse >2 blank lines
   out = out
     .split('\n')
     .map(line => line.trimEnd())
@@ -311,55 +295,32 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
   return out;
 }
 
-
-/* ════════════════════════════════════════════════
-   PLAIN TEXT STRIP (for EMRs that don't support Markdown)
-════════════════════════════════════════════════ */
-
 function stripMarkdown(md) {
   return md
-    .replace(/#{1,6}\s+/g, '')          // headings
-    .replace(/\*\*(.+?)\*\*/g, '$1')  // bold
-    .replace(/\*(.+?)\*/g, '$1')        // italic
-    .replace(/~~(.+?)~~/g, '$1')          // strikethrough
-    .replace(/`(.+?)`/g, '$1')            // inline code
-    .replace(/^\s*[-*+]\s+/gm, '• ')   // unordered lists
-    .replace(/^\s*\d+\.\s+/gm, '')    // ordered lists
-    .replace(/^>\s+/gm, '')              // blockquotes
-    .replace(/!\[.*?\]\(.*?\)/g, '')  // images
-    .replace(/\[(.+?)\]\(.*?\)/g, '$1') // links
-    .replace(/_{1,2}(.+?)_{1,2}/g, '$1') // underscore bold/italic
+    .replace(/#{1,6}\s+/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/^\s*[-*+]\s+/gm, '• ')
+    .replace(/^\s*\d+\.\s+/gm, '')
+    .replace(/^>\s+/gm, '')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[(.+?)\]\(.*?\)/g, '$1')
+    .replace(/_{1,2}(.+?)_{1,2}/g, '$1')
     .trim();
 }
 
-/* ════════════════════════════════════════════════
-   CLIPBOARD
-════════════════════════════════════════════════ */
-
-/**
- * copyToClipboard(markdownText) → Promise<boolean>
- *
- * Writes RICH TEXT (HTML) to the clipboard so content pastes with formatting
- * (bold, italics, lists, etc.) into EMR rich-text fields.
- *
- * Tier 1 — ClipboardItem API: writes both text/html and text/plain so the
- *           receiving app can pick the richer format it supports.
- * Tier 2 — clipboard.writeText: plain Markdown if ClipboardItem unavailable.
- * Tier 3 — execCommand('copy'): last resort for very old browsers.
- */
 async function copyToClipboard(markdownText, forceText = false) {
   if (!markdownText || !markdownText.trim()) return false;
 
-  // If plain text mode is on (or forced), strip Markdown before writing
   const usePlainText = forceText || (state.behavior && state.behavior.plainTextCopy);
   const textPayload = usePlainText ? stripMarkdown(markdownText) : markdownText;
 
-  // Render Markdown → HTML for the rich-text clipboard payload.
   const renderedHtml = (!usePlainText && typeof marked !== 'undefined')
     ? `<div>${marked.parse(markdownText)}</div>`
     : `<pre>${textPayload}</pre>`;
 
-  // ── Tier 1: ClipboardItem (rich text) ──────────────────────────────────
   if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
     try {
       await navigator.clipboard.write([
@@ -369,19 +330,17 @@ async function copyToClipboard(markdownText, forceText = false) {
         }),
       ]);
       return true;
-    } catch { /* permission denied or unsupported — fall through */ }
+    } catch {}
   }
 
-  // ── Tier 2: writeText (plain Markdown) ────────────────────────────────
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
       await navigator.clipboard.writeText(textPayload);
       showToast('Copied as plain text (rich text not supported in this browser)', 'warning', 3500);
       return true;
-    } catch { /* fall through */ }
+    } catch {}
   }
 
-  // ── Tier 3: execCommand fallback ──────────────────────────────────────
   try {
     const ta = document.createElement('textarea');
     ta.value = textPayload;
@@ -400,10 +359,6 @@ async function copyToClipboard(markdownText, forceText = false) {
     return false;
   }
 }
-
-/* ════════════════════════════════════════════════
-   TOAST NOTIFICATIONS
-════════════════════════════════════════════════ */
 
 function showToast(message, type = 'success', duration = 2200) {
   const container = dom.toastContainer;
@@ -487,23 +442,17 @@ function renderDropdownControls(dropdowns) {
   dom.previewRendered.appendChild(wrap);
 }
 
-/* ════════════════════════════════════════════════
-   PREVIEW RENDERING
-════════════════════════════════════════════════ */
-
 function updatePreview() {
   const input = state.currentInput;
   const hasInput = input.trim();
-
-  // Validate note template first
   const nt = state.noteTemplate;
+
   if (!nt.includes('{input}') || !nt.includes('{templates}')) {
     setStatus('Error: Note template missing {input} or {templates}', 'error');
     return;
   }
 
   if (!hasInput) {
-    // Clear state
     state.matchedTemplates = [];
     state.activeDropdowns = [];
     state.currentNote = '';
@@ -516,11 +465,9 @@ function updatePreview() {
     return;
   }
 
-  // Match templates
   const matched = matchTemplates(input);
   state.matchedTemplates = matched;
 
-  // Replace dropdown triggers in input
   let modifiedInput = input;
   const bottomTemplates = [];
 
@@ -532,10 +479,8 @@ function updatePreview() {
         const normalized = String(trigger).trim();
         if (!normalized) continue;
         const escaped = escapeRegExp(normalized).replace(/\s+/g, '\\s+');
-        // Match word boundaries, case insensitive
         const regex = new RegExp(`(^|[^a-z0-9])(${escaped})($|[^a-z0-9])`, 'gi');
         if (regex.test(modifiedInput)) {
-          // Replace with placeholder
           modifiedInput = modifiedInput.replace(regex, `$1{dropdown:${t.id}}$3`);
           replaced = true;
         }
@@ -546,12 +491,11 @@ function updatePreview() {
     }
   });
 
-  // Recompute active dropdowns from both modifiedInput and NoteTemplate
   const idsToSearch = new Set();
   collectDropdownIdsFromText(nt, idsToSearch, new Set());
   collectDropdownIdsFromText(modifiedInput, idsToSearch, new Set());
   bottomTemplates.forEach(t => {
-     collectDropdownIdsFromText(t.content, idsToSearch, new Set());
+    collectDropdownIdsFromText(t.content, idsToSearch, new Set());
   });
 
   state.activeDropdowns = [...idsToSearch]
@@ -560,12 +504,10 @@ function updatePreview() {
     .filter(isDropdownTemplate)
     .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
 
-  // Build note Markdown
   const mdSource = renderNote(modifiedInput, bottomTemplates, nt, {
     sourceLabels: state.behavior.sourceLabels,
   });
-  
-  // Update match badge
+
   if (matched.length > 0) {
     dom.matchBadge.textContent = matched.length;
     dom.matchBadge.classList.remove('hidden');
@@ -574,22 +516,16 @@ function updatePreview() {
   }
 
   state.currentNote = mdSource;
-
-  // Update source tab
   dom.sourceText.textContent = mdSource;
 
-  // Update preview tab (render HTML from Markdown)
   const html = marked.parse(mdSource);
   dom.previewRendered.innerHTML = html;
   renderDropdownControls(state.activeDropdowns);
   dom.previewEmpty.classList.add('hidden');
   dom.previewRendered.classList.remove('hidden');
 
-  // Status
-  // We use modifiedInput for checking empty, to avoid saying no templates matched if we replaced something
   if (matched.length === 0 && input.trim()) {
     setStatus('No templates matched — try "illness", "injury", "otitis", "strep", or "follow up"', 'idle');
-    // Show a helpful no-match message in preview
     dom.previewRendered.innerHTML = '<div class="sc-no-match-msg"><span class="sc-no-match-icon">🔍</span><span>No templates matched your input.</span><span class="sc-no-match-hint">Try words like: <em>illness, injury, otitis, strep, dehydration, trouble breathing, follow up…</em></span></div>';
     dom.previewEmpty.classList.add('hidden');
     dom.previewRendered.classList.remove('hidden');
@@ -600,7 +536,6 @@ function updatePreview() {
     );
   }
 
-  // Schedule auto-copy
   scheduleAutoCopy();
 }
 
@@ -613,10 +548,6 @@ function setStatus(text, mode = 'idle') {
   if (mode === 'matched') dom.statusText.classList.add('sc-matched');
   if (mode === 'error')   dom.statusText.classList.add('sc-error-text');
 }
-
-/* ════════════════════════════════════════════════
-   AUTO-COPY TIMER
-════════════════════════════════════════════════ */
 
 function scheduleAutoCopy() {
   cancelAutoCopy();
@@ -642,10 +573,6 @@ function cancelAutoCopy() {
   if (dom.autoCopyIndicator) dom.autoCopyIndicator.classList.add('hidden');
 }
 
-/* ════════════════════════════════════════════════
-   AUTO-CLEAR TIMER
-════════════════════════════════════════════════ */
-
 function scheduleAutoClear() {
   clearTimeout(state.autoClearTimer);
   if (!dom.input.value.trim()) return;
@@ -659,7 +586,6 @@ function scheduleAutoClear() {
 function clearInput(saveForUndo = false) {
   if (saveForUndo && dom.input.value.trim()) {
     state.lastClearedInput = dom.input.value;
-    // Show undo button briefly
     if (dom.undoClearBtn) {
       dom.undoClearBtn.classList.remove('hidden');
       clearTimeout(state.undoClearTimer);
@@ -679,10 +605,6 @@ function clearInput(saveForUndo = false) {
   debouncedUpdate();
 }
 
-/* ════════════════════════════════════════════════
-   PANE PERSISTENCE
-════════════════════════════════════════════════ */
-
 function savePaneState() {
   storage.set(STORAGE_KEYS.PANE_STATE, {
     focusMode: dom.pane.classList.contains('sc-focus-mode'),
@@ -696,117 +618,12 @@ function restorePaneState() {
 }
 
 function clampPaneToViewport() {}
-
-/* ════════════════════════════════════════════════
-   DRAG — move pane by header
-════════════════════════════════════════════════ */
-
-function initDrag() {
-  dom.header.removeAttribute('title');
-}
-
-function onDragStart(e) {
-  if (e.target.closest('.sc-btn')) return;
-  if (e.button !== 0) return;
-
-  state.isDragging = true;
-  const rect = dom.pane.getBoundingClientRect();
-  state.dragOffsetX = e.clientX - rect.left;
-  state.dragOffsetY = e.clientY - rect.top;
-
-  dom.pane.style.transition = 'none';
-  document.body.style.userSelect = 'none';
-  e.preventDefault();
-}
-
-function onDragTouchStart(e) {
-  if (e.target.closest('.sc-btn')) return;
-  const t = e.touches[0];
-  state.isDragging = true;
-  const rect = dom.pane.getBoundingClientRect();
-  state.dragOffsetX = t.clientX - rect.left;
-  state.dragOffsetY = t.clientY - rect.top;
-  dom.pane.style.transition = 'none';
-  e.preventDefault();
-}
-
-document.addEventListener('mousemove', (e) => {
-  if (!state.isDragging) return;
-  movePaneTo(e.clientX, e.clientY);
-});
-
-document.addEventListener('touchmove', (e) => {
-  if (!state.isDragging) return;
-  const t = e.touches[0];
-  movePaneTo(t.clientX, t.clientY);
-}, { passive: false });
-
-function movePaneTo(cx, cy) {
-  const pane = dom.pane;
-  const w = pane.offsetWidth;
-  const h = pane.offsetHeight;
-  let x = cx - state.dragOffsetX;
-  let y = cy - state.dragOffsetY;
-  x = Math.max(0, Math.min(x, window.innerWidth  - w));
-  y = Math.max(0, Math.min(y, window.innerHeight - h));
-  pane.style.left  = x + 'px';
-  pane.style.top   = y + 'px';
-  pane.style.right = 'auto';
-}
-
-document.addEventListener('mouseup', () => {
-  if (!state.isDragging) return;
-  state.isDragging = false;
-  document.body.style.userSelect = '';
-  savePaneState();
-});
-
-document.addEventListener('touchend', () => {
-  if (!state.isDragging) return;
-  state.isDragging = false;
-  savePaneState();
-});
-
-/* ════════════════════════════════════════════════
-   RESIZE — custom bottom-right handle
-════════════════════════════════════════════════ */
-
+function initDrag() { dom.header.removeAttribute('title'); }
 function initResize() {
   const handle = dom.resizeHandle;
   if (!handle) return;
   handle.hidden = true;
-
-  handle.addEventListener('mousedown', (e) => {
-    state.isResizing = true;
-    state.resizeStartX = e.clientX;
-    state.resizeStartY = e.clientY;
-    state.resizeStartW = dom.pane.offsetWidth;
-    state.resizeStartH = dom.pane.offsetHeight;
-    document.body.style.userSelect = 'none';
-    e.preventDefault();
-    e.stopPropagation();
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!state.isResizing) return;
-    const newW = Math.max(320, state.resizeStartW + (e.clientX - state.resizeStartX));
-    const newH = Math.max(220, state.resizeStartH + (e.clientY - state.resizeStartY));
-    dom.pane.style.width  = newW + 'px';
-    dom.pane.style.height = newH + 'px';
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (!state.isResizing) return;
-    state.isResizing = false;
-    document.body.style.userSelect = '';
-    savePaneState();
-  });
 }
-
-/* ════════════════════════════════════════════════
-   FOCUS MODE
-════════════════════════════════════════════════ */
-
 function applyFocusMode(enabled) {
   const pane = dom.pane;
   const btn  = dom.minimizeBtn;
@@ -824,35 +641,22 @@ function applyFocusMode(enabled) {
     btn.setAttribute('aria-label', 'Focus mode');
   }
 }
-
 function toggleFocusMode() {
   const enabled = !dom.pane.classList.contains('sc-focus-mode');
   applyFocusMode(enabled);
   savePaneState();
 }
-
-function applyMinimize(minimized) {
-  applyFocusMode(minimized);
-}
-
-function toggleMinimize() {
-  toggleFocusMode();
-}
-
-/* ════════════════════════════════════════════════
-   INPUT EXPANSIONS
-════════════════════════════════════════════════ */
+function applyMinimize(minimized) { applyFocusMode(minimized); }
+function toggleMinimize() { toggleFocusMode(); }
 
 function formatDateOffset(days = 0) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toLocaleDateString(undefined, { month: '2-digit', day: '2-digit', year: 'numeric' });
 }
-
 function formatTimeNow() {
   return new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
-
 function applyDotExpansions(el) {
   const cursor = el.selectionStart ?? el.value.length;
   const before = el.value.slice(0, cursor);
@@ -875,7 +679,6 @@ function applyDotExpansions(el) {
   el.setSelectionRange(nextCursor, nextCursor);
   return true;
 }
-
 function applyBulletExpansion(el) {
   const cursor = el.selectionStart ?? el.value.length;
   const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
@@ -885,7 +688,6 @@ function applyBulletExpansion(el) {
   el.setSelectionRange(cursor + 1, cursor + 1);
   return true;
 }
-
 function attachSmartTextareaBehavior(el, onChange) {
   el.addEventListener('input', () => {
     applyDotExpansions(el);
@@ -909,10 +711,6 @@ function attachSmartTextareaBehavior(el, onChange) {
   });
 }
 
-/* ════════════════════════════════════════════════
-   PREVIEW TABS
-════════════════════════════════════════════════ */
-
 function initPreviewTabs() {
   document.querySelectorAll('.sc-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -935,18 +733,10 @@ function initPreviewTabs() {
   });
 }
 
-/* ════════════════════════════════════════════════
-   TEXTAREA AUTO-HEIGHT
-════════════════════════════════════════════════ */
-
 function autoResizeTextarea(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 180) + 'px';
 }
-
-/* ════════════════════════════════════════════════
-   LOAD SAVED STATE
-════════════════════════════════════════════════ */
 
 function loadState() {
   const savedTemplates = storage.get(STORAGE_KEYS.TEMPLATES);
@@ -965,12 +755,7 @@ function loadState() {
   }
 }
 
-/* ════════════════════════════════════════════════
-   INITIALIZATION
-════════════════════════════════════════════════ */
-
 function init() {
-  // Populate DOM cache
   dom.pane             = $('smartchart-pane');
   dom.header           = $('sc-header');
   dom.input            = $('sc-input');
@@ -996,23 +781,17 @@ function init() {
   dom.sourceLabelsBtnEl= $('sc-source-labels-btn');
   dom.plainTextBtn     = $('sc-plaintext-btn');
 
-  // Load persisted data
   loadState();
 
-  // Configure marked.js (basic markdown, no GFM tables)
   if (typeof marked !== 'undefined') {
     marked.use({ gfm: true, breaks: true });
   }
 
-  // Restore pane geometry
   restorePaneState();
-
-  // Initialize interactions
   initDrag();
   initResize();
   initPreviewTabs();
 
-  /* ── Input ── */
   attachSmartTextareaBehavior(dom.input, () => {
     state.currentInput = dom.input.value;
     autoResizeTextarea(dom.input);
@@ -1022,7 +801,6 @@ function init() {
     scheduleAutoClear();
   });
 
-  /* ── Manual copy ── */
   dom.copyBtn.addEventListener('click', async () => {
     if (!state.currentNote.trim()) {
       showToast('Nothing to copy yet', 'warning');
@@ -1036,10 +814,8 @@ function init() {
     }
   });
 
-  /* ── Minimize ── */
   dom.minimizeBtn.addEventListener('click', toggleMinimize);
 
-  /* ── Settings open ── */
   dom.settingsBtn.addEventListener('click', () => {
     if (dom.pane.classList.contains('sc-focus-mode')) {
       applyFocusMode(false);
@@ -1049,12 +825,10 @@ function init() {
     if (window.SmartChartSettings) window.SmartChartSettings.open();
   });
 
-  /* ── Settings close ── */
   dom.settingsClose.addEventListener('click', () => {
     dom.settingsPanel.classList.add('hidden');
   });
 
-  /* ── New Patient ── */
   if (dom.newPatientBtn) {
     dom.newPatientBtn.addEventListener('click', () => {
       clearInput(true);
@@ -1063,7 +837,6 @@ function init() {
     });
   }
 
-  /* ── Undo Clear ── */
   if (dom.undoClearBtn) {
     dom.undoClearBtn.addEventListener('click', () => {
       if (state.lastClearedInput) {
@@ -1079,7 +852,6 @@ function init() {
     });
   }
 
-  /* ── Source Labels toggle ── */
   if (dom.sourceLabelsBtnEl) {
     dom.sourceLabelsBtnEl.addEventListener('click', () => {
       state.behavior.sourceLabels = !state.behavior.sourceLabels;
@@ -1090,13 +862,11 @@ function init() {
       storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
       updatePreview();
     });
-    // Restore state
     if (state.behavior.sourceLabels) {
       dom.sourceLabelsBtnEl.classList.add('active');
     }
   }
 
-  /* ── Plain Text toggle ── */
   if (dom.plainTextBtn) {
     dom.plainTextBtn.addEventListener('click', async () => {
       if (!state.currentNote.trim()) { showToast('Nothing to copy yet', 'warning'); return; }
@@ -1109,14 +879,11 @@ function init() {
     });
   }
 
-  /* ── Keyboard shortcuts ── */
   document.addEventListener('keydown', (e) => {
-    // Escape: close settings
     if (e.key === 'Escape' && !dom.settingsPanel.classList.contains('hidden')) {
       dom.settingsPanel.classList.add('hidden');
       return;
     }
-    // Ctrl/Cmd + Shift + C: copy note
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
       e.preventDefault();
       if (state.currentNote.trim()) {
@@ -1127,7 +894,6 @@ function init() {
       } else { showToast('Nothing to copy yet', 'warning'); }
       return;
     }
-    // Ctrl/Cmd + Shift + N: new patient
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
       e.preventDefault();
       clearInput(true);
@@ -1135,7 +901,6 @@ function init() {
       dom.input.focus();
       return;
     }
-    // Ctrl/Cmd + Shift + S: open settings
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
       e.preventDefault();
       const isOpen = !dom.settingsPanel.classList.contains('hidden');
@@ -1147,7 +912,6 @@ function init() {
       if (!isOpen && window.SmartChartSettings) window.SmartChartSettings.open();
       return;
     }
-    // Ctrl/Cmd + Shift + F: focus input
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
       e.preventDefault();
       dom.input.focus();
@@ -1155,18 +919,11 @@ function init() {
     }
   });
 
-  /* ── Window resize: re-clamp pane ── */
   window.addEventListener('resize', debounce(clampPaneToViewport, 200));
-
-  // Initial render
   updatePreview();
 }
 
 document.addEventListener('DOMContentLoaded', init);
-
-/* ════════════════════════════════════════════════
-   PUBLIC API (for settings.js module)
-════════════════════════════════════════════════ */
 
 window.SmartChart = {
   state,

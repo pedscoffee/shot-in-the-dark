@@ -110,7 +110,7 @@
 
       // Convert Markdown formatting to HTML tags for the editor
       html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-      html = html.replace(/\*(.*?)\*/g, '<i>$1</i>');
+      html = html.replace(/\*([\s\S]*?)\*/g, '<i>$1</i>'););
 
       let lines = html.split('\n');
       let inList = false;
