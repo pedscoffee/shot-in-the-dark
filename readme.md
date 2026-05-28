@@ -4,7 +4,7 @@
 
 **[Live App → pedscoffee.github.io/shot-in-the-dark](https://pedscoffee.github.io/shot-in-the-dark/)**
 
-> ⚠️ Currently in active development. Suitable for personal use and evaluation.
+> ⚠️ Currently in active development.  Not yet suitable for actual use.
 
 ---
 
