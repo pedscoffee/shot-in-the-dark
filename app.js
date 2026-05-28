@@ -298,13 +298,7 @@ function renderTemplateContent(t, seen = new Set()) {
  */
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
-  const inlineMode = opts.inlineDropdowns || false;
-
   const templatesStr = matched.map(t => {
-    if (isDropdownTemplate(t) && inlineMode) {
-      // Return a sentinel for inline rendering — not the resolved value
-      return `DROPDOWN_SENTINEL_${t.id}_END`;
-    }
     const content = renderTemplateContent(t);
     if (!content.trim()) return '';
     const label = showLabels ? `**[${t.name}]**\n` : '';
@@ -314,13 +308,7 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
   let out = noteTemplate
     .replace(/\{input\}/g, input)
     .replace(/\{templates\}/g, templatesStr)
-    .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
-      const tpl = getTemplateById(id);
-      if (isDropdownTemplate(tpl) && inlineMode) {
-        return `DROPDOWN_SENTINEL_${id}_END`;
-      }
-      return renderTemplateContent(tpl);
-    });
+    .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContent(getTemplateById(id)));
 
   out = processStaticPlaceholders(out);
 
@@ -444,111 +432,71 @@ function showToast(message, type = 'success', duration = 2200) {
   }, duration);
 }
 
-function buildDropdownCard(t) {
-  const selection = getDropdownSelection(t.id);
-  const card = document.createElement('div');
-  card.className = 'sc-dropdown-template';
-  card.dataset.dropdownId = t.id;
-
-  const header = document.createElement('div');
-  header.className = 'sc-dropdown-template-header';
-  header.textContent = t.label || t.name;
-
-  const controls = document.createElement('div');
-  controls.className = 'sc-dropdown-template-controls';
-
-  const select = document.createElement('select');
-  select.className = 'sc-dropdown-template-select';
-  select.multiple = true;
-  select.size = Math.min(Math.max((t.options || []).length, 3), 6);
-  (t.options || []).forEach(optionText => {
-    const option = document.createElement('option');
-    option.value = optionText;
-    option.textContent = optionText;
-    option.selected = (selection.values || []).includes(optionText);
-    select.appendChild(option);
-  });
-
-  const join = document.createElement('select');
-  join.className = 'sc-dropdown-template-join';
-  [
-    ['lines', 'Bullets'],
-    ['comma', 'Comma list'],
-    ['and', 'Comma + and'],
-    ['or', 'Comma + or'],
-    ['nor', 'Comma + nor'],
-    ['sentence', 'Sentence'],
-    ['paragraphs', 'Paragraphs'],
-  ].forEach(([value, label]) => {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = label;
-    option.selected = value === (selection.join || t.join || 'lines');
-    join.appendChild(option);
-  });
-
-  const onChange = () => {
-    state.dropdownSelections[t.id] = {
-      values: Array.from(select.selectedOptions).map(option => option.value),
-      join: join.value,
-    };
-    updatePreview();
-  };
-  select.addEventListener('change', onChange);
-  join.addEventListener('change', onChange);
-
-  controls.append(select, join);
-  card.append(header, controls);
-  return card;
-}
-
 function renderDropdownControls(dropdowns) {
   if (!dom.previewRendered || dropdowns.length === 0) return;
 
-  // Find inline sentinels and replace them with dropdown cards
-  const sentinel_re = /DROPDOWN_SENTINEL_([a-zA-Z0-9_-]+)_END/g;
-  const rendered = dom.previewRendered;
-  const inlinedIds = new Set();
+  const wrap = document.createElement('div');
+  wrap.className = 'sc-dropdown-template-list';
 
-  // Walk text nodes looking for sentinel strings
-  function replaceSentinelsInNode(root) {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    const toReplace = [];
-    let node;
-    while ((node = walker.nextNode())) {
-      if (sentinel_re.test(node.textContent)) toReplace.push(node);
-      sentinel_re.lastIndex = 0;
-    }
-    toReplace.forEach(textNode => {
-      const parts = textNode.textContent.split(/DROPDOWN_SENTINEL_([a-zA-Z0-9_-]+)_END/);
-      if (parts.length <= 1) return;
-      const frag = document.createDocumentFragment();
-      for (let i = 0; i < parts.length; i++) {
-        if (i % 2 === 0) {
-          if (parts[i]) frag.appendChild(document.createTextNode(parts[i]));
-        } else {
-          const dropId = parts[i];
-          const tpl = getTemplateById(dropId);
-          if (tpl && isDropdownTemplate(tpl)) {
-            inlinedIds.add(dropId);
-            frag.appendChild(buildDropdownCard(tpl));
-          }
-        }
-      }
-      textNode.parentNode.replaceChild(frag, textNode);
+  dropdowns.forEach(t => {
+    const selection = getDropdownSelection(t.id);
+    const card = document.createElement('div');
+    card.className = 'sc-dropdown-template';
+    card.dataset.dropdownId = t.id;
+
+    const header = document.createElement('div');
+    header.className = 'sc-dropdown-template-header';
+    header.textContent = t.label || t.name;
+
+    const controls = document.createElement('div');
+    controls.className = 'sc-dropdown-template-controls';
+
+    const select = document.createElement('select');
+    select.className = 'sc-dropdown-template-select';
+    select.multiple = true;
+    select.size = Math.min(Math.max((t.options || []).length, 3), 6);
+    (t.options || []).forEach(optionText => {
+      const option = document.createElement('option');
+      option.value = optionText;
+      option.textContent = optionText;
+      option.selected = (selection.values || []).includes(optionText);
+      select.appendChild(option);
     });
-  }
 
-  replaceSentinelsInNode(rendered);
+    const join = document.createElement('select');
+    join.className = 'sc-dropdown-template-join';
+    [
+      ['lines', 'Bullets'],
+      ['comma', 'Comma list'],
+      ['and', 'Comma + and'],
+      ['or', 'Comma + or'],
+      ['nor', 'Comma + nor'],
+      ['sentence', 'Sentence'],
+      ['paragraphs', 'Paragraphs'],
+    ].forEach(([value, label]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      option.selected = value === (selection.join || t.join || 'lines');
+      join.appendChild(option);
+    });
 
-  // For any dropdowns NOT inlined (e.g. matched from input triggers only), append at bottom
-  const remaining = dropdowns.filter(t => !inlinedIds.has(t.id));
-  if (remaining.length > 0) {
-    const wrap = document.createElement('div');
-    wrap.className = 'sc-dropdown-template-list';
-    remaining.forEach(t => wrap.appendChild(buildDropdownCard(t)));
-    rendered.appendChild(wrap);
-  }
+    const onChange = () => {
+      state.dropdownSelections[t.id] = {
+        values: Array.from(select.selectedOptions).map(option => option.value),
+        join: join.value,
+      };
+      updatePreview();
+    };
+    select.addEventListener('change', onChange);
+    join.addEventListener('change', onChange);
+
+    controls.append(select, join);
+    card.append(header, controls);
+    wrap.appendChild(card);
+  });
+
+  dom.previewRendered.appendChild(wrap);
 }
 
 /* ════════════════════════════════════════════════
@@ -593,23 +541,17 @@ function updatePreview() {
     dom.matchBadge.classList.add('hidden');
   }
 
-  // Build note Markdown (for source tab and clipboard — no inline sentinels)
+  // Build note Markdown
   const mdSource = renderNote(input, matched, nt, {
     sourceLabels: state.behavior.sourceLabels,
-    inlineDropdowns: false,
   });
   state.currentNote = mdSource;
 
   // Update source tab
   dom.sourceText.textContent = mdSource;
 
-  // Build HTML preview with inline dropdown sentinels
-  const mdForPreview = renderNote(input, matched, nt, {
-    sourceLabels: state.behavior.sourceLabels,
-    inlineDropdowns: true,
-  });
-  // Render Markdown to HTML (sentinels survive since marked won't eat them)
-  const html = marked.parse(mdForPreview);
+  // Update preview tab (render HTML from Markdown)
+  const html = marked.parse(mdSource);
   dom.previewRendered.innerHTML = html;
   renderDropdownControls(state.activeDropdowns);
   dom.previewEmpty.classList.add('hidden');
@@ -915,42 +857,6 @@ function applyBulletExpansion(el) {
   return true;
 }
 
-/**
- * replaceTriggerWordsWithDropdownRefs(el)
- * For any dropdown template whose trigger is present as a bare word in the input,
- * replace that trigger text with `{dropdown:id}` so the trigger doesn't stay visible
- * alongside the rendered dropdown control.
- */
-function replaceTriggerWordsWithDropdownRefs(el) {
-  const dropdownTemplates = state.templates.filter(isDropdownTemplate);
-  if (dropdownTemplates.length === 0) return;
-
-  let val = el.value;
-  let changed = false;
-
-  dropdownTemplates.forEach(t => {
-    (t.triggers || []).forEach(trigger => {
-      const normalized = String(trigger || '').trim();
-      if (!normalized) return;
-      const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
-      const re = new RegExp(`(^|[^a-zA-Z0-9{])(${escaped})([^a-zA-Z0-9}]|$)`, 'gi');
-      const replacement = `$1{dropdown:${t.id}}$3`;
-      const newVal = val.replace(re, replacement);
-      if (newVal !== val) {
-        val = newVal;
-        changed = true;
-      }
-    });
-  });
-
-  if (changed) {
-    const cursor = el.selectionStart;
-    el.value = val;
-    // Try to keep cursor roughly in place
-    el.setSelectionRange(Math.min(cursor, val.length), Math.min(cursor, val.length));
-  }
-}
-
 function attachSmartTextareaBehavior(el, onChange) {
   el.addEventListener('input', () => {
     applyDotExpansions(el);
@@ -1083,8 +989,6 @@ function init() {
     autoResizeTextarea(dom.input);
     cancelAutoCopy();
     clearTimeout(state.autoClearTimer);
-    // Replace dropdown trigger words in input with {dropdown:id} references
-    replaceTriggerWordsWithDropdownRefs(dom.input);
     debouncedUpdate();
     scheduleAutoClear();
   });

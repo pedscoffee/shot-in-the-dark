@@ -159,52 +159,27 @@
       <!-- ── Tab: Note Template ── -->
       <div id="stab-note-template" class="sc-stab-content active">
         <div class="sc-field-group">
-          <label class="sc-label" for="sc-note-template-editor">Note Structure</label>
+          <label class="sc-label" for="sc-note-template-input">Note Structure</label>
           <p class="sc-help-text">
-            Use <code>{input}</code> for your one-liner and <code>{templates}</code> for matched content.
-            Insert placeholders with the buttons below. Select text and use <strong>B</strong>, <em>I</em>, <u>U</u> for formatting.
+            Use <code>{input}</code> for your one-liner, <code>{templates}</code> for matched content,
+            <code>{dropdown:template-id}</code> to nest dropdown templates, and <code>{static:TEXT}</code> for fixed Markdown text.
           </p>
-          <!-- Formatting toolbar -->
-          <div id="sc-note-template-tools" class="sc-template-tools" aria-label="Template editor tools">
-            <!-- Rich formatting -->
-            <button class="sc-btn sc-btn-ghost sc-template-tool sc-fmt-btn" data-format="bold"
-              title="Bold selected text (Ctrl+B)"><strong>B</strong></button>
-            <button class="sc-btn sc-btn-ghost sc-template-tool sc-fmt-btn" data-format="italic"
-              title="Italic selected text (Ctrl+I)"><em>I</em></button>
-            <button class="sc-btn sc-btn-ghost sc-template-tool sc-fmt-btn" data-format="underline"
-              title="Underline selected text (Ctrl+U)"><u>U</u></button>
-            <button class="sc-btn sc-btn-ghost sc-template-tool sc-fmt-btn" data-format="bullet"
-              title="Insert bullet list">&#8226; List</button>
-            <span class="sc-tool-divider" aria-hidden="true"></span>
-            <!-- Placeholder chips -->
-            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{input}"
-              title="Insert input placeholder">{input}</button>
-            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{templates}"
-              title="Insert templates placeholder">{templates}</button>
-            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{dropdown:follow-up}"
-              title="Nest the follow-up dropdown inline">Follow-Up ▾</button>
-            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{static:}"
-              title="Insert static text placeholder">Static</button>
+          <div id="sc-note-template-tools" class="sc-template-tools" aria-label="Template helpers">
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="- " title="Insert a bullet line">Bullet</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="1. " title="Insert a numbered line">Numbered</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{dropdown:follow-up}" title="Nest the follow-up dropdown">Follow-Up</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{static:Today's date: }" title="Insert a static text placeholder">Static</button>
           </div>
-          <!-- Rich text editor -->
-          <div id="sc-note-template-editor"
-            class="sc-rte"
-            contenteditable="true"
-            role="textbox"
-            aria-multiline="true"
-            aria-label="Note template rich text editor"
-            spellcheck="false"
-            data-placeholder="{input}&#10;&#10;{templates}"></div>
+          <textarea id="sc-note-template-input" class="sc-textarea-settings" rows="8"
+            placeholder="{input}&#10;&#10;{templates}" aria-label="Note template"></textarea>
           <div id="sc-note-template-error" class="sc-error hidden"></div>
         </div>
         <div class="sc-example-block">
-          <div class="sc-example-label">Example — type or paste, then select text to format:</div>
+          <div class="sc-example-label">Example:</div>
           <pre class="sc-example-pre">**HPI:** {input}
 
 **Educated On:**
-{templates}
-
-{dropdown:follow-up}</pre>
+{templates}</pre>
         </div>
         <div class="sc-btn-row">
           <button id="sc-save-note-template" class="sc-btn sc-btn-primary">Save</button>
