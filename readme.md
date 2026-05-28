@@ -1,5 +1,7 @@
 # SmartChart
 
+>>> In beta development; not yet ready for use
+
 **Stateless, client-side PWA for auto-inserting templated text into EMR notes.**
 
 [Shot-in-the-dark](https://pedscoffee.github.io/shot-in-the-dark/)
