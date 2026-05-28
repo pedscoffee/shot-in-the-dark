@@ -295,19 +295,10 @@ function renderTemplateContent(t, seen = new Set()) {
  * renderNote(input, matched, noteTemplate) → Markdown string
  * Replaces {input}, {templates}, dropdown placeholders, and {static:...}.
  * Strips trailing whitespace per line. Returns trimmed Markdown source.
- *
- * For dropdown templates that were matched via trigger words, the trigger
- * text in {input} is NOT stripped here — the preview layer handles inline
- * dropdown controls. The Markdown source simply omits unresolved dropdowns
- * until the user makes a selection.
  */
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
-
-  // Build the {templates} block — skip dropdown-only templates here because
-  // they are rendered inline via renderDropdownControls() in the preview.
   const templatesStr = matched.map(t => {
-    if (isDropdownTemplate(t)) return ''; // rendered inline, not in bulk block
     const content = renderTemplateContent(t);
     if (!content.trim()) return '';
     const label = showLabels ? `**[${t.name}]**\n` : '';
@@ -317,12 +308,7 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
   let out = noteTemplate
     .replace(/\{input\}/g, input)
     .replace(/\{templates\}/g, templatesStr)
-    .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
-      const t = getTemplateById(id);
-      if (!isDropdownTemplate(t)) return renderTemplateContent(t);
-      // Render the current selection if one exists; otherwise empty string
-      return renderDropdownValue(t);
-    });
+    .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContent(getTemplateById(id)));
 
   out = processStaticPlaceholders(out);
 
@@ -449,77 +435,68 @@ function showToast(message, type = 'success', duration = 2200) {
 function renderDropdownControls(dropdowns) {
   if (!dom.previewRendered || dropdowns.length === 0) return;
 
-  // Replace inline placeholder markers left by buildPreviewHtml with actual controls.
-  // If multiple markers exist for the same dropdown (e.g. matched via trigger AND
-  // via {dropdown:id} in the template), replace the first and remove the rest.
+  const wrap = document.createElement('div');
+  wrap.className = 'sc-dropdown-template-list';
+
   dropdowns.forEach(t => {
-    const markers = dom.previewRendered.querySelectorAll(`[data-dropdown-id="${t.id}"]`);
-    if (markers.length === 0) return;
-    const card = buildDropdownCard(t);
-    markers[0].replaceWith(card);
-    // Remove any duplicate markers
-    for (let i = 1; i < markers.length; i++) {
-      markers[i].remove();
-    }
-  });
-}
+    const selection = getDropdownSelection(t.id);
+    const card = document.createElement('div');
+    card.className = 'sc-dropdown-template';
+    card.dataset.dropdownId = t.id;
 
-function buildDropdownCard(t) {
-  const selection = getDropdownSelection(t.id);
-  const card = document.createElement('div');
-  card.className = 'sc-dropdown-template';
-  card.dataset.dropdownId = t.id;
+    const header = document.createElement('div');
+    header.className = 'sc-dropdown-template-header';
+    header.textContent = t.label || t.name;
 
-  const header = document.createElement('div');
-  header.className = 'sc-dropdown-template-header';
-  header.textContent = t.label || t.name;
+    const controls = document.createElement('div');
+    controls.className = 'sc-dropdown-template-controls';
 
-  const controls = document.createElement('div');
-  controls.className = 'sc-dropdown-template-controls';
+    const select = document.createElement('select');
+    select.className = 'sc-dropdown-template-select';
+    select.multiple = true;
+    select.size = Math.min(Math.max((t.options || []).length, 3), 6);
+    (t.options || []).forEach(optionText => {
+      const option = document.createElement('option');
+      option.value = optionText;
+      option.textContent = optionText;
+      option.selected = (selection.values || []).includes(optionText);
+      select.appendChild(option);
+    });
 
-  const select = document.createElement('select');
-  select.className = 'sc-dropdown-template-select';
-  select.multiple = true;
-  select.size = Math.min(Math.max((t.options || []).length, 3), 6);
-  (t.options || []).forEach(optionText => {
-    const option = document.createElement('option');
-    option.value = optionText;
-    option.textContent = optionText;
-    option.selected = (selection.values || []).includes(optionText);
-    select.appendChild(option);
-  });
+    const join = document.createElement('select');
+    join.className = 'sc-dropdown-template-join';
+    [
+      ['lines', 'Bullets'],
+      ['comma', 'Comma list'],
+      ['and', 'Comma + and'],
+      ['or', 'Comma + or'],
+      ['nor', 'Comma + nor'],
+      ['sentence', 'Sentence'],
+      ['paragraphs', 'Paragraphs'],
+    ].forEach(([value, label]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      option.selected = value === (selection.join || t.join || 'lines');
+      join.appendChild(option);
+    });
 
-  const join = document.createElement('select');
-  join.className = 'sc-dropdown-template-join';
-  [
-    ['lines', 'Bullets'],
-    ['comma', 'Comma list'],
-    ['and', 'Comma + and'],
-    ['or', 'Comma + or'],
-    ['nor', 'Comma + nor'],
-    ['sentence', 'Sentence'],
-    ['paragraphs', 'Paragraphs'],
-  ].forEach(([value, label]) => {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = label;
-    option.selected = value === (selection.join || t.join || 'lines');
-    join.appendChild(option);
-  });
-
-  const onChange = () => {
-    state.dropdownSelections[t.id] = {
-      values: Array.from(select.selectedOptions).map(option => option.value),
-      join: join.value,
+    const onChange = () => {
+      state.dropdownSelections[t.id] = {
+        values: Array.from(select.selectedOptions).map(option => option.value),
+        join: join.value,
+      };
+      updatePreview();
     };
-    updatePreview();
-  };
-  select.addEventListener('change', onChange);
-  join.addEventListener('change', onChange);
+    select.addEventListener('change', onChange);
+    join.addEventListener('change', onChange);
 
-  controls.append(select, join);
-  card.append(header, controls);
-  return card;
+    controls.append(select, join);
+    card.append(header, controls);
+    wrap.appendChild(card);
+  });
+
+  dom.previewRendered.appendChild(wrap);
 }
 
 /* ════════════════════════════════════════════════
@@ -573,65 +550,9 @@ function updatePreview() {
   // Update source tab
   dom.sourceText.textContent = mdSource;
 
-  // Build HTML for preview. For each active dropdown, we need an inline
-  // placeholder marker so renderDropdownControls can inject the control
-  // at the right position.
-  //
-  // Strategy:
-  //  1. Re-run renderNote but replace dropdown values with unique marker spans.
-  //  2. Parse that HTML.
-  //  3. renderDropdownControls swaps markers for real controls.
-  //
-  // Also: if a dropdown was matched via trigger words in the one-liner,
-  // replace those trigger words in the displayed {input} with a marker too.
-
-  function buildPreviewHtml() {
-    const showLabels = state.behavior.sourceLabels;
-
-    // Build {templates} block (non-dropdown templates only)
-    const templatesStr = matched.map(t => {
-      if (isDropdownTemplate(t)) return '';
-      const content = renderTemplateContent(t);
-      if (!content.trim()) return '';
-      const label = showLabels ? `**[${t.name}]**\n` : '';
-      return label + content;
-    }).filter(Boolean).join('\n\n');
-
-    // For the displayed input, replace trigger words of matched dropdown
-    // templates with a marker span so the dropdown appears inline.
-    let displayInput = input;
-    state.activeDropdowns.forEach(t => {
-      if (!Array.isArray(t.triggers)) return;
-      t.triggers.forEach(trigger => {
-        if (!triggerMatches(displayInput, trigger)) return;
-        const escaped = escapeRegExp(trigger).replace(/\s+/g, '\\s+');
-        const re = new RegExp(`(^|[^a-z0-9])(${escaped})($|[^a-z0-9])`, 'gi');
-        displayInput = displayInput.replace(re,
-          (_, pre, _match, post) => `${pre}<span data-dropdown-id="${t.id}"></span>${post}`
-        );
-      });
-    });
-
-    // Build the note template output with marker spans for dropdowns
-    let out = nt
-      .replace(/\{input\}/g, displayInput)
-      .replace(/\{templates\}/g, templatesStr)
-      .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
-        const t = getTemplateById(id);
-        if (!isDropdownTemplate(t)) return renderTemplateContent(t);
-        return `<span data-dropdown-id="${id}"></span>`;
-      });
-
-    out = processStaticPlaceholders(out);
-
-    // Render Markdown → HTML (the displayInput may already contain HTML spans,
-    // so we need to be careful: parse the non-HTML parts only).
-    // Simple approach: marked.parse the whole thing — the spans pass through.
-    return marked.parse(out);
-  }
-
-  const previewHtml = buildPreviewHtml();
-  dom.previewRendered.innerHTML = previewHtml;
+  // Update preview tab (render HTML from Markdown)
+  const html = marked.parse(mdSource);
+  dom.previewRendered.innerHTML = html;
   renderDropdownControls(state.activeDropdowns);
   dom.previewEmpty.classList.add('hidden');
   dom.previewRendered.classList.remove('hidden');
@@ -1049,11 +970,9 @@ function init() {
   // Load persisted data
   loadState();
 
-  // Configure marked.js (basic markdown, no GFM tables; allow inline HTML for dropdown markers)
+  // Configure marked.js (basic markdown, no GFM tables)
   if (typeof marked !== 'undefined') {
     marked.use({ gfm: true, breaks: true });
-    // Ensure inline HTML (our <span data-dropdown-id> markers) is not escaped
-    marked.setOptions({ headerIds: false, mangle: false });
   }
 
   // Restore pane geometry

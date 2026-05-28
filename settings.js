@@ -57,170 +57,31 @@
     });
 
     /* ════════════════════════════════════════════════
-       TAB: NOTE TEMPLATE  (rich-text editor)
+       TAB: NOTE TEMPLATE
     ════════════════════════════════════════════════ */
 
-    const noteTemplateEditor = $('sc-note-template-editor');
-    const noteTemplateInput  = $('sc-note-template-input');   // hidden, holds Markdown
-    const noteTemplateError  = $('sc-note-template-error');
-    const saveNoteBtn        = $('sc-save-note-template');
-    const resetNoteBtn       = $('sc-reset-note-template');
+    const noteTemplateInput = $('sc-note-template-input');
+    const noteTemplateError = $('sc-note-template-error');
+    const saveNoteBtn       = $('sc-save-note-template');
+    const resetNoteBtn      = $('sc-reset-note-template');
+    const noteTemplateTools = $('sc-note-template-tools');
 
-    /* ── Markdown ↔ HTML conversion helpers ── */
-
-    /**
-     * markdownToHtml(md) → innerHTML string for the contenteditable editor.
-     * Converts bold/italic/underline Markdown to HTML tags and wraps
-     * {placeholder} tokens in styled <span> chips.
-     */
-    function markdownToHtml(md) {
-      // Work line-by-line so we can handle bullet lists
-      const lines = String(md).split('\n');
-      const htmlLines = lines.map(line => {
-        // Bullet list lines: "- text" or "* text"
-        const bulletMatch = line.match(/^(\s*)([-*])\s+(.*)/);
-        if (bulletMatch) {
-          const inner = inlineMarkdownToHtml(bulletMatch[3]);
-          return `<li>${inner}</li>`;
-        }
-        return `<div>${inlineMarkdownToHtml(line) || '<br>'}</div>`;
-      });
-
-      // Wrap consecutive <li> elements in a <ul>
-      const joined = htmlLines.join('');
-      return joined.replace(/(<li>.*?<\/li>)+/gs, match => `<ul>${match}</ul>`);
-    }
-
-    /**
-     * inlineMarkdownToHtml(text) → HTML string for inline formatting.
-     * Handles **bold**, *italic*, __underline__, and {placeholder} tokens.
-     */
-    function inlineMarkdownToHtml(text) {
-      // Escape HTML entities first (except we'll re-insert tags)
-      let out = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-      // Bold: **text**
-      out = out.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-      // Italic: *text* (single asterisk, not preceded/followed by *)
-      out = out.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
-      // Underline: __text__
-      out = out.replace(/__(.+?)__/g, '<u>$1</u>');
-
-      // Placeholder chips: {anything}
-      out = out.replace(/\{([^}]+)\}/g, (_, inner) =>
-        `<span class="sc-rte-placeholder" contenteditable="false">{${inner}}</span>`
-      );
-
-      return out;
-    }
-
-    /**
-     * htmlToMarkdown(el) → Markdown string extracted from the editor DOM.
-     * Walks child nodes to reconstruct Markdown from formatting tags.
-     */
-    function htmlToMarkdown(el) {
-      function nodeToMd(node) {
-        if (node.nodeType === Node.TEXT_NODE) return node.textContent;
-        if (node.nodeType !== Node.ELEMENT_NODE) return '';
-
-        const tag = node.tagName.toLowerCase();
-
-        // Placeholder chip — return its text content verbatim
-        if (node.classList && node.classList.contains('sc-rte-placeholder')) {
-          return node.textContent;
-        }
-
-        const inner = Array.from(node.childNodes).map(nodeToMd).join('');
-
-        if (tag === 'strong' || tag === 'b') return `**${inner}**`;
-        if (tag === 'em'     || tag === 'i') return `*${inner}*`;
-        if (tag === 'u')                     return `__${inner}__`;
-        if (tag === 'br')                    return '';
-        if (tag === 'li')                    return `- ${inner}`;
-        if (tag === 'ul')  {
-          // Each <li> already produces "- text"; join with newlines
-          return Array.from(node.children).map(nodeToMd).join('\n');
-        }
-        if (tag === 'div' || tag === 'p') {
-          // Block-level: content + newline separator handled by caller
-          return inner;
-        }
-        // Span and other inline wrappers — just return inner content
-        return inner;
-      }
-
-      // Collect top-level block lines
-      const lines = [];
-      el.childNodes.forEach(child => {
-        const tag = child.tagName ? child.tagName.toLowerCase() : '';
-        if (tag === 'ul') {
-          // Bullet list block
-          lines.push(nodeToMd(child));
-        } else if (tag === 'div' || tag === 'p') {
-          const text = nodeToMd(child);
-          // A div containing only <br> is an empty line
-          lines.push(text === '' ? '' : text);
-        } else if (child.nodeType === Node.TEXT_NODE) {
-          lines.push(child.textContent);
-        } else {
-          lines.push(nodeToMd(child));
-        }
-      });
-
-      return lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-    }
-
-    /** Load the current Markdown template into the rich-text editor. */
     function loadNoteTemplateTab() {
-      noteTemplateEditor.innerHTML = markdownToHtml(state.noteTemplate);
-      noteTemplateEditor.dataset.placeholder = '{input}\n\n{templates}';
+      noteTemplateInput.value = state.noteTemplate;
       noteTemplateError.classList.add('hidden');
       noteTemplateError.textContent = '';
     }
 
-    /** Keep toolbar button active states in sync with cursor position. */
-    function updateToolbarState() {
-      ['bold', 'italic', 'underline', 'insertUnorderedList'].forEach(cmd => {
-        const btn = document.querySelector(`.sc-rte-btn[data-cmd="${cmd}"]`);
-        if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
-      });
+    if (typeof attachSmartTextareaBehavior === 'function') {
+      attachSmartTextareaBehavior(noteTemplateInput, () => {});
     }
 
-    // Toolbar formatting buttons
-    document.querySelectorAll('.sc-rte-btn[data-cmd]').forEach(btn => {
-      btn.addEventListener('mousedown', e => {
-        e.preventDefault(); // keep focus in editor
-        noteTemplateEditor.focus();
-        document.execCommand(btn.dataset.cmd, false, null);
-        updateToolbarState();
-      });
-    });
-
-    // Toolbar placeholder-insert buttons
-    document.querySelectorAll('.sc-rte-insert-btn[data-insert]').forEach(btn => {
-      btn.addEventListener('mousedown', e => {
-        e.preventDefault();
-        noteTemplateEditor.focus();
-        const token = btn.dataset.insert;
-        const chip = `<span class="sc-rte-placeholder" contenteditable="false">${esc(token)}</span>`;
-        document.execCommand('insertHTML', false, chip + '&nbsp;');
-        updateToolbarState();
-      });
-    });
-
-    noteTemplateEditor.addEventListener('keyup',   updateToolbarState);
-    noteTemplateEditor.addEventListener('mouseup',  updateToolbarState);
-    noteTemplateEditor.addEventListener('selectionchange', updateToolbarState);
-
     saveNoteBtn.addEventListener('click', () => {
-      const val = htmlToMarkdown(noteTemplateEditor);
+      const val = noteTemplateInput.value || '';
       if (!val.includes('{input}') || !val.includes('{templates}')) {
         noteTemplateError.textContent = 'Note template must include both {input} and {templates}.';
         noteTemplateError.classList.remove('hidden');
-        noteTemplateEditor.focus();
+        noteTemplateInput.focus();
         return;
       }
       noteTemplateError.classList.add('hidden');
@@ -235,11 +96,28 @@
       const def = DEFAULT_NOTE_TEMPLATE;
       state.noteTemplate = def;
       storage.set(STORAGE_KEYS.NOTE_TEMPLATE, def);
-      noteTemplateEditor.innerHTML = markdownToHtml(def);
+      noteTemplateInput.value = def;
       noteTemplateError.classList.add('hidden');
       showToast('Note template reset to default', 'success');
       updatePreview();
     });
+
+    if (noteTemplateTools) {
+      noteTemplateTools.querySelectorAll('[data-snippet]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const snippet = btn.dataset.snippet || '';
+          const start = noteTemplateInput.selectionStart ?? noteTemplateInput.value.length;
+          const end = noteTemplateInput.selectionEnd ?? noteTemplateInput.value.length;
+          const before = noteTemplateInput.value.slice(0, start);
+          const after = noteTemplateInput.value.slice(end);
+          const prefix = before && !before.endsWith('\n') ? '\n' : '';
+          noteTemplateInput.value = before + prefix + snippet + after;
+          const cursor = before.length + prefix.length + snippet.length;
+          noteTemplateInput.setSelectionRange(cursor, cursor);
+          noteTemplateInput.focus();
+        });
+      });
+    }
 
     /* ════════════════════════════════════════════════
        TAB: TEMPLATES — LIST

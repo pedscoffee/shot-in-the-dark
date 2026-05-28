@@ -159,47 +159,26 @@
       <!-- ── Tab: Note Template ── -->
       <div id="stab-note-template" class="sc-stab-content active">
         <div class="sc-field-group">
-          <label class="sc-label">Note Structure</label>
+          <label class="sc-label" for="sc-note-template-input">Note Structure</label>
           <p class="sc-help-text">
-            Format text directly using the toolbar. Use <code>{input}</code> for your one-liner,
-            <code>{templates}</code> for matched content, and the buttons below to insert placeholders.
+            Use <code>{input}</code> for your one-liner, <code>{templates}</code> for matched content,
+            <code>{dropdown:template-id}</code> to nest dropdown templates, and <code>{static:TEXT}</code> for fixed Markdown text.
           </p>
-
-          <!-- Rich-text formatting toolbar -->
-          <div class="sc-rte-toolbar" role="toolbar" aria-label="Formatting">
-            <button type="button" class="sc-rte-btn" data-cmd="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
-            <button type="button" class="sc-rte-btn" data-cmd="italic" title="Italic (Ctrl+I)"><em>I</em></button>
-            <button type="button" class="sc-rte-btn" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
-            <div class="sc-rte-sep"></div>
-            <button type="button" class="sc-rte-btn" data-cmd="insertUnorderedList" title="Bullet list">&#8226; List</button>
-            <div class="sc-rte-sep"></div>
-            <!-- Placeholder insertion buttons -->
-            <button type="button" class="sc-rte-insert-btn" data-insert="{input}" title="Insert one-liner placeholder">{input}</button>
-            <button type="button" class="sc-rte-insert-btn" data-insert="{templates}" title="Insert matched templates placeholder">{templates}</button>
-            <button type="button" class="sc-rte-insert-btn" data-insert="{dropdown:follow-up}" title="Insert follow-up dropdown">{follow-up}</button>
+          <div id="sc-note-template-tools" class="sc-template-tools" aria-label="Template helpers">
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="- " title="Insert a bullet line">Bullet</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="1. " title="Insert a numbered line">Numbered</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{dropdown:follow-up}" title="Nest the follow-up dropdown">Follow-Up</button>
+            <button class="sc-btn sc-btn-ghost sc-template-tool" data-snippet="{static:Today's date: }" title="Insert a static text placeholder">Static</button>
           </div>
-
-          <!-- Contenteditable rich-text editor -->
-          <div
-            id="sc-note-template-editor"
-            class="sc-rte-editor"
-            contenteditable="true"
-            spellcheck="false"
-            aria-label="Note template editor"
-            aria-multiline="true"
-            role="textbox"
-            data-placeholder="{input}&#10;&#10;{templates}"
-          ></div>
-
-          <!-- Hidden textarea keeps the Markdown value for save/load -->
-          <textarea id="sc-note-template-input" class="hidden" aria-hidden="true"></textarea>
+          <textarea id="sc-note-template-input" class="sc-textarea-settings" rows="8"
+            placeholder="{input}&#10;&#10;{templates}" aria-label="Note template"></textarea>
           <div id="sc-note-template-error" class="sc-error hidden"></div>
         </div>
         <div class="sc-example-block">
-          <div class="sc-example-label">Example (what you'd type):</div>
-          <pre class="sc-example-pre"><strong>HPI:</strong> {input}
+          <div class="sc-example-label">Example:</div>
+          <pre class="sc-example-pre">**HPI:** {input}
 
-<strong>Educated On:</strong>
+**Educated On:**
 {templates}</pre>
         </div>
         <div class="sc-btn-row">
