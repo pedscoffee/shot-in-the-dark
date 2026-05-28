@@ -227,18 +227,6 @@ function collectDropdownIdsFromText(text, ids = new Set(), seen = new Set()) {
   return ids;
 }
 
-function collectActiveDropdowns(matched) {
-  const ids = new Set();
-  matched.forEach(t => {
-    if (isDropdownTemplate(t)) ids.add(t.id);
-    collectDropdownIdsFromText(t.content, ids);
-  });
-  return [...ids]
-    .map(id => getTemplateById(id))
-    .filter(isDropdownTemplate)
-    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
-}
-
 /* ════════════════════════════════════════════════
    NOTE RENDERING
 ════════════════════════════════════════════════ */
@@ -531,8 +519,52 @@ function updatePreview() {
   // Match templates
   const matched = matchTemplates(input);
   state.matchedTemplates = matched;
-  state.activeDropdowns = collectActiveDropdowns(matched);
 
+  // Replace dropdown triggers in input
+  let modifiedInput = input;
+  const bottomTemplates = [];
+
+  matched.forEach(t => {
+    let replaced = false;
+    if (t.type === 'dropdown') {
+      for (const trigger of t.triggers) {
+        if (!trigger) continue;
+        const normalized = String(trigger).trim();
+        if (!normalized) continue;
+        const escaped = escapeRegExp(normalized).replace(/\s+/g, '\\s+');
+        // Match word boundaries, case insensitive
+        const regex = new RegExp(`(^|[^a-z0-9])(${escaped})($|[^a-z0-9])`, 'gi');
+        if (regex.test(modifiedInput)) {
+          // Replace with placeholder
+          modifiedInput = modifiedInput.replace(regex, `$1{dropdown:${t.id}}$3`);
+          replaced = true;
+        }
+      }
+    }
+    if (!replaced) {
+      bottomTemplates.push(t);
+    }
+  });
+
+  // Recompute active dropdowns from both modifiedInput and NoteTemplate
+  const idsToSearch = new Set();
+  collectDropdownIdsFromText(nt, idsToSearch, new Set());
+  collectDropdownIdsFromText(modifiedInput, idsToSearch, new Set());
+  bottomTemplates.forEach(t => {
+     collectDropdownIdsFromText(t.content, idsToSearch, new Set());
+  });
+
+  state.activeDropdowns = [...idsToSearch]
+    .map(id => getTemplateById(id))
+    .filter(Boolean)
+    .filter(isDropdownTemplate)
+    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+
+  // Build note Markdown
+  const mdSource = renderNote(modifiedInput, bottomTemplates, nt, {
+    sourceLabels: state.behavior.sourceLabels,
+  });
+  
   // Update match badge
   if (matched.length > 0) {
     dom.matchBadge.textContent = matched.length;
@@ -541,10 +573,6 @@ function updatePreview() {
     dom.matchBadge.classList.add('hidden');
   }
 
-  // Build note Markdown
-  const mdSource = renderNote(input, matched, nt, {
-    sourceLabels: state.behavior.sourceLabels,
-  });
   state.currentNote = mdSource;
 
   // Update source tab
@@ -558,6 +586,7 @@ function updatePreview() {
   dom.previewRendered.classList.remove('hidden');
 
   // Status
+  // We use modifiedInput for checking empty, to avoid saying no templates matched if we replaced something
   if (matched.length === 0 && input.trim()) {
     setStatus('No templates matched — try "illness", "injury", "otitis", "strep", or "follow up"', 'idle');
     // Show a helpful no-match message in preview

@@ -638,6 +638,72 @@ body {
 }
 .sc-textarea-settings:focus { border-color: var(--border-focus); }
 
+/* Rich Text Editor for Note Template */
+.sc-rich-editor {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s;
+  margin-bottom: 8px;
+}
+.sc-rich-editor:focus-within {
+  border-color: var(--border-focus);
+}
+.sc-rich-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-pane);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.sc-rich-toolbar button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  transition: background 0.1s, color 0.1s;
+}
+.sc-rich-toolbar button:hover {
+  background: var(--bg-hover);
+  color: var(--text-1);
+}
+.sc-rich-toolbar button.sc-template-tool {
+  font-size: 11px;
+}
+.sc-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 4px;
+}
+.sc-editor-content {
+  padding: 10px 12px;
+  min-height: 140px;
+  max-height: 300px;
+  overflow-y: auto;
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.sc-editor-content b, .sc-editor-content strong { font-weight: bold; }
+.sc-editor-content i, .sc-editor-content em { font-style: italic; }
+.sc-editor-content u { text-decoration: underline; }
+.sc-editor-content ul { padding-left: 20px; list-style: disc; margin: 0; }
+.sc-editor-content li { margin-bottom: 2px; }
+
 .sc-template-tools {
   display: flex;
   gap: 6px;

@@ -32,7 +32,7 @@
     const {
       state, dom, storage, STORAGE_KEYS,
       DEFAULT_NOTE_TEMPLATE, DEFAULT_TEMPLATES, DEFAULT_BEHAVIOR,
-      showToast, updatePreview, attachSmartTextareaBehavior,
+      showToast, updatePreview,
     } = App;
 
     /* ════════════════════════════════════════════════
@@ -66,27 +66,114 @@
     const resetNoteBtn      = $('sc-reset-note-template');
     const noteTemplateTools = $('sc-note-template-tools');
 
+    function editorHtmlToMarkdown(html) {
+      let temp = document.createElement('div');
+      temp.innerHTML = html;
+
+      function traverse(node) {
+        if (node.nodeType === 3) {
+          return node.nodeValue;
+        }
+        let res = '';
+        const tag = (node.tagName || '').toLowerCase();
+        for (const child of node.childNodes) {
+          res += traverse(child);
+        }
+        if (tag === 'b' || tag === 'strong') return `**${res}**`;
+        if (tag === 'i' || tag === 'em') return `*${res}*`;
+        if (tag === 'u') return `<u>${res}</u>`;
+        if (tag === 'p' || tag === 'div') return `\n${res}\n`;
+        if (tag === 'br') return `\n`;
+        if (tag === 'li') return `\n- ${res}`;
+        if (tag === 'ul' || tag === 'ol') return `\n${res}\n`;
+        return res;
+      }
+
+      let md = traverse(temp);
+      
+      // Cleanup whitespace and newlines
+      md = md.replace(/\n{3,}/g, '\n\n').trim();
+      md = md.replace(/\n- \n/g, '\n- ');
+
+      // Unescape standard entities
+      md = md.replace(/&nbsp;/g, ' ');
+      md = md.replace(/&amp;/g, '&');
+      md = md.replace(/&lt;/g, '<');
+      md = md.replace(/&gt;/g, '>');
+
+      return md;
+    }
+
+    function markdownToEditorHtml(md) {
+      if (!md) return '';
+      let html = String(md);
+
+      // Convert Markdown formatting to HTML tags for the editor
+      html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      html = html.replace(/\*(.*?)\*/g, '<i>$1</i>');
+
+      let lines = html.split('\n');
+      let inList = false;
+      let out = [];
+
+      for (let line of lines) {
+        if (line.match(/^[-*]\s+(.*)/)) {
+          if (!inList) { out.push('<ul>'); inList = true; }
+          out.push(`<li>${line.replace(/^[-*]\s+/, '')}</li>`);
+        } else {
+          if (inList) { out.push('</ul>'); inList = false; }
+          out.push(`${line}<br>`);
+        }
+      }
+      if (inList) out.push('</ul>');
+
+      html = out.join('').replace(/<br>$/, '');
+      html = html.replace(/<\/ul><br>/g, '</ul>');
+
+      return html;
+    }
+
     function loadNoteTemplateTab() {
-      noteTemplateInput.value = state.noteTemplate;
+      // Use markdownToEditorHtml to show the formatting as rich text
+      noteTemplateInput.innerHTML = markdownToEditorHtml(state.noteTemplate);
       noteTemplateError.classList.add('hidden');
       noteTemplateError.textContent = '';
     }
 
-    if (typeof attachSmartTextareaBehavior === 'function') {
-      attachSmartTextareaBehavior(noteTemplateInput, () => {});
+    if (noteTemplateTools) {
+      // Setup rich text commands
+      noteTemplateTools.querySelectorAll('button[data-cmd]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const cmd = btn.dataset.cmd;
+          document.execCommand(cmd, false, null);
+          noteTemplateInput.focus();
+        });
+      });
+
+      // Setup snippet insertion
+      noteTemplateTools.querySelectorAll('button[data-snippet]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const snippet = btn.dataset.snippet || '';
+          noteTemplateInput.focus();
+          document.execCommand('insertText', false, snippet);
+        });
+      });
     }
 
     saveNoteBtn.addEventListener('click', () => {
-      const val = noteTemplateInput.value || '';
-      if (!val.includes('{input}') || !val.includes('{templates}')) {
+      // Convert rich text HTML back to robust Markdown format
+      const md = editorHtmlToMarkdown(noteTemplateInput.innerHTML);
+      if (!md.includes('{input}') || !md.includes('{templates}')) {
         noteTemplateError.textContent = 'Note template must include both {input} and {templates}.';
         noteTemplateError.classList.remove('hidden');
         noteTemplateInput.focus();
         return;
       }
       noteTemplateError.classList.add('hidden');
-      state.noteTemplate = val;
-      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, val);
+      state.noteTemplate = md;
+      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, md);
       showToast('Note template saved', 'success');
       updatePreview();
     });
@@ -96,28 +183,11 @@
       const def = DEFAULT_NOTE_TEMPLATE;
       state.noteTemplate = def;
       storage.set(STORAGE_KEYS.NOTE_TEMPLATE, def);
-      noteTemplateInput.value = def;
+      noteTemplateInput.innerHTML = markdownToEditorHtml(def);
       noteTemplateError.classList.add('hidden');
       showToast('Note template reset to default', 'success');
       updatePreview();
     });
-
-    if (noteTemplateTools) {
-      noteTemplateTools.querySelectorAll('[data-snippet]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const snippet = btn.dataset.snippet || '';
-          const start = noteTemplateInput.selectionStart ?? noteTemplateInput.value.length;
-          const end = noteTemplateInput.selectionEnd ?? noteTemplateInput.value.length;
-          const before = noteTemplateInput.value.slice(0, start);
-          const after = noteTemplateInput.value.slice(end);
-          const prefix = before && !before.endsWith('\n') ? '\n' : '';
-          noteTemplateInput.value = before + prefix + snippet + after;
-          const cursor = before.length + prefix.length + snippet.length;
-          noteTemplateInput.setSelectionRange(cursor, cursor);
-          noteTemplateInput.focus();
-        });
-      });
-    }
 
     /* ════════════════════════════════════════════════
        TAB: TEMPLATES — LIST
@@ -299,8 +369,8 @@
     formCancelBtn.addEventListener('click', closeForm);
     formCloseBtn.addEventListener('click', closeForm);
 
-    if (typeof attachSmartTextareaBehavior === 'function') {
-      attachSmartTextareaBehavior(formContent, () => {});
+    if (typeof App.attachSmartTextareaBehavior === 'function') {
+      App.attachSmartTextareaBehavior(formContent, () => {});
     }
 
     /* ── Template form: save ── */
