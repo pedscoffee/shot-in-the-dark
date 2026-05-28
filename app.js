@@ -79,11 +79,18 @@ const DEFAULT_TEMPLATES = [
     priority: 7,
   },
   {
+    id: 'eczema',
+    name: 'Eczema',
+    triggers: ['eczema', 'atopic dermatitis'],
+    content: '<em>Discussed supportive care with emphasis on frequent moisturization, appropriate use of topical steroids, and return precautions.</em>',
+    priority: 8,
+  },
+  {
     id: 'pcmh-reminder',
     name: 'PCMH Reminder',
     triggers: ['adhd', 'weight', 'obesity', 'strep throat'],
     content: '<em>PCMH Reminder</em>',
-    priority: 8,
+    priority: 9,
   },
   {
     id: 'follow-up',
