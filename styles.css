@@ -1050,6 +1050,110 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ══════════════════════════════════════
+   RICH-TEXT NOTE TEMPLATE EDITOR
+══════════════════════════════════════ */
+
+.sc-rte-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  padding: 5px 7px;
+  background: var(--bg-header);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.sc-rte-btn {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.12s;
+  line-height: 1.4;
+}
+.sc-rte-btn:hover { background: var(--bg-hover); color: var(--text-1); border-color: var(--border); }
+.sc-rte-btn.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+.sc-rte-insert-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 7px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.12s;
+  line-height: 1.4;
+}
+.sc-rte-insert-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+
+.sc-rte-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.sc-rte-editor {
+  width: 100%;
+  min-height: 120px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.sc-rte-editor:focus { border-color: var(--border-focus); }
+.sc-rte-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  font-style: italic;
+  pointer-events: none;
+}
+.sc-rte-editor ul {
+  padding-left: 1.4em;
+  margin: 2px 0;
+}
+.sc-rte-editor li {
+  margin: 1px 0;
+}
+
+/* Placeholder chips rendered inside the editor */
+.sc-rte-placeholder {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+  white-space: nowrap;
+  user-select: all;
+  cursor: default;
+  line-height: 1.5;
+  vertical-align: baseline;
+}
+
 /* Behavior tab new toggles */
 .sc-toggle-row {
   display: flex;
