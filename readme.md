@@ -42,7 +42,7 @@ The **Note Template** (editable in Settings) controls the final assembled struct
 |---|---|
 | `{input}` | Your typed one-liner |
 | `{templates}` | All matched template content, joined with blank lines |
-| `{static:TEXT}` | Fixed text; use `\n` for newlines |
+| `{static:TEXT}` | Fixed text; use `<br>` for line breaks |
 
 **Default structure:**
 ```
@@ -58,7 +58,7 @@ The **Note Template** (editable in Settings) controls the final assembled struct
 **Educated On:**
 {templates}
 
-{static:**Follow-Up:** Return in 1 week if not improving.\n\n**Vaccines:** Up to date.}
+{static:**Follow-Up:** Return in 1 week if not improving.<br><br>**Vaccines:** Up to date.}
 ```
 
 ### Auto-Copy & Auto-Clear

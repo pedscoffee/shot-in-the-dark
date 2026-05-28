@@ -23,7 +23,7 @@ const STORAGE_KEYS = {
   BEHAVIOR:      'sc_behavior',
 };
 
-const DEFAULT_NOTE_TEMPLATE = `{input}\n\n{templates}`;
+const DEFAULT_NOTE_TEMPLATE = `{input}<br>{templates}`;
 
 /** Default templates sourced from templates.txt. */
 const DEFAULT_TEMPLATES = [
@@ -233,11 +233,11 @@ function collectDropdownIdsFromText(text, ids = new Set(), seen = new Set()) {
 
 /**
  * processStaticPlaceholders(text) → string
- * Replaces {static:TEXT} with TEXT, handling \n escape sequences.
+ * Replaces {static:TEXT} with TEXT, handling <br> tags for line breaks.
  */
 function processStaticPlaceholders(text) {
   return text.replace(/\{static:([^}]*)\}/g, (_, content) =>
-    content.replace(/\\n/g, '\n')
+    content.replace(/<br>/gi, '\n')
   );
 }
 
