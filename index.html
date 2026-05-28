@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <!-- marked.js removed — no longer needed; all content is stored and rendered as HTML -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -100,10 +100,10 @@
     <section class="sc-preview-section" aria-label="Note preview">
       <div class="sc-preview-tabs" role="tablist">
         <button class="sc-tab active" data-tab="preview" role="tab" aria-selected="true">Preview</button>
-        <button class="sc-tab" data-tab="source" role="tab" aria-selected="false">Markdown</button>
+        <button class="sc-tab" data-tab="source" role="tab" aria-selected="false">HTML Source</button>
         <div class="sc-tab-actions">
           <button id="sc-source-labels-btn" class="sc-btn sc-btn-text sc-tab-action-btn" title="Toggle source labels showing which template each block came from">Labels</button>
-          <button id="sc-plaintext-btn" class="sc-btn sc-btn-text sc-tab-action-btn" title="Copy as plain text (strips Markdown symbols) — useful for plain-text EMR fields">Plain</button>
+          <button id="sc-plaintext-btn" class="sc-btn sc-btn-text sc-tab-action-btn" title="Copy as plain text — useful for plain-text EMR fields">Plain</button>
         </div>
       </div>
 
@@ -162,28 +162,21 @@
           <p class="sc-help-text">
             Use <code>{input}</code> for your one-liner, <code>{templates}</code> for matched content,
             <code>{dropdown:template-id}</code> to nest dropdown templates, and <code>{static:TEXT}</code> for fixed text.
+            Format freely — bold, italic, headings, lists are all supported.
           </p>
           <div class="sc-rich-editor">
-            <div id="sc-note-template-tools" class="sc-rich-toolbar" aria-label="Template helpers">
-              <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
-              <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
-              <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
-              <button type="button" data-cmd="insertUnorderedList" title="Bullet List">• List</button>
-              <div class="sc-toolbar-divider"></div>
-              <button type="button" class="sc-template-tool" data-snippet="{input}" title="Insert {input} placeholder">{input}</button>
-              <button type="button" class="sc-template-tool" data-snippet="{templates}" title="Insert {templates} placeholder">{templates}</button>
-              <button type="button" class="sc-template-tool" data-snippet="{dropdown:follow-up}" title="Nest the follow-up dropdown">Follow-Up</button>
-              <button type="button" class="sc-template-tool" data-snippet="{static:Today's date: }" title="Insert a static text placeholder">Static</button>
-            </div>
-            <div id="sc-note-template-input" class="sc-editor-content" contenteditable="true" aria-label="Note template editor"></div>
+            <!-- toolbar is populated by settings.js createRichEditor() -->
+            <div id="sc-note-template-tools" class="sc-rich-toolbar" aria-label="Note template formatting"></div>
+            <div id="sc-note-template-input" class="sc-editor-content" contenteditable="true"
+                 aria-label="Note template editor" spellcheck="false"></div>
           </div>
           <div id="sc-note-template-error" class="sc-error hidden"></div>
         </div>
         <div class="sc-example-block">
           <div class="sc-example-label">Example:</div>
-          <pre class="sc-example-pre">**HPI:** {input}
+          <pre class="sc-example-pre"><b>HPI:</b> {input}
 
-**Educated On:**
+<b>Educated On:</b>
 {templates}</pre>
         </div>
         <div class="sc-btn-row">
@@ -201,7 +194,7 @@
         <!-- Template list -->
         <div id="sc-template-list" class="sc-template-list"></div>
 
-        <!-- Inline edit/add form (hidden until triggered) -->
+        <!-- Inline edit/add form -->
         <div id="sc-template-form" class="sc-template-form hidden">
           <div class="sc-form-header">
             <span id="sc-form-title-label">New Template</span>
@@ -227,11 +220,17 @@
               <option value="dropdown">Dropdown</option>
             </select>
           </div>
+
+          <!-- Rich content editor (replaces the old textarea) -->
           <div class="sc-field-group">
-            <label class="sc-label" for="sc-form-content">Content <span class="sc-muted">(Markdown)</span></label>
-            <textarea id="sc-form-content" class="sc-textarea-settings" rows="4"
-              placeholder="Template body text. Use {dropdown:template-id} to nest a dropdown."></textarea>
+            <label class="sc-label">Content</label>
+            <div class="sc-rich-editor">
+              <div id="sc-form-content-toolbar" class="sc-rich-toolbar" aria-label="Content formatting"></div>
+              <div id="sc-form-content-editor" class="sc-editor-content" contenteditable="true"
+                   aria-label="Template content editor" spellcheck="true"></div>
+            </div>
           </div>
+
           <div id="sc-form-dropdown-fields" class="hidden">
             <div class="sc-field-group">
               <label class="sc-label" for="sc-form-dropdown-label">Dropdown Label</label>
@@ -300,7 +299,7 @@
         <div class="sc-toggle-row">
           <div class="sc-toggle-info">
             <span class="sc-toggle-label">Copy as Plain Text</span>
-            <span class="sc-toggle-desc">Strips Markdown symbols before copying. Use if your EMR paste field doesn't support rich text.</span>
+            <span class="sc-toggle-desc">Strips HTML formatting before copying. Use if your EMR paste field doesn't support rich text.</span>
           </div>
           <input type="checkbox" id="sc-plaintext-setting" style="flex-shrink:0;margin-top:2px;accent-color:var(--accent);width:16px;height:16px;">
         </div>

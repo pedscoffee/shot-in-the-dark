@@ -1,10 +1,11 @@
-/** 
+/**
  * SmartChart — app.js
  * Core logic: template matching, note rendering, clipboard,
  * focus mode, auto-copy, auto-clear, state persistence.
  *
  * Design decisions:
- *  - Copies Markdown source text (not HTML) to clipboard
+ *  - Stores & renders templates as HTML (no Markdown)
+ *  - Copies rich HTML + plain-text fallback to clipboard
  *  - Debounce preview: 300ms | Auto-copy: 1.5s | Auto-clear: 30s
  *  - Pane fills the browser window
  *  - Focus mode hides everything below the input for EMR side-by-side use
@@ -23,64 +24,65 @@ const STORAGE_KEYS = {
   BEHAVIOR:      'sc_behavior',
 };
 
-const DEFAULT_NOTE_TEMPLATE = `{input}\n\n{templates}`;
+// Stored as HTML from here on
+const DEFAULT_NOTE_TEMPLATE = `{input}<br><br>{templates}`;
 
-/** Default templates sourced from templates.txt. */
+/** Default templates — content stored as HTML strings. */
 const DEFAULT_TEMPLATES = [
   {
     id: 'well-child-health-maintenance',
     name: 'Well Child / Health Maintenance',
     triggers: ['well child', 'well-child', 'well visit', 'health maintenance', 'checkup', 'check-up', 'annual exam', 'physical', 'preventive'],
-    content: '*All forms, labs, immunizations, and patient concerns reviewed and addressed appropriately. Screening questions, past medical history, past social history, medications, and growth chart reviewed. Age-appropriate anticipatory guidance reviewed and printed in AVS. Parent questions addressed.*',
+    content: '<em>All forms, labs, immunizations, and patient concerns reviewed and addressed appropriately. Screening questions, past medical history, past social history, medications, and growth chart reviewed. Age-appropriate anticipatory guidance reviewed and printed in AVS. Parent questions addressed.</em>',
     priority: 1,
   },
   {
     id: 'illness-supportive-care',
     name: 'Illness Supportive Care',
     triggers: ['illness', 'sick', 'fever', 'cough', 'congestion', 'runny nose', 'uri', 'cold', 'rash', 'sore throat', 'strep', 'ear pain', 'earache', 'otitis', 'vomiting', 'diarrhea', 'dehydration', 'trouble breathing', 'shortness of breath', 'wheezing'],
-    content: '*Recommended supportive care with OTC medications as needed. Return precautions given including increasing pain, worsening fever, dehydration, new symptoms, prolonged symptoms, worsening symptoms, and other concerns. Caregiver expressed understanding and agreement with treatment plan.*',
+    content: '<em>Recommended supportive care with OTC medications as needed. Return precautions given including increasing pain, worsening fever, dehydration, new symptoms, prolonged symptoms, worsening symptoms, and other concerns. Caregiver expressed understanding and agreement with treatment plan.</em>',
     priority: 2,
   },
   {
     id: 'injury-supportive-care',
     name: 'Injury Supportive Care',
     triggers: ['injury', 'laceration', 'cut', 'wound', 'trauma', 'bruise', 'contusion', 'sprain', 'strain', 'abrasion', 'scrape', 'fracture'],
-    content: '*Recommended supportive care with Tylenol, Motrin, rest, ice, compression, elevation, and gradual return to activity as appropriate. Return precautions given including increasing pain, swelling, or failure to improve.*',
+    content: '<em>Recommended supportive care with Tylenol, Motrin, rest, ice, compression, elevation, and gradual return to activity as appropriate. Return precautions given including increasing pain, swelling, or failure to improve.</em>',
     priority: 3,
   },
   {
     id: 'ear-infection-risk',
     name: 'Ear Infection Risk',
     triggers: ['ear infection', 'otitis', 'otitis media', 'ear pain', 'earache', 'ear ache'],
-    content: '*Risk of untreated otitis media includes persistent pain and fever, hearing loss, and mastoiditis.*',
+    content: '<em>Risk of untreated otitis media includes persistent pain and fever, hearing loss, and mastoiditis.</em>',
     priority: 4,
   },
   {
     id: 'strep-test-risk',
     name: 'Strep Test Risk',
     triggers: ['strep test', 'rapid strep', 'throat culture', 'strep throat', 'strep'],
-    content: '*Risk of untreated strep throat includes rheumatic fever and peritonsillar abscess. This problem is moderate risk due to pending lab results which may necessitate further pharmacologic management.*',
+    content: '<em>Risk of untreated strep throat includes rheumatic fever and peritonsillar abscess. This problem is moderate risk due to pending lab results which may necessitate further pharmacologic management.</em>',
     priority: 5,
   },
   {
     id: 'dehydration-risk',
     name: 'Dehydration Risk',
     triggers: ['dehydration', 'vomiting', 'diarrhea', 'decreased urination', 'not drinking', 'poor intake', 'poor po'],
-    content: '*Patient is at risk for dehydration, which would warrant emergency room care or admission for IV fluids.*',
+    content: '<em>Patient is at risk for dehydration, which would warrant emergency room care or admission for IV fluids.</em>',
     priority: 6,
   },
   {
     id: 'respiratory-distress-risk',
     name: 'Respiratory Distress Risk',
     triggers: ['trouble breathing', 'difficulty breathing', 'shortness of breath', 'respiratory distress', 'wheezing', 'labored breathing'],
-    content: '*Patient is at risk for worsening respiratory distress and clinical deterioration, which would need emergency room care or hospital admission.*',
+    content: '<em>Patient is at risk for worsening respiratory distress and clinical deterioration, which would need emergency room care or hospital admission.</em>',
     priority: 7,
   },
   {
     id: 'pcmh-reminder',
     name: 'PCMH Reminder',
     triggers: ['adhd', 'weight', 'obesity', 'strep throat'],
-    content: '*PCMH Reminder*',
+    content: '<em>PCMH Reminder</em>',
     priority: 8,
   },
   {
@@ -111,26 +113,20 @@ const DEFAULT_BEHAVIOR = {
 };
 
 const state = {
-  noteTemplate:    DEFAULT_NOTE_TEMPLATE,
-  templates:       typeof structuredClone === 'function' ? structuredClone(DEFAULT_TEMPLATES) : JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
-  behavior:        Object.assign({}, DEFAULT_BEHAVIOR),
-  currentInput:    '',
-  currentNote:     '',
-  matchedTemplates:[],
-  activeDropdowns: [],
+  noteTemplate:       DEFAULT_NOTE_TEMPLATE,
+  templates:          typeof structuredClone === 'function' ? structuredClone(DEFAULT_TEMPLATES) : JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
+  behavior:           Object.assign({}, DEFAULT_BEHAVIOR),
+  currentInput:       '',
+  currentNoteHtml:    '',
+  matchedTemplates:   [],
+  activeDropdowns:    [],
   dropdownSelections: {},
-  autoCopyTimer:   null,
-  autoClearTimer:  null,
-  previewDebounce: null,
-  lastClearedInput:'',
-  isDragging:      false,
-  isResizing:      false,
-  dragOffsetX:     0,
-  dragOffsetY:     0,
-  resizeStartX:    0,
-  resizeStartY:    0,
-  resizeStartW:    0,
-  resizeStartH:    0,
+  autoCopyTimer:      null,
+  autoClearTimer:     null,
+  previewDebounce:    null,
+  lastClearedInput:   '',
+  isDragging:         false,
+  isResizing:         false,
 };
 
 const $ = id => document.getElementById(id);
@@ -189,28 +185,22 @@ function getDropdownSelection(id) {
   return state.dropdownSelections[id];
 }
 
-function collectDropdownIdsFromText(text, ids = new Set(), seen = new Set()) {
-  String(text || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
+function collectDropdownIdsFromHtml(html, ids = new Set(), seen = new Set()) {
+  String(html || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
     if (seen.has(id)) return '';
     seen.add(id);
     const tpl = getTemplateById(id);
     if (isDropdownTemplate(tpl)) ids.add(id);
-    if (tpl && tpl.content) collectDropdownIdsFromText(tpl.content, ids, seen);
+    if (tpl && tpl.content) collectDropdownIdsFromHtml(tpl.content, ids, seen);
     return '';
   });
   return ids;
 }
 
-function processStaticPlaceholders(text) {
-  return text.replace(/\{static:([^}]*)\}/g, (_, content) =>
-    content.replace(/<br>/gi, '\n')
-  );
-}
-
 function joinTemplateOptions(options, mode) {
-  if (mode === 'lines') return options.map(option => `- ${option}`).join('\n');
-  if (mode === 'paragraphs') return options.join('\n\n');
-  if (mode === 'sentence') return options.join(' ');
+  if (mode === 'lines')      return '<ul>' + options.map(o => `<li>${o}</li>`).join('') + '</ul>';
+  if (mode === 'paragraphs') return options.map(o => `<p>${o}</p>`).join('');
+  if (mode === 'sentence')   return options.join(' ');
   if (mode === 'and') {
     if (options.length < 3) return options.join(' and ');
     return `${options.slice(0, -1).join(', ')}, and ${options[options.length - 1]}`;
@@ -226,107 +216,81 @@ function joinTemplateOptions(options, mode) {
   return options.join(', ');
 }
 
-function renderDropdownValue(t) {
+function renderDropdownValueHtml(t) {
   const selection = getDropdownSelection(t.id);
   const selected = Array.isArray(selection.values) ? selection.values : [];
   if (selected.length === 0) return '';
   const join = selection.join || t.join || 'lines';
-  return `**${t.label || t.name}:**\n${joinTemplateOptions(selected, join)}`;
+  return `<p><strong>${t.label || t.name}:</strong></p>${joinTemplateOptions(selected, join)}`;
 }
 
-function renderTemplateContent(t, seen = new Set()) {
+function renderTemplateContentHtml(t, seen = new Set()) {
   if (!t) return '';
-  if (isDropdownTemplate(t)) return renderDropdownValue(t);
+  if (isDropdownTemplate(t)) return renderDropdownValueHtml(t);
   if (seen.has(t.id)) return '';
   seen.add(t.id);
   return String(t.content || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
     const dropdown = getTemplateById(id);
-    return isDropdownTemplate(dropdown) ? renderDropdownValue(dropdown) : '';
+    return isDropdownTemplate(dropdown) ? renderDropdownValueHtml(dropdown) : '';
   });
 }
 
 /**
- * renderNote(input, matched, noteTemplate) → Markdown string
+ * renderNote(input, matched, noteTemplate) → HTML string
  * Replaces {input}, {templates}, dropdown placeholders, and {static:...}.
- *
- * Override logic: if the note template wraps {templates} in Markdown
- * formatting, that formatting acts as a global override for the same
- * formatting type on individual template content.
  */
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
-  const wrapMatch = noteTemplate.match(/(\*{1,2}|_{1,2})\{templates\}(\*{1,2}|_{1,2})/);
-  const hasOverride = !!(wrapMatch && wrapMatch[1] === wrapMatch[2]);
 
-  const templatesStr = matched.map(t => {
-    let content = renderTemplateContent(t);
+  const templatesHtml = matched.map(t => {
+    const content = renderTemplateContentHtml(t);
     if (!content.trim()) return '';
-
-    if (hasOverride) {
-      if (wrapMatch[1] === '**') {
-        content = content.replace(/\*\*([\s\S]*?)\*\*/g, '$1');
-      } else if (wrapMatch[1] === '*') {
-        content = content.replace(/(?<!\*)\*(?!\*)([\s\S]*?)(?<!\*)\*(?!\*)/g, '$1');
-      } else if (wrapMatch[1] === '__') {
-        content = content.replace(/__([\s\S]*?)__/g, '$1');
-      } else if (wrapMatch[1] === '_') {
-        content = content.replace(/(?<!_)_(?!_)([\s\S]*?)(?<!_)_(?!_)/g, '$1');
-      }
-    }
-
-    const label = showLabels ? `**[${t.name}]**\n` : '';
+    const label = showLabels ? `<p><strong>[${t.name}]</strong></p>` : '';
     return label + content;
-  }).filter(Boolean).join('\n\n');
+  }).filter(Boolean).join('<hr class="sc-template-sep">');
+
+  // Escape the input text for safe HTML insertion
+  const escapedInput = input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
 
   let out = noteTemplate
-    .replace(/\{input\}/g, input)
-    .replace(/\{templates\}/g, templatesStr)
-    .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContent(getTemplateById(id)));
+    .replace(/\{input\}/g, escapedInput)
+    .replace(/\{templates\}/g, templatesHtml)
+    .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContentHtml(getTemplateById(id)));
 
-  out = processStaticPlaceholders(out);
-
-  out = out
-    .split('\n')
-    .map(line => line.trimEnd())
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  // {static:TEXT} → plain span
+  out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
 
   return out;
 }
 
-function stripMarkdown(md) {
-  return md
-    .replace(/#{1,6}\s+/g, '')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\*(.+?)\*/g, '$1')
-    .replace(/~~(.+?)~~/g, '$1')
-    .replace(/`(.+?)`/g, '$1')
-    .replace(/^\s*[-*+]\s+/gm, '• ')
-    .replace(/^\s*\d+\.\s+/gm, '')
-    .replace(/^>\s+/gm, '')
-    .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/\[(.+?)\]\(.*?\)/g, '$1')
-    .replace(/_{1,2}(.+?)_{1,2}/g, '$1')
-    .trim();
+/** Extract plain text from an HTML string for plain-text clipboard copy. */
+function htmlToPlainText(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  // Replace <br>, <p>, <li>, <hr> with newlines before innerText extraction
+  div.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
+  div.querySelectorAll('p, div, li, hr').forEach(el => {
+    el.insertAdjacentText('afterend', '\n');
+  });
+  return (div.innerText || div.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-async function copyToClipboard(markdownText, forceText = false) {
-  if (!markdownText || !markdownText.trim()) return false;
+async function copyToClipboard(html, forcePlain = false) {
+  if (!html || !html.trim()) return false;
 
-  const usePlainText = forceText || (state.behavior && state.behavior.plainTextCopy);
-  const textPayload = usePlainText ? stripMarkdown(markdownText) : markdownText;
+  const plainText = htmlToPlainText(html);
+  const usePlain  = forcePlain || (state.behavior && state.behavior.plainTextCopy);
 
-  const renderedHtml = (!usePlainText && typeof marked !== 'undefined')
-    ? `<div>${marked.parse(markdownText)}</div>`
-    : `<pre>${textPayload}</pre>`;
-
-  if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+  if (!usePlain && navigator.clipboard && typeof ClipboardItem !== 'undefined') {
     try {
       await navigator.clipboard.write([
         new ClipboardItem({
-          'text/html':  new Blob([renderedHtml],  { type: 'text/html' }),
-          'text/plain': new Blob([textPayload],   { type: 'text/plain' }),
+          'text/html':  new Blob([`<div>${html}</div>`], { type: 'text/html' }),
+          'text/plain': new Blob([plainText],            { type: 'text/plain' }),
         }),
       ]);
       return true;
@@ -335,20 +299,19 @@ async function copyToClipboard(markdownText, forceText = false) {
 
   if (navigator.clipboard && navigator.clipboard.writeText) {
     try {
-      await navigator.clipboard.writeText(textPayload);
-      showToast('Copied as plain text (rich text not supported in this browser)', 'warning', 3500);
+      await navigator.clipboard.writeText(plainText);
+      if (!usePlain) showToast('Copied as plain text (rich text not supported in this browser)', 'warning', 3500);
       return true;
     } catch {}
   }
 
   try {
     const ta = document.createElement('textarea');
-    ta.value = textPayload;
+    ta.value = plainText;
     ta.setAttribute('readonly', '');
     ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
     document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
+    ta.focus(); ta.select();
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     if (!ok) throw new Error('execCommand returned false');
@@ -363,12 +326,10 @@ async function copyToClipboard(markdownText, forceText = false) {
 function showToast(message, type = 'success', duration = 2200) {
   const container = dom.toastContainer;
   if (!container) return;
-
   const el = document.createElement('div');
   el.className = `sc-toast ${type}`;
   el.textContent = message;
   container.appendChild(el);
-
   setTimeout(() => {
     el.classList.add('sc-fade-out');
     setTimeout(() => el.remove(), 280);
@@ -426,7 +387,7 @@ function renderDropdownControls(dropdowns) {
 
     const onChange = () => {
       state.dropdownSelections[t.id] = {
-        values: Array.from(select.selectedOptions).map(option => option.value),
+        values: Array.from(select.selectedOptions).map(o => o.value),
         join: join.value,
       };
       updatePreview();
@@ -443,9 +404,9 @@ function renderDropdownControls(dropdowns) {
 }
 
 function updatePreview() {
-  const input = state.currentInput;
+  const input    = state.currentInput;
   const hasInput = input.trim();
-  const nt = state.noteTemplate;
+  const nt       = state.noteTemplate;
 
   if (!nt.includes('{input}') || !nt.includes('{templates}')) {
     setStatus('Error: Note template missing {input} or {templates}', 'error');
@@ -454,8 +415,8 @@ function updatePreview() {
 
   if (!hasInput) {
     state.matchedTemplates = [];
-    state.activeDropdowns = [];
-    state.currentNote = '';
+    state.activeDropdowns  = [];
+    state.currentNoteHtml  = '';
     dom.matchBadge.classList.add('hidden');
     dom.previewEmpty.classList.remove('hidden');
     dom.previewRendered.classList.add('hidden');
@@ -486,17 +447,13 @@ function updatePreview() {
         }
       }
     }
-    if (!replaced) {
-      bottomTemplates.push(t);
-    }
+    if (!replaced) bottomTemplates.push(t);
   });
 
   const idsToSearch = new Set();
-  collectDropdownIdsFromText(nt, idsToSearch, new Set());
-  collectDropdownIdsFromText(modifiedInput, idsToSearch, new Set());
-  bottomTemplates.forEach(t => {
-    collectDropdownIdsFromText(t.content, idsToSearch, new Set());
-  });
+  collectDropdownIdsFromHtml(nt, idsToSearch, new Set());
+  collectDropdownIdsFromHtml(modifiedInput, idsToSearch, new Set());
+  bottomTemplates.forEach(t => collectDropdownIdsFromHtml(t.content, idsToSearch, new Set()));
 
   state.activeDropdowns = [...idsToSearch]
     .map(id => getTemplateById(id))
@@ -504,7 +461,7 @@ function updatePreview() {
     .filter(isDropdownTemplate)
     .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
 
-  const mdSource = renderNote(modifiedInput, bottomTemplates, nt, {
+  const htmlSource = renderNote(modifiedInput, bottomTemplates, nt, {
     sourceLabels: state.behavior.sourceLabels,
   });
 
@@ -515,11 +472,11 @@ function updatePreview() {
     dom.matchBadge.classList.add('hidden');
   }
 
-  state.currentNote = mdSource;
-  dom.sourceText.textContent = mdSource;
+  state.currentNoteHtml = htmlSource;
+  // Source tab shows cleaned HTML for transparency
+  dom.sourceText.textContent = htmlSource;
 
-  const html = marked.parse(mdSource);
-  dom.previewRendered.innerHTML = html;
+  dom.previewRendered.innerHTML = htmlSource;
   renderDropdownControls(state.activeDropdowns);
   dom.previewEmpty.classList.add('hidden');
   dom.previewRendered.classList.remove('hidden');
@@ -552,15 +509,14 @@ function setStatus(text, mode = 'idle') {
 function scheduleAutoCopy() {
   cancelAutoCopy();
   if (!state.behavior.autoCopyEnabled) return;
-  if (!state.currentNote.trim()) return;
+  if (!state.currentNoteHtml.trim()) return;
   if (state.activeDropdowns.some(t => getDropdownSelection(t.id).values.length === 0)) return;
 
   dom.autoCopyIndicator.classList.remove('hidden');
-
   state.autoCopyTimer = setTimeout(async () => {
     dom.autoCopyIndicator.classList.add('hidden');
-    if (!state.currentNote.trim()) return;
-    const ok = await copyToClipboard(state.currentNote);
+    if (!state.currentNoteHtml.trim()) return;
+    const ok = await copyToClipboard(state.currentNoteHtml);
     if (ok) {
       showToast('✓ Copied to clipboard', 'success');
       setStatus('Copied to clipboard ✓', 'matched');
@@ -576,7 +532,6 @@ function cancelAutoCopy() {
 function scheduleAutoClear() {
   clearTimeout(state.autoClearTimer);
   if (!dom.input.value.trim()) return;
-
   state.autoClearTimer = setTimeout(() => {
     clearInput(true);
     showToast('Input cleared (inactivity) — tap Undo to restore', 'warning', 4000);
@@ -595,9 +550,9 @@ function clearInput(saveForUndo = false) {
       }, 8000);
     }
   }
-  dom.input.value = '';
-  state.currentInput = '';
-  state.activeDropdowns = [];
+  dom.input.value      = '';
+  state.currentInput   = '';
+  state.activeDropdowns   = [];
   state.dropdownSelections = {};
   clearTimeout(state.autoClearTimer);
   cancelAutoCopy();
@@ -624,13 +579,11 @@ function initResize() {
   if (!handle) return;
   handle.hidden = true;
 }
+
 function applyFocusMode(enabled) {
-  const pane = dom.pane;
+  dom.pane.classList.toggle('sc-focus-mode', enabled);
   const btn  = dom.minimizeBtn;
   const icon = dom.minIcon;
-
-  pane.classList.toggle('sc-focus-mode', enabled);
-
   if (enabled) {
     icon.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
     btn.title = 'Exit focus mode';
@@ -642,8 +595,7 @@ function applyFocusMode(enabled) {
   }
 }
 function toggleFocusMode() {
-  const enabled = !dom.pane.classList.contains('sc-focus-mode');
-  applyFocusMode(enabled);
+  applyFocusMode(!dom.pane.classList.contains('sc-focus-mode'));
   savePaneState();
 }
 function applyMinimize(minimized) { applyFocusMode(minimized); }
@@ -660,13 +612,13 @@ function formatTimeNow() {
 function applyDotExpansions(el) {
   const cursor = el.selectionStart ?? el.value.length;
   const before = el.value.slice(0, cursor);
-  const after = el.value.slice(cursor);
+  const after  = el.value.slice(cursor);
   const replacements = {
-    '.today': formatDateOffset(0),
-    '.now': formatTimeNow(),
+    '.today':    formatDateOffset(0),
+    '.now':      formatTimeNow(),
     '.tomorrow': formatDateOffset(1),
-    '.2d': formatDateOffset(2),
-    '.1w': formatDateOffset(7),
+    '.2d':       formatDateOffset(2),
+    '.1w':       formatDateOffset(7),
   };
   const match = before.match(/(^|[\s(])(\.(?:today|now|tomorrow|2d|1w))$/i);
   if (!match) return false;
@@ -680,7 +632,7 @@ function applyDotExpansions(el) {
   return true;
 }
 function applyBulletExpansion(el) {
-  const cursor = el.selectionStart ?? el.value.length;
+  const cursor    = el.selectionStart ?? el.value.length;
   const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
   const lineBeforeCursor = el.value.slice(lineStart, cursor);
   if (lineBeforeCursor !== '-') return false;
@@ -694,12 +646,11 @@ function attachSmartTextareaBehavior(el, onChange) {
     applyBulletExpansion(el);
     onChange();
   });
-
   el.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
-    const cursor = el.selectionStart ?? el.value.length;
+    const cursor    = el.selectionStart ?? el.value.length;
     const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
-    const line = el.value.slice(lineStart, cursor);
+    const line      = el.value.slice(lineStart, cursor);
     const bulletMatch = line.match(/^(\s*[-*]\s+)/);
     if (!bulletMatch) return;
     e.preventDefault();
@@ -720,7 +671,6 @@ function initPreviewTabs() {
       });
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
-
       const which = tab.dataset.tab;
       if (which === 'preview') {
         dom.previewPanel.classList.remove('hidden');
@@ -743,12 +693,10 @@ function loadState() {
   if (savedTemplates && Array.isArray(savedTemplates) && savedTemplates.length > 0) {
     state.templates = savedTemplates;
   }
-
   const savedNoteTemplate = storage.get(STORAGE_KEYS.NOTE_TEMPLATE);
   if (typeof savedNoteTemplate === 'string' && savedNoteTemplate.trim()) {
     state.noteTemplate = savedNoteTemplate;
   }
-
   const savedBehavior = storage.get(STORAGE_KEYS.BEHAVIOR);
   if (savedBehavior && typeof savedBehavior === 'object') {
     state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, savedBehavior);
@@ -756,37 +704,32 @@ function loadState() {
 }
 
 function init() {
-  dom.pane             = $('smartchart-pane');
-  dom.header           = $('sc-header');
-  dom.input            = $('sc-input');
-  dom.body             = $('sc-body');
-  dom.previewPanel     = $('sc-preview');
-  dom.previewEmpty     = $('sc-preview-empty');
-  dom.previewRendered  = $('sc-preview-rendered');
-  dom.sourcePanel      = $('sc-source');
-  dom.sourceText       = $('sc-source-text');
-  dom.statusText       = $('sc-status-text');
-  dom.autoCopyIndicator= $('sc-autocopy-indicator');
-  dom.matchBadge       = $('sc-match-badge');
-  dom.copyBtn          = $('sc-copy-btn');
-  dom.settingsBtn      = $('sc-settings-btn');
-  dom.minimizeBtn      = $('sc-minimize-btn');
-  dom.minIcon          = $('sc-min-icon');
-  dom.settingsPanel    = $('sc-settings');
-  dom.settingsClose    = $('sc-settings-close');
-  dom.resizeHandle     = $('sc-resize-handle');
-  dom.toastContainer   = $('sc-toast-container');
-  dom.newPatientBtn    = $('sc-new-patient-btn');
-  dom.undoClearBtn     = $('sc-undo-clear-btn');
-  dom.sourceLabelsBtnEl= $('sc-source-labels-btn');
-  dom.plainTextBtn     = $('sc-plaintext-btn');
+  dom.pane              = $('smartchart-pane');
+  dom.header            = $('sc-header');
+  dom.input             = $('sc-input');
+  dom.body              = $('sc-body');
+  dom.previewPanel      = $('sc-preview');
+  dom.previewEmpty      = $('sc-preview-empty');
+  dom.previewRendered   = $('sc-preview-rendered');
+  dom.sourcePanel       = $('sc-source');
+  dom.sourceText        = $('sc-source-text');
+  dom.statusText        = $('sc-status-text');
+  dom.autoCopyIndicator = $('sc-autocopy-indicator');
+  dom.matchBadge        = $('sc-match-badge');
+  dom.copyBtn           = $('sc-copy-btn');
+  dom.settingsBtn       = $('sc-settings-btn');
+  dom.minimizeBtn       = $('sc-minimize-btn');
+  dom.minIcon           = $('sc-min-icon');
+  dom.settingsPanel     = $('sc-settings');
+  dom.settingsClose     = $('sc-settings-close');
+  dom.resizeHandle      = $('sc-resize-handle');
+  dom.toastContainer    = $('sc-toast-container');
+  dom.newPatientBtn     = $('sc-new-patient-btn');
+  dom.undoClearBtn      = $('sc-undo-clear-btn');
+  dom.sourceLabelsBtnEl = $('sc-source-labels-btn');
+  dom.plainTextBtn      = $('sc-plaintext-btn');
 
   loadState();
-
-  if (typeof marked !== 'undefined') {
-    marked.use({ gfm: true, breaks: true });
-  }
-
   restorePaneState();
   initDrag();
   initResize();
@@ -802,16 +745,10 @@ function init() {
   });
 
   dom.copyBtn.addEventListener('click', async () => {
-    if (!state.currentNote.trim()) {
-      showToast('Nothing to copy yet', 'warning');
-      return;
-    }
+    if (!state.currentNoteHtml.trim()) { showToast('Nothing to copy yet', 'warning'); return; }
     cancelAutoCopy();
-    const ok = await copyToClipboard(state.currentNote);
-    if (ok) {
-      showToast('✓ Copied to clipboard', 'success');
-      setStatus('Copied to clipboard ✓', 'matched');
-    }
+    const ok = await copyToClipboard(state.currentNoteHtml);
+    if (ok) { showToast('✓ Copied to clipboard', 'success'); setStatus('Copied to clipboard ✓', 'matched'); }
   });
 
   dom.minimizeBtn.addEventListener('click', toggleMinimize);
@@ -840,7 +777,7 @@ function init() {
   if (dom.undoClearBtn) {
     dom.undoClearBtn.addEventListener('click', () => {
       if (state.lastClearedInput) {
-        dom.input.value = state.lastClearedInput;
+        dom.input.value    = state.lastClearedInput;
         state.currentInput = state.lastClearedInput;
         state.lastClearedInput = '';
         autoResizeTextarea(dom.input);
@@ -862,20 +799,15 @@ function init() {
       storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
       updatePreview();
     });
-    if (state.behavior.sourceLabels) {
-      dom.sourceLabelsBtnEl.classList.add('active');
-    }
+    if (state.behavior.sourceLabels) dom.sourceLabelsBtnEl.classList.add('active');
   }
 
   if (dom.plainTextBtn) {
     dom.plainTextBtn.addEventListener('click', async () => {
-      if (!state.currentNote.trim()) { showToast('Nothing to copy yet', 'warning'); return; }
+      if (!state.currentNoteHtml.trim()) { showToast('Nothing to copy yet', 'warning'); return; }
       cancelAutoCopy();
-      const ok = await copyToClipboard(state.currentNote, true);
-      if (ok) {
-        showToast('✓ Copied as plain text', 'success');
-        setStatus('Copied as plain text ✓', 'matched');
-      }
+      const ok = await copyToClipboard(state.currentNoteHtml, true);
+      if (ok) { showToast('✓ Copied as plain text', 'success'); setStatus('Copied as plain text ✓', 'matched'); }
     });
   }
 
@@ -886,9 +818,9 @@ function init() {
     }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
       e.preventDefault();
-      if (state.currentNote.trim()) {
+      if (state.currentNoteHtml.trim()) {
         cancelAutoCopy();
-        copyToClipboard(state.currentNote).then(ok => {
+        copyToClipboard(state.currentNoteHtml).then(ok => {
           if (ok) { showToast('✓ Copied to clipboard', 'success'); setStatus('Copied to clipboard ✓', 'matched'); }
         });
       } else { showToast('Nothing to copy yet', 'warning'); }
@@ -937,7 +869,7 @@ window.SmartChart = {
   showToast,
   renderNote,
   matchTemplates,
-  stripMarkdown,
+  htmlToPlainText,
   clearInput,
   attachSmartTextareaBehavior,
 };

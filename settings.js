@@ -3,6 +3,9 @@
  * Settings panel: note template editor, templates CRUD,
  * behavior controls, export/import/reset.
  *
+ * All template content and the note template are now stored and edited
+ * as HTML — no Markdown conversion anywhere.
+ *
  * Runs after app.js. Accesses shared state via window.SmartChart.
  */
 
@@ -10,7 +13,6 @@
 
 (function () {
 
-  /* ─── Escape HTML for safe innerHTML insertion ─── */
   function esc(str) {
     return String(str)
       .replace(/&/g, '&amp;')
@@ -21,9 +23,146 @@
 
   const $ = id => document.getElementById(id);
 
-  /* ════════════════════════════════════════════════
-     INIT — runs after DOMContentLoaded
-  ════════════════════════════════════════════════ */
+  /* ══════════════════════════════════════════
+     RICH EDITOR HELPERS
+  ══════════════════════════════════════════ */
+
+  /**
+   * createRichEditor(containerId, toolbarDef)
+   * Wires up a contenteditable div with a rich formatting toolbar.
+   *
+   * toolbarDef: array of:
+   *   { cmd, label, title }           — execCommand button (toggles active state)
+   *   { type: 'snippet', label, snippet, title }  — insert literal text
+   *   { type: 'divider' }
+   *   { type: 'heading', level }      — insert H1/H2/H3 via formatBlock
+   *
+   * Returns { getHtml(), setHtml(html), focus() }
+   */
+  function createRichEditor(editorEl, toolbarEl, toolbarDef) {
+    if (!editorEl || !toolbarEl) return null;
+
+    // Reflect active formatting states on toolbar buttons
+    function updateToolbarState() {
+      toolbarEl.querySelectorAll('button[data-cmd]').forEach(btn => {
+        const cmd = btn.dataset.cmd;
+        try {
+          btn.classList.toggle('sc-toolbar-active', document.queryCommandState(cmd));
+        } catch {}
+      });
+    }
+
+    editorEl.addEventListener('keyup',   updateToolbarState);
+    editorEl.addEventListener('mouseup', updateToolbarState);
+    editorEl.addEventListener('selectionchange', updateToolbarState);
+
+    // Build toolbar
+    toolbarEl.innerHTML = '';
+    toolbarDef.forEach(item => {
+      if (item.type === 'divider') {
+        const d = document.createElement('div');
+        d.className = 'sc-toolbar-divider';
+        toolbarEl.appendChild(d);
+        return;
+      }
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+
+      if (item.type === 'snippet') {
+        btn.dataset.snippet = item.snippet;
+        btn.innerHTML = item.label;
+        btn.title = item.title || item.label;
+        btn.className = 'sc-template-tool';
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          editorEl.focus();
+          document.execCommand('insertHTML', false, item.snippet);
+        });
+
+      } else if (item.type === 'heading') {
+        btn.dataset.heading = item.level;
+        btn.innerHTML = item.label;
+        btn.title = item.title || `Heading ${item.level}`;
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          editorEl.focus();
+          document.execCommand('formatBlock', false, `h${item.level}`);
+        });
+
+      } else {
+        // Standard execCommand
+        btn.dataset.cmd = item.cmd;
+        btn.innerHTML = item.label;
+        btn.title = item.title || item.label;
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          editorEl.focus();
+          document.execCommand(item.cmd, false, null);
+          updateToolbarState();
+        });
+      }
+
+      toolbarEl.appendChild(btn);
+    });
+
+    return {
+      getHtml() {
+        // Normalize — collapse 3+ consecutive <br>s
+        return editorEl.innerHTML
+          .replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>')
+          .trim();
+      },
+      setHtml(html) {
+        editorEl.innerHTML = html || '';
+      },
+      focus() { editorEl.focus(); },
+    };
+  }
+
+  // Shared toolbar definition for template content editors
+  const CONTENT_TOOLBAR = [
+    { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold (Ctrl+B)' },
+    { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic (Ctrl+I)' },
+    { cmd: 'underline',     label: '<u>U</u>',       title: 'Underline (Ctrl+U)' },
+    { cmd: 'strikeThrough', label: '<s>S</s>',       title: 'Strikethrough' },
+    { type: 'divider' },
+    { type: 'heading', level: 1, label: 'H1', title: 'Heading 1' },
+    { type: 'heading', level: 2, label: 'H2', title: 'Heading 2' },
+    { type: 'heading', level: 3, label: 'H3', title: 'Heading 3' },
+    { type: 'divider' },
+    { cmd: 'insertUnorderedList', label: '• List',   title: 'Bullet list' },
+    { cmd: 'insertOrderedList',   label: '1. List',  title: 'Numbered list' },
+    { cmd: 'indent',              label: '→',        title: 'Indent' },
+    { cmd: 'outdent',             label: '←',        title: 'Outdent' },
+    { type: 'divider' },
+    { cmd: 'justifyLeft',   label: '⬤‥',  title: 'Align left' },
+    { cmd: 'justifyCenter', label: '‥⬤‥', title: 'Center' },
+    { cmd: 'justifyRight',  label: '‥⬤',  title: 'Align right' },
+    { type: 'divider' },
+    { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
+  ];
+
+  // Toolbar for the Note Template editor (adds {placeholder} snippet buttons)
+  const NOTE_TEMPLATE_TOOLBAR = [
+    { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold' },
+    { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic' },
+    { cmd: 'underline',     label: '<u>U</u>',       title: 'Underline' },
+    { type: 'divider' },
+    { cmd: 'insertUnorderedList', label: '• List',   title: 'Bullet list' },
+    { cmd: 'insertOrderedList',   label: '1. List',  title: 'Numbered list' },
+    { type: 'divider' },
+    { type: 'snippet', label: '{input}',            snippet: '{input}',            title: 'Insert {input} placeholder' },
+    { type: 'snippet', label: '{templates}',        snippet: '{templates}',        title: 'Insert {templates} placeholder' },
+    { type: 'snippet', label: 'Follow-Up ▾',        snippet: '{dropdown:follow-up}', title: 'Nest follow-up dropdown' },
+    { type: 'snippet', label: '{static:…}',         snippet: '{static:Text here}', title: 'Insert static text placeholder' },
+    { type: 'divider' },
+    { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
+  ];
+
+  /* ══════════════════════════════════════════
+     INIT
+  ══════════════════════════════════════════ */
 
   function init() {
     const App = window.SmartChart;
@@ -35,10 +174,7 @@
       showToast, updatePreview,
     } = App;
 
-    /* ════════════════════════════════════════════════
-       SETTINGS TABS
-    ════════════════════════════════════════════════ */
-
+    /* ── Settings Tabs ── */
     function activateSettingsTab(tabId) {
       document.querySelectorAll('.sc-settings-tab').forEach(btn => {
         const active = btn.dataset.stab === tabId;
@@ -51,7 +187,6 @@
         pane.classList.toggle('hidden', !show);
       });
     }
-
     document.querySelectorAll('.sc-settings-tab').forEach(btn => {
       btn.addEventListener('click', () => activateSettingsTab(btn.dataset.stab));
     });
@@ -60,130 +195,44 @@
        TAB: NOTE TEMPLATE
     ════════════════════════════════════════════════ */
 
-    const noteTemplateInput = $('sc-note-template-input');
-    const noteTemplateError = $('sc-note-template-error');
-    const saveNoteBtn       = $('sc-save-note-template');
-    const resetNoteBtn      = $('sc-reset-note-template');
-    const noteTemplateTools = $('sc-note-template-tools');
+    const noteTemplateEditorEl  = $('sc-note-template-input');
+    const noteTemplateToolbarEl = $('sc-note-template-tools');
+    const noteTemplateError     = $('sc-note-template-error');
+    const saveNoteBtn           = $('sc-save-note-template');
+    const resetNoteBtn          = $('sc-reset-note-template');
 
-    function editorHtmlToMarkdown(html) {
-      let temp = document.createElement('div');
-      temp.innerHTML = html;
-
-      function traverse(node) {
-        if (node.nodeType === 3) {
-          return node.nodeValue;
-        }
-        let res = '';
-        const tag = (node.tagName || '').toLowerCase();
-        for (const child of node.childNodes) {
-          res += traverse(child);
-        }
-        if (tag === 'b' || tag === 'strong') return `**${res}**`;
-        if (tag === 'i' || tag === 'em') return `*${res}*`;
-        if (tag === 'u') return `<u>${res}</u>`;
-        if (tag === 'p' || tag === 'div') return `\n${res}\n`;
-        if (tag === 'br') return `\n`;
-        if (tag === 'li') return `\n- ${res}`;
-        if (tag === 'ul' || tag === 'ol') return `\n${res}\n`;
-        return res;
-      }
-
-      let md = traverse(temp);
-      
-      // Cleanup whitespace and newlines
-      md = md.replace(/\n{3,}/g, '\n\n').trim();
-      md = md.replace(/\n- \n/g, '\n- ');
-
-      // Unescape standard entities
-      md = md.replace(/&nbsp;/g, ' ');
-      md = md.replace(/&amp;/g, '&');
-      md = md.replace(/&lt;/g, '<');
-      md = md.replace(/&gt;/g, '>');
-
-      return md;
-    }
-
-    function markdownToEditorHtml(md) {
-      if (!md) return '';
-      let html = String(md);
-
-      // Convert Markdown formatting to HTML tags for the editor
-      html = html.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-      html = html.replace(/\*([\s\S]*?)\*/g, '<i>$1</i>');
-
-      let lines = html.split('\n');
-      let inList = false;
-      let out = [];
-
-      for (let line of lines) {
-        if (line.match(/^[-*]\s+(.*)/)) {
-          if (!inList) { out.push('<ul>'); inList = true; }
-          out.push(`<li>${line.replace(/^[-*]\s+/, '')}</li>`);
-        } else {
-          if (inList) { out.push('</ul>'); inList = false; }
-          out.push(`${line}<br>`);
-        }
-      }
-      if (inList) out.push('</ul>');
-
-      html = out.join('').replace(/<br>$/, '');
-      html = html.replace(/<\/ul><br>/g, '</ul>');
-
-      return html;
-    }
+    const noteTemplateEditor = createRichEditor(
+      noteTemplateEditorEl,
+      noteTemplateToolbarEl,
+      NOTE_TEMPLATE_TOOLBAR
+    );
 
     function loadNoteTemplateTab() {
-      // Use markdownToEditorHtml to show the formatting as rich text
-      noteTemplateInput.innerHTML = markdownToEditorHtml(state.noteTemplate);
+      noteTemplateEditor.setHtml(state.noteTemplate);
       noteTemplateError.classList.add('hidden');
       noteTemplateError.textContent = '';
     }
 
-    if (noteTemplateTools) {
-      // Setup rich text commands
-      noteTemplateTools.querySelectorAll('button[data-cmd]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const cmd = btn.dataset.cmd;
-          document.execCommand(cmd, false, null);
-          noteTemplateInput.focus();
-        });
-      });
-
-      // Setup snippet insertion
-      noteTemplateTools.querySelectorAll('button[data-snippet]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const snippet = btn.dataset.snippet || '';
-          noteTemplateInput.focus();
-          document.execCommand('insertText', false, snippet);
-        });
-      });
-    }
-
     saveNoteBtn.addEventListener('click', () => {
-      // Convert rich text HTML back to robust Markdown format
-      const md = editorHtmlToMarkdown(noteTemplateInput.innerHTML);
-      if (!md.includes('{input}') || !md.includes('{templates}')) {
+      const html = noteTemplateEditor.getHtml();
+      if (!html.includes('{input}') || !html.includes('{templates}')) {
         noteTemplateError.textContent = 'Note template must include both {input} and {templates}.';
         noteTemplateError.classList.remove('hidden');
-        noteTemplateInput.focus();
+        noteTemplateEditor.focus();
         return;
       }
       noteTemplateError.classList.add('hidden');
-      state.noteTemplate = md;
-      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, md);
+      state.noteTemplate = html;
+      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, html);
       showToast('Note template saved', 'success');
       updatePreview();
     });
 
     resetNoteBtn.addEventListener('click', () => {
       if (!confirm('Reset note template to the default?\n\n"{input}<br><br>{templates}"')) return;
-      const def = DEFAULT_NOTE_TEMPLATE;
-      state.noteTemplate = def;
-      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, def);
-      noteTemplateInput.innerHTML = markdownToEditorHtml(def);
+      state.noteTemplate = DEFAULT_NOTE_TEMPLATE;
+      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, DEFAULT_NOTE_TEMPLATE);
+      noteTemplateEditor.setHtml(DEFAULT_NOTE_TEMPLATE);
       noteTemplateError.classList.add('hidden');
       showToast('Note template reset to default', 'success');
       updatePreview();
@@ -193,25 +242,31 @@
        TAB: TEMPLATES — LIST
     ════════════════════════════════════════════════ */
 
-    const templateListEl  = $('sc-template-list');
-    const addTemplateBtn  = $('sc-add-template-btn');
-    const templateFormEl  = $('sc-template-form');
-
-    // Form fields
-    const formTitleLabel  = $('sc-form-title-label');
-    const formId          = $('sc-form-id');
-    const formName        = $('sc-form-name');
-    const formTriggers    = $('sc-form-triggers');
-    const formType        = $('sc-form-type');
-    const formContent     = $('sc-form-content');
+    const templateListEl     = $('sc-template-list');
+    const addTemplateBtn     = $('sc-add-template-btn');
+    const templateFormEl     = $('sc-template-form');
+    const formTitleLabel     = $('sc-form-title-label');
+    const formId             = $('sc-form-id');
+    const formName           = $('sc-form-name');
+    const formTriggers       = $('sc-form-triggers');
+    const formType           = $('sc-form-type');
     const formDropdownFields = $('sc-form-dropdown-fields');
-    const formDropdownLabel = $('sc-form-dropdown-label');
-    const formOptions     = $('sc-form-options');
-    const formJoin        = $('sc-form-join');
-    const formPriority    = $('sc-form-priority');
-    const formSaveBtn     = $('sc-form-save');
-    const formCancelBtn   = $('sc-form-cancel');
-    const formCloseBtn    = $('sc-form-close');
+    const formDropdownLabel  = $('sc-form-dropdown-label');
+    const formOptions        = $('sc-form-options');
+    const formJoin           = $('sc-form-join');
+    const formPriority       = $('sc-form-priority');
+    const formSaveBtn        = $('sc-form-save');
+    const formCancelBtn      = $('sc-form-cancel');
+    const formCloseBtn       = $('sc-form-close');
+
+    // Rich editor for template content
+    const formContentEditorEl  = $('sc-form-content-editor');
+    const formContentToolbarEl = $('sc-form-content-toolbar');
+    const formContentEditor = createRichEditor(
+      formContentEditorEl,
+      formContentToolbarEl,
+      CONTENT_TOOLBAR
+    );
 
     let activeCategory = '';
 
@@ -219,7 +274,6 @@
       const allSorted = [...state.templates].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
       const categories = [...new Set(allSorted.map(t => t.category || '').filter(Boolean))];
 
-      // Build category filter bar
       const filterHtml = categories.length > 0 ? `
         <div class="sc-cat-filter">
           <button class="sc-cat-btn${activeCategory === '' ? ' active' : ''}" data-cat="">All</button>
@@ -230,8 +284,7 @@
       const sorted = activeCategory ? allSorted.filter(t => (t.category || '') === activeCategory) : allSorted;
 
       if (allSorted.length === 0) {
-        templateListEl.innerHTML =
-          '<p style="color:var(--text-3);font-size:12px;text-align:center;padding:18px 0;">No templates yet. Add one above.</p>';
+        templateListEl.innerHTML = '<p style="color:var(--text-3);font-size:12px;text-align:center;padding:18px 0;">No templates yet. Add one above.</p>';
         return;
       }
 
@@ -253,8 +306,7 @@
           <div class="sc-template-actions">
             <button class="sc-btn sc-btn-icon" data-action="preview" data-id="${esc(t.id)}" title="Preview template content">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
               </svg>
             </button>
             <button class="sc-btn sc-btn-icon" data-action="edit" data-id="${esc(t.id)}" title="Edit template">
@@ -263,8 +315,7 @@
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </button>
-            <button class="sc-btn sc-btn-icon" data-action="delete" data-id="${esc(t.id)}"
-              title="Delete template" style="color:var(--danger)">
+            <button class="sc-btn sc-btn-icon" data-action="delete" data-id="${esc(t.id)}" title="Delete template" style="color:var(--danger)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -275,15 +326,9 @@
         </div>
       `).join(''));
 
-      // Category filter click handlers
       templateListEl.querySelectorAll('.sc-cat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          activeCategory = btn.dataset.cat;
-          renderTemplateList();
-        });
+        btn.addEventListener('click', () => { activeCategory = btn.dataset.cat; renderTemplateList(); });
       });
-
-      // Template action click handlers
       templateListEl.querySelectorAll('[data-action]').forEach(btn => {
         btn.addEventListener('click', () => {
           const { action, id } = btn.dataset;
@@ -301,20 +346,21 @@
       const t = state.templates.find(t => t.id === id);
       if (!t) return;
       const div = document.createElement('div');
-      div.className = 'sc-template-preview-expand';
-      div.textContent = t.type === 'dropdown'
-        ? `Dropdown options:\n${(t.options || []).map(o => `- ${o}`).join('\n')}`
-        : t.content;
+      div.className = 'sc-template-preview-expand sc-md-content';
+      if (t.type === 'dropdown') {
+        div.innerHTML = `<p><strong>Dropdown options:</strong></p><ul>${(t.options || []).map(o => `<li>${esc(o)}</li>`).join('')}</ul>`;
+      } else {
+        div.innerHTML = t.content || '';
+      }
       item.appendChild(div);
     }
 
     function updateTemplateTypeFields() {
       const isDropdown = formType.value === 'dropdown';
       formDropdownFields.classList.toggle('hidden', !isDropdown);
-      formContent.closest('.sc-field-group').classList.toggle('hidden', isDropdown);
+      const contentGroup = formContentEditorEl && formContentEditorEl.closest('.sc-field-group');
+      if (contentGroup) contentGroup.classList.toggle('hidden', isDropdown);
     }
-
-    /* ── Template form: open / close ── */
 
     function openAddForm() {
       formTitleLabel.textContent = 'New Template';
@@ -322,15 +368,14 @@
       formName.value     = '';
       formTriggers.value = '';
       formType.value     = 'text';
-      formContent.value  = '';
+      formContentEditor.setHtml('');
       formDropdownLabel.value = '';
       formOptions.value = '';
       formJoin.value = 'lines';
       formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
-      const catElAdd = $('sc-form-category');
-      if (catElAdd) catElAdd.value = '';
+      const catEl = $('sc-form-category');
+      if (catEl) catEl.value = '';
       updateTemplateTypeFields();
-
       templateFormEl.classList.remove('hidden');
       templateListEl.classList.add('hidden');
       formName.focus();
@@ -339,13 +384,12 @@
     function openEditForm(id) {
       const t = state.templates.find(t => t.id === id);
       if (!t) return;
-
-      formTitleLabel.textContent = 'Edit Template';
+      formTitleLabel.textContent  = 'Edit Template';
       formId.value       = t.id;
       formName.value     = t.name;
       formTriggers.value = t.triggers.join(', ');
       formType.value     = t.type === 'dropdown' ? 'dropdown' : 'text';
-      formContent.value  = t.content || '';
+      formContentEditor.setHtml(t.content || '');
       formDropdownLabel.value = t.label || t.name;
       formOptions.value = (t.options || []).join('\n');
       formJoin.value = t.join || 'lines';
@@ -353,7 +397,6 @@
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = t.category || '';
       updateTemplateTypeFields();
-
       templateFormEl.classList.remove('hidden');
       templateListEl.classList.add('hidden');
       formName.focus();
@@ -369,54 +412,29 @@
     formCancelBtn.addEventListener('click', closeForm);
     formCloseBtn.addEventListener('click', closeForm);
 
-    if (typeof App.attachSmartTextareaBehavior === 'function') {
-      App.attachSmartTextareaBehavior(formContent, () => {});
-    }
-
-    /* ── Template form: save ── */
-
     formSaveBtn.addEventListener('click', () => {
       const name        = (formName.value || '').trim();
       const triggersRaw = (formTriggers.value || '').trim();
       const type        = formType.value === 'dropdown' ? 'dropdown' : 'text';
-      const content     = (formContent.value || '').trim();
+      const content     = formContentEditor.getHtml();
       const options     = (formOptions.value || '').split('\n').map(s => s.trim()).filter(Boolean);
       const priority    = parseInt(formPriority.value, 10) || 10;
       const id          = formId.value || `tpl-${Date.now()}`;
-      const catElSave   = $('sc-form-category');
-      const category    = catElSave ? (catElSave.value || '').trim() : '';
+      const catEl       = $('sc-form-category');
+      const category    = catEl ? (catEl.value || '').trim() : '';
 
-      if (!name) {
-        alert('Template name is required.');
-        formName.focus();
-        return;
-      }
-      if (!triggersRaw) {
-        alert('At least one trigger keyword is required.');
-        formTriggers.focus();
-        return;
-      }
-      if (type === 'text' && !content) {
-        alert('Template content cannot be empty.');
-        formContent.focus();
-        return;
-      }
-      if (type === 'dropdown' && options.length === 0) {
-        alert('Dropdown templates need at least one option.');
-        formOptions.focus();
-        return;
-      }
+      if (!name) { alert('Template name is required.'); formName.focus(); return; }
+      if (!triggersRaw) { alert('At least one trigger keyword is required.'); formTriggers.focus(); return; }
+      if (type === 'text' && !content.trim()) { alert('Template content cannot be empty.'); formContentEditor.focus(); return; }
+      if (type === 'dropdown' && options.length === 0) { alert('Dropdown templates need at least one option.'); formOptions.focus(); return; }
 
       const triggers = triggersRaw.split(',').map(s => s.trim()).filter(Boolean);
       const template = type === 'dropdown'
         ? {
-            id,
-            name,
-            type,
-            triggers,
-            label: (formDropdownLabel.value || '').trim() || name,
+            id, name, type, triggers,
+            label:    (formDropdownLabel.value || '').trim() || name,
             options,
-            join: formJoin.value || 'lines',
+            join:     formJoin.value || 'lines',
             priority,
             ...(category ? { category } : {}),
           }
@@ -437,8 +455,6 @@
       updatePreview();
     });
 
-    /* ── Template delete ── */
-
     function deleteTemplate(id) {
       const t = state.templates.find(t => t.id === id);
       if (!t) return;
@@ -454,12 +470,12 @@
        TAB: BEHAVIOR
     ════════════════════════════════════════════════ */
 
-    const autoCopyEnabledEl  = $('sc-autocopy-enabled');
-    const autoCopyDelayEl    = $('sc-autocopy-delay');
-    const autoCopyDelayValEl = $('sc-autocopy-delay-val');
-    const autoClearDelayEl   = $('sc-autoclear-delay');
-    const autoClearDelayValEl= $('sc-autoclear-delay-val');
-    const saveBehaviorBtn    = $('sc-save-behavior');
+    const autoCopyEnabledEl   = $('sc-autocopy-enabled');
+    const autoCopyDelayEl     = $('sc-autocopy-delay');
+    const autoCopyDelayValEl  = $('sc-autocopy-delay-val');
+    const autoClearDelayEl    = $('sc-autoclear-delay');
+    const autoClearDelayValEl = $('sc-autoclear-delay-val');
+    const saveBehaviorBtn     = $('sc-save-behavior');
 
     function loadBehaviorTab() {
       autoCopyEnabledEl.checked       = state.behavior.autoCopyEnabled;
@@ -481,9 +497,9 @@
     });
 
     saveBehaviorBtn.addEventListener('click', () => {
-      state.behavior.autoCopyEnabled  = autoCopyEnabledEl.checked;
-      state.behavior.autoCopyDelay    = parseFloat(autoCopyDelayEl.value) * 1000;
-      state.behavior.autoClearDelay   = parseFloat(autoClearDelayEl.value) * 1000;
+      state.behavior.autoCopyEnabled = autoCopyEnabledEl.checked;
+      state.behavior.autoCopyDelay   = parseFloat(autoCopyDelayEl.value) * 1000;
+      state.behavior.autoClearDelay  = parseFloat(autoClearDelayEl.value) * 1000;
       const ptEl2 = $('sc-plaintext-setting');
       if (ptEl2) state.behavior.plainTextCopy = ptEl2.checked;
       const slEl2 = $('sc-sourcelabels-setting');
@@ -503,10 +519,9 @@
        DATA MANAGEMENT
     ════════════════════════════════════════════════ */
 
-    /* Export */
     $('sc-export-btn').addEventListener('click', () => {
       const payload = {
-        version: 1,
+        version: 2,
         exportedAt: new Date().toISOString(),
         noteTemplate: state.noteTemplate,
         templates:    state.templates,
@@ -522,7 +537,6 @@
       showToast('Data exported', 'success');
     });
 
-    /* Import */
     $('sc-import-btn').addEventListener('click', () => {
       const fileInput  = document.createElement('input');
       fileInput.type   = 'file';
@@ -535,7 +549,6 @@
           try {
             const data = JSON.parse(e.target.result);
             let changes = 0;
-
             if (Array.isArray(data.templates) && data.templates.length > 0) {
               state.templates = data.templates;
               storage.set(STORAGE_KEYS.TEMPLATES, state.templates);
@@ -551,13 +564,7 @@
               storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
               changes++;
             }
-
-            if (changes === 0) {
-              showToast('Nothing to import in that file', 'warning');
-              return;
-            }
-
-            // Refresh all tabs
+            if (changes === 0) { showToast('Nothing to import in that file', 'warning'); return; }
             loadNoteTemplateTab();
             renderTemplateList();
             loadBehaviorTab();
@@ -572,22 +579,18 @@
       fileInput.click();
     });
 
-    /* Reset all */
     $('sc-reset-all-btn').addEventListener('click', () => {
       if (!confirm(
         'Reset ALL SmartChart data to factory defaults?\n\n' +
         'This will overwrite all templates, the note template, and behavior settings.\n\n' +
         'This action CANNOT be undone.'
       )) return;
-
       state.templates    = JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
       state.noteTemplate = DEFAULT_NOTE_TEMPLATE;
       state.behavior     = Object.assign({}, DEFAULT_BEHAVIOR);
-
       storage.set(STORAGE_KEYS.TEMPLATES,     state.templates);
       storage.set(STORAGE_KEYS.NOTE_TEMPLATE, state.noteTemplate);
       storage.set(STORAGE_KEYS.BEHAVIOR,      state.behavior);
-
       loadNoteTemplateTab();
       renderTemplateList();
       loadBehaviorTab();
@@ -608,11 +611,9 @@
       activateSettingsTab('note-template');
     }
 
-    /* ─── Expose ─── */
     window.SmartChartSettings = { open };
   }
 
-  /* ─── Entry point: wait for both DOM and app.js ─── */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setTimeout(init, 30));
   } else {

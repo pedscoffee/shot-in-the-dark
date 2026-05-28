@@ -1139,3 +1139,50 @@ body {
   color: var(--text-3);
   line-height: 1.4;
 }
+/* ════════════════════════════════════════════════
+   RICH EDITOR ADDITIONS
+════════════════════════════════════════════════ */
+
+/* Toolbar active (toggled) state — e.g. bold is ON */
+.sc-rich-toolbar button.sc-toolbar-active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+/* Larger editor height for template content */
+.sc-editor-content {
+  min-height: 160px;
+  max-height: 340px;
+}
+
+/* Rich content rendered in the editor */
+.sc-editor-content h1 { font-size: 15px; font-weight: 700; margin: 6px 0 3px; }
+.sc-editor-content h2 { font-size: 13px; font-weight: 700; margin: 6px 0 3px; }
+.sc-editor-content h3 { font-size: 12px; font-weight: 600; margin: 5px 0 2px; }
+.sc-editor-content ul,
+.sc-editor-content ol { padding-left: 22px; margin: 4px 0; }
+.sc-editor-content ol { list-style: decimal; }
+.sc-editor-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 10px;
+  color: var(--text-2);
+  margin: 4px 0;
+}
+.sc-editor-content a { color: var(--info); text-decoration: underline; }
+.sc-editor-content s { opacity: 0.55; }
+.sc-editor-content p { margin: 0 0 4px; }
+.sc-editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Toolbar scrolls on narrow screens instead of wrapping too aggressively */
+.sc-rich-toolbar {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+.sc-rich-toolbar::-webkit-scrollbar { display: none; }
