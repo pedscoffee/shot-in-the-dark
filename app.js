@@ -308,10 +308,8 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
     .split('\n')
     .map(line => line.trimEnd())
     .join('\n')
-    .replace(/\n{3,}/g, '\n\n');
-
-  // Trim only leading whitespace, preserve trailing blank lines from template
-  out = out.trimStart();
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
   return out;
 }
