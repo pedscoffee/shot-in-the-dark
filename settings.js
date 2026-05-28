@@ -179,9 +179,7 @@
     });
 
     resetNoteBtn.addEventListener('click', () => {
-      if (!confirm(`Reset note template to the default?
-
-"${DEFAULT_NOTE_TEMPLATE}"`)) return;
+      if (!confirm('Reset note template to the default?\n\n"{input}\\n\\n{templates}"')) return;
       const def = DEFAULT_NOTE_TEMPLATE;
       state.noteTemplate = def;
       storage.set(STORAGE_KEYS.NOTE_TEMPLATE, def);
