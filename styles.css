@@ -1073,3 +1073,91 @@ body {
   color: var(--text-3);
   line-height: 1.4;
 }
+
+
+/* ════════════════════════════════════════════════
+   RICH TEXT EDITOR — Note Template
+════════════════════════════════════════════════ */
+
+.sc-rte {
+  min-height: 120px;
+  max-height: 260px;
+  overflow-y: auto;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-2);
+  color: var(--text-1);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  outline: none;
+  word-break: break-word;
+  white-space: pre-wrap;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.sc-rte:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.sc-rte:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  pointer-events: none;
+  white-space: pre;
+}
+
+/* Placeholder chips inside the editor */
+.sc-tpl-chip {
+  display: inline-block;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 12px;
+  font-family: var(--mono, monospace);
+  line-height: 1.5;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Toolbar formatting buttons */
+.sc-fmt-btn {
+  font-size: 13px;
+  min-width: 28px;
+  padding: 2px 7px !important;
+  line-height: 1.4;
+}
+
+.sc-fmt-btn strong,
+.sc-fmt-btn em,
+.sc-fmt-btn u {
+  font-size: 13px;
+}
+
+/* Divider between toolbar groups */
+.sc-tool-divider {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+  vertical-align: middle;
+}
+
+/* Ensure lists in editor look correct */
+.sc-rte ul {
+  padding-left: 1.4em;
+  margin: 2px 0;
+}
+
+.sc-rte li {
+  list-style: disc;
+  margin: 1px 0;
+}

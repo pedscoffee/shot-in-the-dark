@@ -60,28 +60,116 @@
        TAB: NOTE TEMPLATE
     ════════════════════════════════════════════════ */
 
-    const noteTemplateInput = $('sc-note-template-input');
+    const noteEditor       = $('sc-note-template-editor');
     const noteTemplateError = $('sc-note-template-error');
     const saveNoteBtn       = $('sc-save-note-template');
     const resetNoteBtn      = $('sc-reset-note-template');
     const noteTemplateTools = $('sc-note-template-tools');
 
+    /* ── Rich-text ↔ Markdown conversion helpers ── */
+
+    /**
+     * markdownToHtml(md) → HTML string for the editor
+     * Converts the subset of Markdown we care about (bold, italic, underline,
+     * bullet lists) into HTML so the editor displays it richly.
+     * Placeholder tokens like {input}, {templates}, {dropdown:id} are wrapped
+     * in non-editable chips so they're visually distinct but preserved.
+     */
+    function markdownToHtml(md) {
+      // Split into lines, process each
+      const lines = String(md || '').split('\n');
+      const htmlLines = [];
+      let inList = false;
+      let listBuffer = [];
+
+      function flushList() {
+        if (listBuffer.length > 0) {
+          htmlLines.push('<ul>' + listBuffer.map(l => `<li>${l}</li>`).join('') + '</ul>');
+          listBuffer = [];
+          inList = false;
+        }
+      }
+
+      lines.forEach(line => {
+        // Detect bullet lines (- or * prefix)
+        const bulletMatch = line.match(/^(\s*[-*]\s+)(.*)/);
+        if (bulletMatch) {
+          inList = true;
+          listBuffer.push(inlineMarkdown(bulletMatch[2]));
+          return;
+        }
+        flushList();
+
+        if (line === '') {
+          htmlLines.push('<br>');
+        } else {
+          htmlLines.push('<div>' + inlineMarkdown(line) + '</div>');
+        }
+      });
+      flushList();
+
+      return htmlLines.join('');
+    }
+
+    function inlineMarkdown(text) {
+      // Bold: **text**
+      text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // Italic: *text* (not preceded by another *)
+      text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+      // Underline: __text__
+      text = text.replace(/__(.+?)__/g, '<u>$1</u>');
+      // Placeholders as chips
+      text = text.replace(/(\{[a-zA-Z0-9_:.-]+\})/g,
+        '<span class="sc-tpl-chip" contenteditable="false">$1</span>');
+      return text;
+    }
+
+    /**
+     * htmlToMarkdown(html) → Markdown string
+     * Serialises the editor's innerHTML back to Markdown for storage.
+     */
+    function htmlToMarkdown(rootEl) {
+      function nodeToMd(node) {
+        if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+        if (node.nodeType !== Node.ELEMENT_NODE) return '';
+        const tag = node.tagName.toLowerCase();
+        const inner = Array.from(node.childNodes).map(nodeToMd).join('');
+        if (tag === 'strong' || tag === 'b') return `**${inner}**`;
+        if (tag === 'em' || tag === 'i') return `*${inner}*`;
+        if (tag === 'u') return `__${inner}__`;
+        if (tag === 'br') return '\n';
+        if (tag === 'li') return `- ${inner}`;
+        if (tag === 'ul') {
+          return Array.from(node.children).map(li => `- ${Array.from(li.childNodes).map(nodeToMd).join('')}`).join('\n');
+        }
+        if (tag === 'div') {
+          // Empty div = newline; div with content = line
+          return inner ? inner + '\n' : '\n';
+        }
+        if (tag === 'span' && node.classList.contains('sc-tpl-chip')) {
+          return node.textContent; // preserve the placeholder token
+        }
+        return inner;
+      }
+
+      let md = Array.from(rootEl.childNodes).map(nodeToMd).join('');
+      // Normalise multiple consecutive newlines
+      md = md.replace(/\n{3,}/g, '\n\n').trim();
+      return md;
+    }
+
     function loadNoteTemplateTab() {
-      noteTemplateInput.value = state.noteTemplate;
+      noteEditor.innerHTML = markdownToHtml(state.noteTemplate);
       noteTemplateError.classList.add('hidden');
       noteTemplateError.textContent = '';
     }
 
-    if (typeof attachSmartTextareaBehavior === 'function') {
-      attachSmartTextareaBehavior(noteTemplateInput, () => {});
-    }
-
     saveNoteBtn.addEventListener('click', () => {
-      const val = noteTemplateInput.value || '';
+      const val = htmlToMarkdown(noteEditor);
       if (!val.includes('{input}') || !val.includes('{templates}')) {
         noteTemplateError.textContent = 'Note template must include both {input} and {templates}.';
         noteTemplateError.classList.remove('hidden');
-        noteTemplateInput.focus();
+        noteEditor.focus();
         return;
       }
       noteTemplateError.classList.add('hidden');
@@ -96,25 +184,53 @@
       const def = DEFAULT_NOTE_TEMPLATE;
       state.noteTemplate = def;
       storage.set(STORAGE_KEYS.NOTE_TEMPLATE, def);
-      noteTemplateInput.value = def;
+      noteEditor.innerHTML = markdownToHtml(def);
       noteTemplateError.classList.add('hidden');
       showToast('Note template reset to default', 'success');
       updatePreview();
     });
 
+    /* ── Formatting toolbar ── */
     if (noteTemplateTools) {
+      // Rich formatting buttons (data-format)
+      noteTemplateTools.querySelectorAll('[data-format]').forEach(btn => {
+        btn.addEventListener('mousedown', (e) => {
+          e.preventDefault(); // Keep focus on editor
+          noteEditor.focus();
+          const fmt = btn.dataset.format;
+          if (fmt === 'bold')       document.execCommand('bold', false, null);
+          if (fmt === 'italic')     document.execCommand('italic', false, null);
+          if (fmt === 'underline')  document.execCommand('underline', false, null);
+          if (fmt === 'bullet') {
+            // Insert a bullet list item
+            document.execCommand('insertUnorderedList', false, null);
+          }
+        });
+      });
+
+      // Snippet insert buttons (data-snippet) — inserts text/chip at cursor
       noteTemplateTools.querySelectorAll('[data-snippet]').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          noteEditor.focus();
           const snippet = btn.dataset.snippet || '';
-          const start = noteTemplateInput.selectionStart ?? noteTemplateInput.value.length;
-          const end = noteTemplateInput.selectionEnd ?? noteTemplateInput.value.length;
-          const before = noteTemplateInput.value.slice(0, start);
-          const after = noteTemplateInput.value.slice(end);
-          const prefix = before && !before.endsWith('\n') ? '\n' : '';
-          noteTemplateInput.value = before + prefix + snippet + after;
-          const cursor = before.length + prefix.length + snippet.length;
-          noteTemplateInput.setSelectionRange(cursor, cursor);
-          noteTemplateInput.focus();
+          // Create a chip element for placeholders
+          const chip = document.createElement('span');
+          chip.className = 'sc-tpl-chip';
+          chip.contentEditable = 'false';
+          chip.textContent = snippet;
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(chip);
+            range.setStartAfter(chip);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          } else {
+            noteEditor.appendChild(chip);
+          }
         });
       });
     }
