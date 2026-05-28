@@ -2,7 +2,7 @@
 
 **A stateless, privacy-first PWA that auto-inserts templated text into EMR notes from a simple clinical one-liner.**
 
-🔗 **[Live App → pedscoffee.github.io/shot-in-the-dark](https://pedscoffee.github.io/shot-in-the-dark/)**
+**[Live App → pedscoffee.github.io/shot-in-the-dark](https://pedscoffee.github.io/shot-in-the-dark/)**
 
 > ⚠️ Currently in active development. Suitable for personal use and evaluation.
 
