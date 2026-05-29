@@ -1186,3 +1186,55 @@ body {
   scrollbar-width: none;
 }
 .sc-rich-toolbar::-webkit-scrollbar { display: none; }
+
+/* ════════════════════════════════════════════════
+   UTILITY — replaces inline styles (CSP compliance)
+════════════════════════════════════════════════ */
+
+/* sc-label used as a section heading, not a <label> element */
+.sc-label-heading {
+  display: block;
+}
+
+/* Visually hidden but screen-reader accessible — for labelling inputs
+   whose visible label text is provided by an adjacent <span> */
+.sc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Behaviour-tab standalone checkboxes (Plain Text / Source Labels) */
+.sc-behavior-checkbox {
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+/* btn-row spacing variants */
+.sc-btn-row--mb { margin-bottom: 10px; }
+.sc-btn-row--mt { margin-top: 10px; }
+
+/* help-text top-margin variant */
+.sc-help-text--mt { margin-top: 4px; }
+
+/* Empty-state paragraph in template list */
+.sc-list-empty {
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+  padding: 18px 0;
+}
+
+/* Delete button danger colour in template list */
+.sc-btn-delete {
+  color: var(--danger);
+}

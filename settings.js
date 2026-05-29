@@ -296,12 +296,12 @@
       const sorted = activeCategory ? allSorted.filter(t => (t.category || '') === activeCategory) : allSorted;
 
       if (allSorted.length === 0) {
-        templateListEl.innerHTML = '<p style="color:var(--text-3);font-size:12px;text-align:center;padding:18px 0;">No templates yet. Add one above.</p>';
+        templateListEl.innerHTML = '<p class="sc-list-empty">No templates yet. Add one above.</p>';
         return;
       }
 
       templateListEl.innerHTML = filterHtml + (sorted.length === 0
-        ? '<p style="color:var(--text-3);font-size:12px;text-align:center;padding:18px 0;">No templates in this category.</p>'
+        ? '<p class="sc-list-empty">No templates in this category.</p>'
         : sorted.map(t => `
         <div class="sc-template-item" data-id="${esc(t.id)}">
           <div class="sc-template-info">
@@ -327,7 +327,7 @@
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
             </button>
-            <button class="sc-btn sc-btn-icon" data-action="delete" data-id="${esc(t.id)}" title="Delete template" style="color:var(--danger)">
+            <button class="sc-btn sc-btn-icon sc-btn-delete" data-action="delete" data-id="${esc(t.id)}" title="Delete template">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>

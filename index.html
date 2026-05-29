@@ -14,7 +14,7 @@
                  script-src 'self' https://cdnjs.cloudflare.com;
                  style-src 'self' https://fonts.googleapis.com;
                  font-src 'self' https://fonts.gstatic.com;
-                 connect-src 'none';
+                 connect-src 'self' https://cdnjs.cloudflare.com;
                  object-src 'none';
                  base-uri 'self';">
   <!-- DOMPurify: sanitizes all HTML before innerHTML insertion to prevent XSS -->
@@ -170,7 +170,7 @@
       <!-- ── Tab: Note Template ── -->
       <div id="stab-note-template" class="sc-stab-content active">
         <div class="sc-field-group">
-          <label class="sc-label">Note Structure</label>
+          <span class="sc-label sc-label-heading">Note Structure</span>
           <p class="sc-help-text">
             Use <code>{input}</code> for your one-liner, <code>{templates}</code> for matched content,
             <code>{dropdown:template-id}</code> to nest dropdown templates, and <code>{static:TEXT}</code> for fixed text.
@@ -199,7 +199,7 @@
 
       <!-- ── Tab: Templates ── -->
       <div id="stab-templates" class="sc-stab-content hidden">
-        <div class="sc-btn-row" style="margin-bottom:10px">
+        <div class="sc-btn-row sc-btn-row--mb">
           <button id="sc-add-template-btn" class="sc-btn sc-btn-primary">+ New Template</button>
         </div>
 
@@ -235,7 +235,7 @@
 
           <!-- Rich content editor (replaces the old textarea) -->
           <div class="sc-field-group">
-            <label class="sc-label">Content</label>
+            <span class="sc-label sc-label-heading">Content</span>
             <div class="sc-rich-editor">
               <div id="sc-form-content-toolbar" class="sc-rich-toolbar" aria-label="Content formatting"></div>
               <div id="sc-form-content-editor" class="sc-editor-content" contenteditable="true"
@@ -271,7 +271,7 @@
                 <span class="sc-toggle-track"></span>
                 <span class="sc-toggle-label">Single-select only (one option at a time)</span>
               </label>
-              <p class="sc-help-text" style="margin-top:4px;">When enabled, users can only pick one option from this dropdown at a time — ideal for mutually exclusive choices like follow-up timing.</p>
+              <p class="sc-help-text sc-help-text--mt">When enabled, users can only pick one option from this dropdown at a time — ideal for mutually exclusive choices like follow-up timing.</p>
             </div>
           </div>
           <div class="sc-field-group">
@@ -293,7 +293,7 @@
       <!-- ── Tab: Behavior ── -->
       <div id="stab-behavior" class="sc-stab-content hidden">
         <div class="sc-field-group">
-          <label class="sc-label">Auto-Copy</label>
+          <label class="sc-label" for="sc-autocopy-enabled">Auto-Copy</label>
           <label class="sc-toggle-wrap">
             <input type="checkbox" id="sc-autocopy-enabled" checked>
             <span class="sc-toggle-track"></span>
@@ -321,23 +321,25 @@
             <span class="sc-toggle-label">Copy as Plain Text</span>
             <span class="sc-toggle-desc">Strips HTML formatting before copying. Use if your EMR paste field doesn't support rich text.</span>
           </div>
-          <input type="checkbox" id="sc-plaintext-setting" style="flex-shrink:0;margin-top:2px;accent-color:var(--accent);width:16px;height:16px;">
+          <label for="sc-plaintext-setting" class="sc-sr-only">Copy as Plain Text</label>
+          <input type="checkbox" id="sc-plaintext-setting" class="sc-behavior-checkbox">
         </div>
         <div class="sc-toggle-row">
           <div class="sc-toggle-info">
             <span class="sc-toggle-label">Show Source Labels in Preview</span>
             <span class="sc-toggle-desc">Prepends [Template Name] before each matched block so you can verify which template contributed each section.</span>
           </div>
-          <input type="checkbox" id="sc-sourcelabels-setting" style="flex-shrink:0;margin-top:2px;accent-color:var(--accent);width:16px;height:16px;">
+          <label for="sc-sourcelabels-setting" class="sc-sr-only">Show Source Labels in Preview</label>
+          <input type="checkbox" id="sc-sourcelabels-setting" class="sc-behavior-checkbox">
         </div>
-        <div class="sc-btn-row" style="margin-top:10px;">
+        <div class="sc-btn-row sc-btn-row--mt">
           <button id="sc-save-behavior" class="sc-btn sc-btn-primary">Save</button>
         </div>
 
         <hr class="sc-divider">
 
         <div class="sc-field-group">
-          <label class="sc-label">Data Management</label>
+          <span class="sc-label sc-label-heading">Data Management</span>
           <div class="sc-btn-col">
             <button id="sc-export-btn" class="sc-btn sc-btn-ghost sc-btn-full">Export All Data (JSON)</button>
             <button id="sc-import-btn" class="sc-btn sc-btn-ghost sc-btn-full">Import Data (JSON)</button>
