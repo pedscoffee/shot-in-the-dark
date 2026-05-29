@@ -1,9 +1,9 @@
 /**
  * SmartChart — settings.js
- * Settings panel: note template editor, templates CRUD,
+ * Settings panel: starter template editor, templates CRUD,
  * behavior controls, export/import/reset.
  *
- * All template content and the note template are now stored and edited
+ * All template content and the starter template are now stored and edited
  * as HTML — no Markdown conversion anywhere.
  *
  * Runs after app.js. Accesses shared state via window.SmartChart.
@@ -30,14 +30,6 @@
   /**
    * createRichEditor(containerId, toolbarDef)
    * Wires up a contenteditable div with a rich formatting toolbar.
-   *
-   * toolbarDef: array of:
-   *   { cmd, label, title }           — execCommand button (toggles active state)
-   *   { type: 'snippet', label, snippet, title }  — insert literal text
-   *   { type: 'divider' }
-   *   { type: 'heading', level }      — insert H1/H2/H3 via formatBlock
-   *
-   * Returns { getHtml(), setHtml(html), focus() }
    */
   function createRichEditor(editorEl, toolbarEl, toolbarDef) {
     if (!editorEl || !toolbarEl) return null;
@@ -69,18 +61,7 @@
       const btn = document.createElement('button');
       btn.type = 'button';
 
-      if (item.type === 'snippet') {
-        btn.dataset.snippet = item.snippet;
-        btn.innerHTML = item.label;
-        btn.title = item.title || item.label;
-        btn.className = 'sc-template-tool';
-        btn.addEventListener('click', e => {
-          e.preventDefault();
-          editorEl.focus();
-          document.execCommand('insertHTML', false, item.snippet);
-        });
-
-      } else if (item.type === 'heading') {
+      if (item.type === 'heading') {
         btn.dataset.heading = item.level;
         btn.innerHTML = item.label;
         btn.title = item.title || `Heading ${item.level}`;
@@ -120,7 +101,7 @@
     };
   }
 
-  // Shared toolbar definition for template content editors
+  // Shared toolbar definition for template content editors and starter template
   const CONTENT_TOOLBAR = [
     { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold (Ctrl+B)' },
     { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic (Ctrl+I)' },
@@ -143,23 +124,6 @@
     { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
   ];
 
-  // Toolbar for the Note Template editor (adds {placeholder} snippet buttons)
-  const NOTE_TEMPLATE_TOOLBAR = [
-    { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold' },
-    { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic' },
-    { cmd: 'underline',     label: '<u>U</u>',       title: 'Underline' },
-    { type: 'divider' },
-    { cmd: 'insertUnorderedList', label: '• List',   title: 'Bullet list' },
-    { cmd: 'insertOrderedList',   label: '1. List',  title: 'Numbered list' },
-    { type: 'divider' },
-    { type: 'snippet', label: '{input}',            snippet: '{input}',            title: 'Insert {input} placeholder' },
-    { type: 'snippet', label: '{templates}',        snippet: '{templates}',        title: 'Insert {templates} placeholder' },
-    { type: 'snippet', label: 'Follow-Up ▾',        snippet: '{dropdown:follow-up}', title: 'Nest follow-up dropdown' },
-    { type: 'snippet', label: '{static:…}',         snippet: '{static:Text here}', title: 'Insert static text placeholder' },
-    { type: 'divider' },
-    { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
-  ];
-
   /* ══════════════════════════════════════════
      INIT
   ══════════════════════════════════════════ */
@@ -169,9 +133,9 @@
     if (!App) { console.error('[SmartChart] app.js not loaded'); return; }
 
     const {
-      state, dom, storage, STORAGE_KEYS,
-      DEFAULT_NOTE_TEMPLATE, DEFAULT_TEMPLATES, DEFAULT_BEHAVIOR,
-      showToast, updatePreview,
+      state, storage, STORAGE_KEYS,
+      DEFAULT_STARTER_TEMPLATE, DEFAULT_TEMPLATES, DEFAULT_BEHAVIOR,
+      showToast
     } = App;
 
     /* ── Settings Tabs ── */
@@ -192,51 +156,51 @@
     });
 
     /* ════════════════════════════════════════════════
-       TAB: NOTE TEMPLATE
+       TAB: STARTER TEMPLATE
     ════════════════════════════════════════════════ */
 
-    const noteTemplateEditorEl  = $('sc-note-template-input');
-    const noteTemplateToolbarEl = $('sc-note-template-tools');
-    const noteTemplateError     = $('sc-note-template-error');
-    const saveNoteBtn           = $('sc-save-note-template');
-    const resetNoteBtn          = $('sc-reset-note-template');
+    // Re-using the HTML IDs from your layout, assuming they might still be named sc-starter-template...
+    // Adjusting these element IDs slightly to match index.html from your payload.
+    const starterTemplateEditorEl  = $('sc-starter-template-input');
+    const starterTemplateToolbarEl = $('sc-starter-template-tools');
+    const starterTemplateError     = $('sc-starter-template-error');
+    const saveStarterBtn           = $('sc-save-starter-template');
+    const resetStarterBtn          = $('sc-reset-starter-template');
 
-    const noteTemplateEditor = createRichEditor(
-      noteTemplateEditorEl,
-      noteTemplateToolbarEl,
-      NOTE_TEMPLATE_TOOLBAR
+    const starterTemplateEditor = createRichEditor(
+      starterTemplateEditorEl,
+      starterTemplateToolbarEl,
+      CONTENT_TOOLBAR // Reusing the standard toolbar without legacy placeholders
     );
 
-    function loadNoteTemplateTab() {
-      noteTemplateEditor.setHtml(state.noteTemplate);
-      noteTemplateError.classList.add('hidden');
-      noteTemplateError.textContent = '';
+    function loadStarterTemplateTab() {
+      starterTemplateEditor.setHtml(state.starterTemplate);
+      if (starterTemplateError) {
+        starterTemplateError.classList.add('hidden');
+        starterTemplateError.textContent = '';
+      }
     }
 
-    saveNoteBtn.addEventListener('click', () => {
-      const html = noteTemplateEditor.getHtml();
-      if (!html.includes('{input}') || !html.includes('{templates}')) {
-        noteTemplateError.textContent = 'Note template must include both {input} and {templates}.';
-        noteTemplateError.classList.remove('hidden');
-        noteTemplateEditor.focus();
-        return;
-      }
-      noteTemplateError.classList.add('hidden');
-      state.noteTemplate = html;
-      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, html);
-      showToast('Note template saved', 'success');
-      updatePreview();
-    });
+    if (saveStarterBtn) {
+      saveStarterBtn.addEventListener('click', () => {
+        const html = starterTemplateEditor.getHtml();
+        if (starterTemplateError) starterTemplateError.classList.add('hidden');
+        state.starterTemplate = html;
+        storage.set(STORAGE_KEYS.STARTER_TEMPLATE, html);
+        showToast('Starter template saved', 'success');
+      });
+    }
 
-    resetNoteBtn.addEventListener('click', () => {
-      if (!confirm('Reset note template to the default?\n\n"{input}<br><br>{templates}"')) return;
-      state.noteTemplate = DEFAULT_NOTE_TEMPLATE;
-      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, DEFAULT_NOTE_TEMPLATE);
-      noteTemplateEditor.setHtml(DEFAULT_NOTE_TEMPLATE);
-      noteTemplateError.classList.add('hidden');
-      showToast('Note template reset to default', 'success');
-      updatePreview();
-    });
+    if (resetStarterBtn) {
+      resetStarterBtn.addEventListener('click', () => {
+        if (!confirm('Clear the starter template to a blank canvas?')) return;
+        state.starterTemplate = '';
+        storage.set(STORAGE_KEYS.STARTER_TEMPLATE, '');
+        starterTemplateEditor.setHtml('');
+        if (starterTemplateError) starterTemplateError.classList.add('hidden');
+        showToast('Starter template cleared', 'success');
+      });
+    }
 
     /* ════════════════════════════════════════════════
        TAB: TEMPLATES — LIST
@@ -459,7 +423,6 @@
       renderTemplateList();
       closeForm();
       showToast(`Template "${name}" saved`, 'success');
-      updatePreview();
     });
 
     function deleteTemplate(id) {
@@ -470,7 +433,6 @@
       storage.set(STORAGE_KEYS.TEMPLATES, state.templates);
       renderTemplateList();
       showToast(`"${t.name}" deleted`, 'warning');
-      updatePreview();
     }
 
     /* ════════════════════════════════════════════════
@@ -518,7 +480,6 @@
       try { storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior); } catch(e) {
         showToast('Storage full — export your data first', 'error', 4000); return;
       }
-      updatePreview();
       showToast('Behavior settings saved', 'success');
     });
 
@@ -530,7 +491,7 @@
       const payload = {
         version: 2,
         exportedAt: new Date().toISOString(),
-        noteTemplate: state.noteTemplate,
+        starterTemplate: state.starterTemplate,
         templates:    state.templates,
         behavior:     state.behavior,
       };
@@ -561,9 +522,9 @@
               storage.set(STORAGE_KEYS.TEMPLATES, state.templates);
               changes++;
             }
-            if (typeof data.noteTemplate === 'string' && data.noteTemplate.trim()) {
-              state.noteTemplate = data.noteTemplate;
-              storage.set(STORAGE_KEYS.NOTE_TEMPLATE, state.noteTemplate);
+            if (typeof data.starterTemplate === 'string') {
+              state.starterTemplate = data.starterTemplate;
+              storage.set(STORAGE_KEYS.STARTER_TEMPLATE, state.starterTemplate);
               changes++;
             }
             if (data.behavior && typeof data.behavior === 'object') {
@@ -572,10 +533,9 @@
               changes++;
             }
             if (changes === 0) { showToast('Nothing to import in that file', 'warning'); return; }
-            loadNoteTemplateTab();
+            loadStarterTemplateTab();
             renderTemplateList();
             loadBehaviorTab();
-            updatePreview();
             showToast(`Import successful (${changes} section${changes !== 1 ? 's' : ''})`, 'success');
           } catch {
             showToast('Import failed: invalid or malformed JSON', 'error', 4000);
@@ -589,20 +549,19 @@
     $('sc-reset-all-btn').addEventListener('click', () => {
       if (!confirm(
         'Reset ALL SmartChart data to factory defaults?\n\n' +
-        'This will overwrite all templates, the note template, and behavior settings.\n\n' +
+        'This will overwrite all templates, the starter template, and behavior settings.\n\n' +
         'This action CANNOT be undone.'
       )) return;
-      state.templates    = JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
-      state.noteTemplate = DEFAULT_NOTE_TEMPLATE;
-      state.behavior     = Object.assign({}, DEFAULT_BEHAVIOR);
-      storage.set(STORAGE_KEYS.TEMPLATES,     state.templates);
-      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, state.noteTemplate);
-      storage.set(STORAGE_KEYS.BEHAVIOR,      state.behavior);
-      loadNoteTemplateTab();
+      state.templates       = JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
+      state.starterTemplate = DEFAULT_STARTER_TEMPLATE;
+      state.behavior        = Object.assign({}, DEFAULT_BEHAVIOR);
+      storage.set(STORAGE_KEYS.TEMPLATES,        state.templates);
+      storage.set(STORAGE_KEYS.STARTER_TEMPLATE, state.starterTemplate);
+      storage.set(STORAGE_KEYS.BEHAVIOR,         state.behavior);
+      loadStarterTemplateTab();
       renderTemplateList();
       loadBehaviorTab();
       closeForm();
-      updatePreview();
       showToast('All data reset to defaults', 'warning', 3000);
     });
 
@@ -611,11 +570,11 @@
     ════════════════════════════════════════════════ */
 
     function open() {
-      loadNoteTemplateTab();
+      loadStarterTemplateTab();
       renderTemplateList();
       loadBehaviorTab();
       closeForm();
-      activateSettingsTab('note-template');
+      activateSettingsTab('starter-template');
     }
 
     window.SmartChartSettings = { open };
