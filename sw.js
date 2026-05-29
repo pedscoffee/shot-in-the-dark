@@ -4,7 +4,7 @@
  * Cache name is versioned; update CACHE_NAME to invalidate on deploy.
  */
 
-const CACHE_NAME = 'smartchart-v2.2';
+const CACHE_NAME = 'smartchart-v2.3';
 
 /* Assets to pre-cache on install */
 const PRECACHE_ASSETS = [
@@ -15,7 +15,8 @@ const PRECACHE_ASSETS = [
   './settings.js',
   './manifest.json',
   './icon.svg',
-  'https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js',
+  // DOMPurify: sanitizes HTML before innerHTML insertion (XSS prevention)
+  'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js',
 ];
 
 /* ─── Install: pre-cache core assets ─── */

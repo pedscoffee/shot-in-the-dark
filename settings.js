@@ -169,10 +169,22 @@
     if (!App) { console.error('[SmartChart] app.js not loaded'); return; }
 
     const {
-      state, dom, storage, STORAGE_KEYS,
+      getState, getTemplates, getNoteTemplate, getBehavior,
+      setTemplates, setNoteTemplate, setBehavior,
+      storage, STORAGE_KEYS,
       DEFAULT_NOTE_TEMPLATE, DEFAULT_TEMPLATES, DEFAULT_BEHAVIOR,
-      showToast, updatePreview,
+      showToast, updatePreview, sanitizeHtml,
     } = App;
+
+    // Convenience: live references through getters so settings always sees current state
+    const state = {
+      get templates()    { return getTemplates(); },
+      set templates(v)   { setTemplates(v); },
+      get noteTemplate() { return getNoteTemplate(); },
+      set noteTemplate(v){ setNoteTemplate(v); },
+      get behavior()     { return getBehavior(); },
+      set behavior(v)    { setBehavior(v); },
+    };
 
     /* ── Settings Tabs ── */
     function activateSettingsTab(tabId) {
@@ -348,9 +360,11 @@
       const div = document.createElement('div');
       div.className = 'sc-template-preview-expand sc-md-content';
       if (t.type === 'dropdown') {
+        // Dropdown options are plain text — escape them, no sanitization needed
         div.innerHTML = `<p><strong>Dropdown options:</strong></p><ul>${(t.options || []).map(o => `<li>${esc(o)}</li>`).join('')}</ul>`;
       } else {
-        div.innerHTML = t.content || '';
+        // Template content is user-authored HTML — sanitize before rendering
+        div.innerHTML = sanitizeHtml(t.content || '');
       }
       item.appendChild(div);
     }
@@ -556,21 +570,55 @@
           try {
             const data = JSON.parse(e.target.result);
             let changes = 0;
+
             if (Array.isArray(data.templates) && data.templates.length > 0) {
-              state.templates = data.templates;
+              // Sanitize every HTML content field before trusting imported data
+              const sanitized = data.templates.map(t => {
+                if (!t || typeof t !== 'object') return null;
+                return {
+                  ...t,
+                  // Coerce and sanitize string fields
+                  id:       String(t.id       || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || `tpl-${Date.now()}`,
+                  name:     String(t.name     || '').slice(0, 200),
+                  content:  typeof t.content === 'string' ? sanitizeHtml(t.content) : '',
+                  triggers: Array.isArray(t.triggers)
+                              ? t.triggers.map(tr => String(tr).slice(0, 100)).filter(Boolean)
+                              : [],
+                  options:  Array.isArray(t.options)
+                              ? t.options.map(o => String(o).slice(0, 500))
+                              : undefined,
+                  label:    t.label    ? String(t.label).slice(0, 200)    : undefined,
+                  category: t.category ? String(t.category).slice(0, 100) : undefined,
+                  priority: Number.isFinite(t.priority) ? t.priority : 10,
+                };
+              }).filter(Boolean);
+              state.templates = sanitized;
               storage.set(STORAGE_KEYS.TEMPLATES, state.templates);
               changes++;
             }
+
             if (typeof data.noteTemplate === 'string' && data.noteTemplate.trim()) {
-              state.noteTemplate = data.noteTemplate;
+              // Sanitize the note template HTML as well
+              state.noteTemplate = sanitizeHtml(data.noteTemplate);
               storage.set(STORAGE_KEYS.NOTE_TEMPLATE, state.noteTemplate);
               changes++;
             }
+
             if (data.behavior && typeof data.behavior === 'object') {
-              state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, data.behavior);
+              // Only copy known numeric/boolean keys — never merge arbitrary properties
+              const b = data.behavior;
+              const safeBehavior = {
+                autoCopyDelay:   Number.isFinite(b.autoCopyDelay)   ? Math.min(Math.max(b.autoCopyDelay, 500), 30000)    : DEFAULT_BEHAVIOR.autoCopyDelay,
+                autoClearDelay:  Number.isFinite(b.autoClearDelay)  ? Math.min(Math.max(b.autoClearDelay, 5000), 600000) : DEFAULT_BEHAVIOR.autoClearDelay,
+                autoCopyEnabled: typeof b.autoCopyEnabled === 'boolean' ? b.autoCopyEnabled : DEFAULT_BEHAVIOR.autoCopyEnabled,
+                plainTextCopy:   typeof b.plainTextCopy   === 'boolean' ? b.plainTextCopy   : DEFAULT_BEHAVIOR.plainTextCopy,
+                sourceLabels:    typeof b.sourceLabels    === 'boolean' ? b.sourceLabels    : DEFAULT_BEHAVIOR.sourceLabels,
+              };
+              state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, safeBehavior);
               storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
               changes++;
             }
+
             if (changes === 0) { showToast('Nothing to import in that file', 'warning'); return; }
             loadNoteTemplateTab();
             renderTemplateList();

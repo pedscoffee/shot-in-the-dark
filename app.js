@@ -161,6 +161,25 @@ function debounce(fn, ms) {
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
+/**
+ * sanitizeHtml(html) → string
+ * Runs HTML through DOMPurify before any innerHTML assignment.
+ * Strips scripts, event handlers, and dangerous attributes.
+ * Falls back to plain-text escaping if DOMPurify is not loaded (should not happen).
+ */
+function sanitizeHtml(html) {
+  if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) {
+    return DOMPurify.sanitize(String(html || ''), {
+      ALLOWED_TAGS: ['b','i','em','strong','u','s','p','br','hr','ul','ol','li',
+                     'h1','h2','h3','span','div','table','thead','tbody','tr','td','th'],
+      ALLOWED_ATTR: ['class','style'],
+    });
+  }
+  // Fallback: strip all tags if DOMPurify somehow unavailable
+  console.warn('[SmartChart] DOMPurify not loaded — stripping all HTML as safety fallback.');
+  return String(html || '').replace(/<[^>]*>/g, '');
+}
+
 function escapeRegExp(str) {
   return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -505,14 +524,14 @@ function updatePreview() {
   // Source tab shows cleaned HTML for transparency
   dom.sourceText.textContent = htmlSource;
 
-  dom.previewRendered.innerHTML = htmlSource;
+  dom.previewRendered.innerHTML = sanitizeHtml(htmlSource);
   renderDropdownControls(state.activeDropdowns);
   dom.previewEmpty.classList.add('hidden');
   dom.previewRendered.classList.remove('hidden');
 
   if (matched.length === 0 && input.trim()) {
     setStatus('No templates matched — try "illness", "injury", "otitis", "strep", or "follow up"', 'idle');
-    dom.previewRendered.innerHTML = '<div class="sc-no-match-msg"><span class="sc-no-match-icon">🔍</span><span>No templates matched your input.</span><span class="sc-no-match-hint">Try words like: <em>illness, injury, otitis, strep, dehydration, trouble breathing, follow up…</em></span></div>';
+    dom.previewRendered.innerHTML = sanitizeHtml('<div class="sc-no-match-msg"><span class="sc-no-match-icon">🔍</span><span>No templates matched your input.</span><span class="sc-no-match-hint">Try words like: <em>illness, injury, otitis, strep, dehydration, trouble breathing, follow up…</em></span></div>');
     dom.previewEmpty.classList.add('hidden');
     dom.previewRendered.classList.remove('hidden');
   } else {
@@ -913,19 +932,30 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 
+// Expose only the minimal API that settings.js requires.
+// Raw state, storage internals, and DOM references are NOT exported.
 window.SmartChart = {
-  state,
-  dom,
-  storage,
+  // Read-only snapshots (settings.js reads these once on open)
+  getState()           { return { ...state, autoCopyTimer: undefined, autoClearTimer: undefined, previewDebounce: undefined }; },
+  getTemplates()       { return state.templates; },
+  getNoteTemplate()    { return state.noteTemplate; },
+  getBehavior()        { return { ...state.behavior }; },
   STORAGE_KEYS,
   DEFAULT_NOTE_TEMPLATE,
   DEFAULT_TEMPLATES,
   DEFAULT_BEHAVIOR,
+  // Mutators (settings.js uses these to save changes)
+  setTemplates(tpls)   { state.templates    = tpls; },
+  setNoteTemplate(nt)  { state.noteTemplate = nt;   },
+  setBehavior(b)       { state.behavior     = b;    },
+  // Shared utilities
+  storage,
   updatePreview,
   showToast,
   renderNote,
   matchTemplates,
   htmlToPlainText,
   clearInput,
+  sanitizeHtml,
   attachSmartTextareaBehavior,
 };

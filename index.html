@@ -7,6 +7,18 @@
   <meta name="theme-color" content="#0b0e14">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Content Security Policy: restrict script execution to self + DOMPurify CDN only.
+       This blocks injected inline scripts even if XSS payloads reach innerHTML. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' https://cdnjs.cloudflare.com;
+                 style-src 'self' https://fonts.googleapis.com;
+                 font-src 'self' https://fonts.gstatic.com;
+                 connect-src 'none';
+                 object-src 'none';
+                 base-uri 'self';">
+  <!-- DOMPurify: sanitizes all HTML before innerHTML insertion to prevent XSS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
   <title>SmartChart</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
