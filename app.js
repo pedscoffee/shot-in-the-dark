@@ -99,6 +99,7 @@ const DEFAULT_TEMPLATES = [
     triggers: ['follow up', 'follow-up', 'followup'],
     label: 'Follow-Up',
     join: 'lines',
+    singleSelect: true,
     options: [
       'Follow up as needed.',
       'Follow up in 2-3 days.',
@@ -355,6 +356,7 @@ function renderDropdownControls(dropdowns) {
 
   dropdowns.forEach(t => {
     const selection = getDropdownSelection(t.id);
+    const isSingleSelect = !!(t.singleSelect);
     const card = document.createElement('div');
     card.className = 'sc-dropdown-template';
     card.dataset.dropdownId = t.id;
@@ -368,8 +370,19 @@ function renderDropdownControls(dropdowns) {
 
     const select = document.createElement('select');
     select.className = 'sc-dropdown-template-select';
-    select.multiple = true;
-    select.size = Math.min(Math.max((t.options || []).length, 3), 6);
+    // Single-select mode: use a <select> without multiple; add a blank "(none)" option
+    if (isSingleSelect) {
+      select.multiple = false;
+      select.size = 1;
+      const blankOpt = document.createElement('option');
+      blankOpt.value = '';
+      blankOpt.textContent = '— select one —';
+      blankOpt.selected = (selection.values || []).length === 0;
+      select.appendChild(blankOpt);
+    } else {
+      select.multiple = true;
+      select.size = Math.min(Math.max((t.options || []).length, 3), 6);
+    }
     (t.options || []).forEach(optionText => {
       const option = document.createElement('option');
       option.value = optionText;
@@ -380,6 +393,8 @@ function renderDropdownControls(dropdowns) {
 
     const join = document.createElement('select');
     join.className = 'sc-dropdown-template-join';
+    // Hide join selector for single-select dropdowns (only one value, no joining needed)
+    if (isSingleSelect) join.style.display = 'none';
     [
       ['lines', 'Bullets'],
       ['comma', 'Comma list'],
@@ -397,8 +412,11 @@ function renderDropdownControls(dropdowns) {
     });
 
     const onChange = () => {
+      const selectedValues = isSingleSelect
+        ? (select.value ? [select.value] : [])
+        : Array.from(select.selectedOptions).map(o => o.value);
       state.dropdownSelections[t.id] = {
-        values: Array.from(select.selectedOptions).map(o => o.value),
+        values: selectedValues,
         join: join.value,
       };
       updatePreview();
@@ -521,7 +539,8 @@ function scheduleAutoCopy() {
   cancelAutoCopy();
   if (!state.behavior.autoCopyEnabled) return;
   if (!state.currentNoteHtml.trim()) return;
-  if (state.activeDropdowns.some(t => getDropdownSelection(t.id).values.length === 0)) return;
+  // Auto-copy proceeds even if dropdowns are unselected — unselected dropdowns
+  // simply render as empty and are excluded from the copied output.
 
   dom.autoCopyIndicator.classList.remove('hidden');
   state.autoCopyTimer = setTimeout(async () => {
@@ -658,6 +677,32 @@ function attachSmartTextareaBehavior(el, onChange) {
     onChange();
   });
   el.addEventListener('keydown', e => {
+    // Backspace on an otherwise-empty bullet line removes the bullet prefix
+    if (e.key === 'Backspace' && !e.metaKey && !e.ctrlKey) {
+      const cursor    = el.selectionStart ?? el.value.length;
+      const selEnd    = el.selectionEnd ?? cursor;
+      if (cursor === selEnd) { // no selection
+        const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
+        const lineBeforeCursor = el.value.slice(lineStart, cursor);
+        // If the line is exactly a bullet prefix ("- " or "* ") with nothing after,
+        // remove the entire prefix rather than deleting character-by-character
+        const bulletOnly = lineBeforeCursor.match(/^(\s*[-*] )$/);
+        if (bulletOnly) {
+          e.preventDefault();
+          // Remove the prefix (and the preceding newline if not at start)
+          const removeFrom = lineStart > 0 ? lineStart - 1 : lineStart; // remove the \n before this line too
+          const removeLength = lineStart > 0
+            ? 1 + bulletOnly[1].length  // \n + prefix chars
+            : bulletOnly[1].length;
+          el.value = el.value.slice(0, removeFrom) + el.value.slice(removeFrom + removeLength);
+          const newCursor = removeFrom;
+          el.setSelectionRange(newCursor, newCursor);
+          onChange();
+          return;
+        }
+      }
+    }
+
     if (e.key !== 'Enter') return;
     const cursor    = el.selectionStart ?? el.value.length;
     const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;

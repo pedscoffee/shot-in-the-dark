@@ -372,6 +372,8 @@
       formDropdownLabel.value = '';
       formOptions.value = '';
       formJoin.value = 'lines';
+      const singleSelectEl = $('sc-form-single-select');
+      if (singleSelectEl) singleSelectEl.checked = false;
       formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = '';
@@ -393,6 +395,8 @@
       formDropdownLabel.value = t.label || t.name;
       formOptions.value = (t.options || []).join('\n');
       formJoin.value = t.join || 'lines';
+      const singleSelectEl = $('sc-form-single-select');
+      if (singleSelectEl) singleSelectEl.checked = !!(t.singleSelect);
       formPriority.value = t.priority ?? 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = t.category || '';
@@ -429,12 +433,15 @@
       if (type === 'dropdown' && options.length === 0) { alert('Dropdown templates need at least one option.'); formOptions.focus(); return; }
 
       const triggers = triggersRaw.split(',').map(s => s.trim()).filter(Boolean);
+      const singleSelectEl = $('sc-form-single-select');
+      const singleSelect = singleSelectEl ? singleSelectEl.checked : false;
       const template = type === 'dropdown'
         ? {
             id, name, type, triggers,
             label:    (formDropdownLabel.value || '').trim() || name,
             options,
             join:     formJoin.value || 'lines',
+            singleSelect,
             priority,
             ...(category ? { category } : {}),
           }
