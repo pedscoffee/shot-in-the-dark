@@ -286,17 +286,10 @@
       const allSorted = [...state.templates].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
       const categories = [...new Set(allSorted.map(t => t.category || '').filter(Boolean))];
 
-      // Detect if the active category is a wizard-generated diagnosis
-      // (has a main template with id wiz-{slug}-main)
-      const isWizardCategory = activeCategory
-        ? allSorted.some(t => t.category === activeCategory && t.id && t.id.endsWith('-main') && t.id.startsWith('wiz-'))
-        : false;
-
       const filterHtml = categories.length > 0 ? `
         <div class="sc-cat-filter">
           <button class="sc-cat-btn${activeCategory === '' ? ' active' : ''}" data-cat="">All</button>
           ${categories.map(c => `<button class="sc-cat-btn${activeCategory === c ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
-          ${isWizardCategory ? `<button class="sc-btn sc-btn-ghost sc-wiz-edit-btn" data-wizcat="${esc(activeCategory)}" title="Re-open this diagnosis in the Template Wizard to edit and regenerate it">✦ Edit in Wizard</button>` : ''}
         </div>
       ` : '';
 
@@ -348,17 +341,6 @@
       templateListEl.querySelectorAll('.sc-cat-btn').forEach(btn => {
         btn.addEventListener('click', () => { activeCategory = btn.dataset.cat; renderTemplateList(); });
       });
-      const wizEditBtn = templateListEl.querySelector('.sc-wiz-edit-btn');
-      if (wizEditBtn) {
-        wizEditBtn.addEventListener('click', () => {
-          const diagName = wizEditBtn.dataset.wizcat;
-          // Close settings, open wizard, load the diagnosis
-          $('sc-settings').classList.add('hidden');
-          const wizPanel = $('sc-wizard');
-          if (wizPanel) wizPanel.classList.remove('hidden');
-          if (window.SmartChartWizard) window.SmartChartWizard.loadDiagnosis(diagName);
-        });
-      }
       templateListEl.querySelectorAll('[data-action]').forEach(btn => {
         btn.addEventListener('click', () => {
           const { action, id } = btn.dataset;

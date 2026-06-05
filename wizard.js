@@ -210,13 +210,61 @@
       } else {
         const wrap = document.createElement('div');
         wrap.className = 'sc-wiz-category-label-wrap';
+
+        // Click-to-edit category name
+        const titleRow = document.createElement('div');
+        titleRow.className = 'sc-wiz-category-name-row';
+
         const title = document.createElement('span');
         title.className = 'sc-wiz-category-name';
         title.textContent = name;
+        title.title = 'Click to rename';
+
+        const editIcon = document.createElement('span');
+        editIcon.className = 'sc-wiz-category-edit-icon';
+        editIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+        editIcon.title = 'Rename category';
+
+        titleRow.appendChild(title);
+        titleRow.appendChild(editIcon);
+
+        // Inline input (hidden by default)
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'sc-input-settings sc-wiz-category-name-input';
+        nameInput.value = name;
+        nameInput.style.display = 'none';
+
+        function startEditing() {
+          title.style.display = 'none';
+          editIcon.style.display = 'none';
+          nameInput.style.display = '';
+          nameInput.focus();
+          nameInput.select();
+        }
+
+        function stopEditing() {
+          const val = nameInput.value.trim() || name;
+          nameInput.value = val;
+          title.textContent = val;
+          nameInput.style.display = 'none';
+          title.style.display = '';
+          editIcon.style.display = '';
+        }
+
+        titleRow.addEventListener('click', startEditing);
+        nameInput.addEventListener('blur', stopEditing);
+        nameInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); stopEditing(); }
+          if (e.key === 'Escape') { nameInput.value = title.textContent; stopEditing(); }
+        });
+
+        wrap.appendChild(titleRow);
+        wrap.appendChild(nameInput);
+
         const descSpan = document.createElement('span');
         descSpan.className = 'sc-wiz-category-desc';
         descSpan.textContent = desc;
-        wrap.appendChild(title);
         wrap.appendChild(descSpan);
         nameTd.appendChild(wrap);
       }
@@ -255,32 +303,7 @@
       });
       modeTd.appendChild(select);
 
-      const reorderTd = document.createElement('td');
-      reorderTd.style.cssText = 'padding: 6px 4px; text-align: center; vertical-align: middle; white-space: nowrap;';
-      reorderTd.className = 'sc-wiz-reorder-td';
-
-      const moveUp = document.createElement('button');
-      moveUp.type = 'button';
-      moveUp.className = 'sc-wiz-move-btn';
-      moveUp.title = 'Move up';
-      moveUp.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="18 15 12 9 6 15"/></svg>';
-      moveUp.addEventListener('click', () => {
-        const prev = row.previousElementSibling;
-        if (prev) listContainer.insertBefore(row, prev);
-      });
-
-      const moveDown = document.createElement('button');
-      moveDown.type = 'button';
-      moveDown.className = 'sc-wiz-move-btn';
-      moveDown.title = 'Move down';
-      moveDown.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>';
-      moveDown.addEventListener('click', () => {
-        const next = row.nextElementSibling;
-        if (next) listContainer.insertBefore(next, row);
-      });
-
-      reorderTd.append(moveUp, moveDown);
-      row.append(checkboxTd, nameTd, textareaTd, modeTd, reorderTd);
+      row.append(checkboxTd, nameTd, textareaTd, modeTd);
       listContainer.appendChild(row);
 
       if (isCustom) {
@@ -357,8 +380,10 @@
           const input = row.querySelector('.sc-wiz-custom-name');
           name = input ? input.value.trim() : '';
         } else {
+          // Prefer the editable input value (covers mid-edit state), fall back to span text
+          const nameInput = row.querySelector('.sc-wiz-category-name-input');
           const nameSpan = row.querySelector('.sc-wiz-category-name');
-          name = nameSpan ? nameSpan.textContent.trim() : '';
+          name = (nameInput ? nameInput.value.trim() : '') || (nameSpan ? nameSpan.textContent.trim() : '');
         }
 
         if (!name) {
@@ -504,154 +529,6 @@
       }
     });
 
-    // ── loadDiagnosis: reconstruct wizard form from existing generated templates ──
-    function loadDiagnosis(diagName) {
-      const templates = getTemplates();
-      const diagSlug = slugify(diagName);
-      const mainId = `wiz-${diagSlug}-main`;
-      const mainTpl = templates.find(t => t.id === mainId);
-
-      // Start with a clean slate
-      $('sc-wiz-name').value = diagName;
-      $('sc-wiz-triggers').value = mainTpl ? (mainTpl.triggers || []).join(', ') : '';
-      customCategoryCounter = 0;
-
-      // Parse the ordered list of {dropdown:ID} references from the main template content
-      const dropdownIds = [];
-      if (mainTpl && mainTpl.content) {
-        const re = /\{dropdown:([^}]+)\}/g;
-        let m;
-        while ((m = re.exec(mainTpl.content)) !== null) {
-          dropdownIds.push(m[1].trim());
-        }
-      }
-
-      // Build a map from sub-template ID → sub-template
-      const subMap = {};
-      templates.forEach(t => {
-        if (t.category === diagName && t.id !== mainId) subMap[t.id] = t;
-      });
-
-      // Render default categories first (unchecked/empty unless they appear in dropdownIds)
-      listContainer.innerHTML = '';
-      DEFAULT_CATEGORIES.forEach(cat => {
-        // Find the sub-template that matches this default category slot
-        const expectedId = `wiz-${diagSlug}-${slugify(cat.name)}`;
-        const subTpl = subMap[expectedId];
-
-        // Also check if the sub-template's label was renamed (same id pattern, different label)
-        // Try to match by ID first; fall back to searching by label
-        const actualId = dropdownIds.find(id => id === expectedId)
-          || dropdownIds.find(id => {
-            const t = subMap[id];
-            return t && slugify(t.label || '') === slugify(cat.name);
-          });
-        const resolvedTpl = actualId ? (subMap[actualId] || subTpl) : subTpl;
-
-        // Determine display name: prefer the sub-template label if it differs (user renamed it)
-        const displayName = (resolvedTpl && resolvedTpl.label && resolvedTpl.label !== cat.name)
-          ? resolvedTpl.label
-          : cat.name;
-
-        addCategoryRow(displayName, cat.desc, cat.placeholder, cat.defaultMode, cat.id, false);
-
-        if (resolvedTpl) {
-          // Populate the row we just added (last child)
-          const row = listContainer.lastElementChild;
-          const textarea = row.querySelector('textarea');
-          const select = row.querySelector('select');
-          const checkbox = row.querySelector('.sc-wiz-checkbox');
-          if (textarea) textarea.value = (resolvedTpl.options || []).join('
-');
-          if (select) {
-            const mode = resolvedTpl.singleSelect ? 'singleSelect' : (resolvedTpl.join || 'lines');
-            select.value = mode;
-          }
-          if (checkbox) checkbox.checked = true;
-        }
-      });
-
-      // Add custom category rows for any sub-templates NOT matched to a default category slot
-      const defaultExpectedIds = DEFAULT_CATEGORIES.map(cat => `wiz-${diagSlug}-${slugify(cat.name)}`);
-      const handledIds = new Set(defaultExpectedIds);
-      handledIds.add(mainId);
-
-      // Only add custom rows for IDs that appear in the dropdown references order
-      dropdownIds.forEach(id => {
-        if (handledIds.has(id)) return;
-        const t = subMap[id];
-        if (!t) return;
-        customCategoryCounter++;
-        addCategoryRow(t.label || t.name, '', 'Enter custom variations, one per line...', t.join || 'lines', `custom-${customCategoryCounter}`, true);
-        const row = listContainer.lastElementChild;
-        const textarea = row.querySelector('textarea');
-        const select = row.querySelector('select');
-        if (textarea) textarea.value = (t.options || []).join('
-');
-        if (select) select.value = t.singleSelect ? 'singleSelect' : (t.join || 'lines');
-        handledIds.add(id);
-      });
-
-      // Now reorder rows to match the dropdownIds order (the user's saved order)
-      // Build id→row map based on which sub-template each row represents
-      if (dropdownIds.length > 0) {
-        // Map each row to its expected sub-template ID
-        const rowsInOrder = [];
-        const unorderedRows = [];
-        const allRows = Array.from(listContainer.querySelectorAll('tr'));
-
-        // For default rows, derive their expected sub-template ID
-        const rowIdMap = new Map();
-        allRows.forEach(row => {
-          const isCustom = row.dataset.custom === 'true';
-          if (isCustom) {
-            // Find the custom row's sub-template by matching its name input value
-            const nameInput = row.querySelector('.sc-wiz-custom-name');
-            const label = nameInput ? nameInput.value.trim() : '';
-            const matchId = dropdownIds.find(id => {
-              const t = subMap[id];
-              return t && (t.label === label || t.name === label);
-            });
-            rowIdMap.set(row, matchId || null);
-          } else {
-            const catId = row.dataset.id;
-            const cat = DEFAULT_CATEGORIES.find(c => c.id === catId);
-            if (cat) {
-              const expectedId = `wiz-${diagSlug}-${slugify(cat.name)}`;
-              // Also check if a renamed variant exists
-              const altId = dropdownIds.find(id => {
-                const t = subMap[id];
-                return t && slugify(t.label || '') === slugify(cat.name);
-              });
-              rowIdMap.set(row, dropdownIds.includes(expectedId) ? expectedId : (altId || null));
-            } else {
-              rowIdMap.set(row, null);
-            }
-          }
-        });
-
-        // Sort rows: first those in dropdownIds order, then unchecked defaults at the end
-        const inDropdown = [];
-        const notInDropdown = [];
-        allRows.forEach(row => {
-          const id = rowIdMap.get(row);
-          if (id && dropdownIds.includes(id)) {
-            inDropdown.push({ row, idx: dropdownIds.indexOf(id) });
-          } else {
-            notInDropdown.push(row);
-          }
-        });
-        inDropdown.sort((a, b) => a.idx - b.idx);
-
-        // Re-append in order
-        inDropdown.forEach(({ row }) => listContainer.appendChild(row));
-        notInDropdown.forEach(row => listContainer.appendChild(row));
-      }
-
-      renderLinkedTemplates();
-      $('sc-wiz-name').focus();
-    }
-
     // Public API
     window.SmartChartWizard = {
       open() {
@@ -661,8 +538,7 @@
         renderLinkedTemplates();
         customCategoryCounter = 0;
         $('sc-wiz-name').focus();
-      },
-      loadDiagnosis
+      }
     };
   }
 
