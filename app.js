@@ -4,11 +4,11 @@
  * focus mode, auto-copy, auto-clear, state persistence.
  *
  * Design decisions:
- *  - Stores & renders templates as HTML (no Markdown)
- *  - Copies rich HTML + plain-text fallback to clipboard
- *  - Debounce preview: 300ms | Auto-copy: 1.5s | Auto-clear: 30s
- *  - Pane fills the browser window
- *  - Focus mode hides everything below the input for EMR side-by-side use
+ * - Stores & renders templates as HTML (no Markdown)
+ * - Copies rich HTML + plain-text fallback to clipboard
+ * - Debounce preview: 300ms | Auto-copy: 1.5s | Auto-clear: 30s
+ * - Pane fills the browser window
+ * - Focus mode hides everything below the input for EMR side-by-side use
  */
 
 'use strict';
@@ -123,6 +123,7 @@ const DEFAULT_BEHAVIOR = {
   autoCopyEnabled: true,
   plainTextCopy:   false,
   sourceLabels:    false,
+  hyphenBullets:   false,
 };
 
 const state = {
@@ -300,6 +301,14 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
 
   // {static:TEXT} → plain span
   out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
+
+  // Transform standard bullets to hardcoded hyphens if enabled
+  if (opts.hyphenBullets) {
+    out = out.replace(/<ul[^>]*>/gi, '<div class="sc-list-hyphen">')
+             .replace(/<\/ul>/gi, '</div>')
+             .replace(/<li[^>]*>/gi, '<div class="sc-hyphen-item">- ')
+             .replace(/<\/li>/gi, '</div>');
+  }
 
   return out;
 }
@@ -517,6 +526,7 @@ function updatePreview() {
 
   const htmlSource = renderNote(modifiedInput, bottomTemplates, nt, {
     sourceLabels: state.behavior.sourceLabels,
+    hyphenBullets: state.behavior.hyphenBullets,
   });
 
   if (matched.length > 0) {

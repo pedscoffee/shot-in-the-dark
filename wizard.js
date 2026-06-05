@@ -414,14 +414,14 @@
 
       // 2. Generate the main Diagnosis Template at priority 1 (appears first in matched output)
       const mainTemplateId = `wiz-${diagSlug}-main`;
-      // Build content: each dropdown is on its own line without a redundant bold label
-      // (the user already knows from context what each selection means)
+      // Build content: each dropdown is separated by a space rather than a <br>
+      // to avoid extra line breaks in the rendered output
       let contentHtml = '';
       dropdownReferences.forEach(ref => {
-        contentHtml += `{dropdown:${ref.id}}<br>`;
+        contentHtml += `{dropdown:${ref.id}} `;
       });
-      // Trim the trailing <br>
-      contentHtml = contentHtml.replace(/<br>$/, '');
+      // Trim the trailing space
+      contentHtml = contentHtml.replace(/ $/, '');
 
       const mainTemplate = {
         id: mainTemplateId,

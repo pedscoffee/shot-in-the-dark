@@ -7,8 +7,6 @@
   <meta name="theme-color" content="#0b0e14">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <!-- Content Security Policy: restrict script execution to self + DOMPurify CDN only.
-       This blocks injected inline scripts even if XSS payloads reach innerHTML. -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
                  script-src 'self' https://cdnjs.cloudflare.com;
@@ -17,24 +15,18 @@
                  connect-src 'self' https://cdnjs.cloudflare.com;
                  object-src 'none';
                  base-uri 'self';">
-  <!-- DOMPurify: sanitizes all HTML before innerHTML insertion to prevent XSS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
   <title>SmartChart</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  <!-- marked.js removed — no longer needed; all content is stored and rendered as HTML -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════
-     MAIN FLOATING PANE
-════════════════════════════════════════════════ -->
 <div id="smartchart-pane" class="sc-pane" role="complementary" aria-label="SmartChart Note Assistant">
 
-  <!-- Header / Drag Handle -->
   <header id="sc-header" class="sc-header" title="Drag to move">
     <div class="sc-header-left">
       <span class="sc-logo" aria-hidden="true">✚</span>
@@ -42,7 +34,6 @@
       <span id="sc-match-badge" class="sc-match-badge hidden" aria-live="polite" title="Matched templates">0</span>
     </div>
     <div class="sc-header-right">
-      <!-- New Patient button -->
       <button id="sc-new-patient-btn" class="sc-btn sc-btn-icon" title="New Patient — clear input (Ctrl+Shift+N)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -51,14 +42,12 @@
           <line x1="9" y1="17" x2="15" y2="17"/>
         </svg>
       </button>
-      <!-- Copy button -->
       <button id="sc-copy-btn" class="sc-btn sc-btn-icon" title="Copy note to clipboard (Ctrl+Shift+C)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
         </svg>
       </button>
-      <!-- Wizard button -->
       <button id="sc-wizard-btn" class="sc-btn sc-btn-icon" title="Template Wizard (Ctrl+Shift+W)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M15 4V2"/>
@@ -73,14 +62,12 @@
           <path d="M12.2 6.2l5.6 5.6"/>
         </svg>
       </button>
-      <!-- Settings button -->
       <button id="sc-settings-btn" class="sc-btn sc-btn-icon" title="Settings (Ctrl+Shift+S)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       </button>
-      <!-- Focus mode button -->
       <button id="sc-minimize-btn" class="sc-btn sc-btn-icon" title="Focus mode" aria-label="Focus mode">
         <svg id="sc-min-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
@@ -92,10 +79,8 @@
     </div>
   </header>
 
-  <!-- ─── MAIN BODY ─── -->
   <div id="sc-body" class="sc-body">
 
-    <!-- Input Section -->
     <section class="sc-input-section">
       <div class="sc-input-label">
         <span>Clinical One-Liner <span class="sc-kbd-hint" title="Keyboard shortcuts: Ctrl+Shift+C to copy, Ctrl+Shift+N for new patient, Esc to close settings">⌨</span></span>
@@ -115,7 +100,6 @@
       ></textarea>
     </section>
 
-    <!-- Status Bar -->
     <div id="sc-status-bar" class="sc-status-bar" aria-live="polite" aria-atomic="true">
       <span id="sc-status-text" class="sc-status-text">Ready</span>
       <div class="sc-status-right">
@@ -123,7 +107,6 @@
       </div>
     </div>
 
-    <!-- Preview Section -->
     <section class="sc-preview-section" aria-label="Note preview">
       <div class="sc-preview-tabs" role="tablist">
         <button class="sc-tab active" data-tab="preview" role="tab" aria-selected="true">Preview</button>
@@ -134,7 +117,6 @@
         </div>
       </div>
 
-      <!-- Preview tab -->
       <div id="sc-preview" class="sc-preview-content sc-preview-rendered" role="tabpanel">
         <div id="sc-preview-empty" class="sc-empty-state">
           <div class="sc-empty-inner">
@@ -152,18 +134,12 @@
         <div id="sc-preview-rendered" class="sc-md-content hidden"></div>
       </div>
 
-      <!-- Source tab -->
       <div id="sc-source" class="sc-preview-content sc-preview-source hidden" role="tabpanel">
         <pre id="sc-source-text" class="sc-source-pre"></pre>
       </div>
     </section>
 
-  </div><!-- /#sc-body -->
-
-  <!-- ═══════════════════════════════════════════════
-       SETTINGS PANEL (full-pane overlay)
-  ════════════════════════════════════════════════ -->
-  <div id="sc-settings" class="sc-settings hidden" role="dialog" aria-label="SmartChart Settings">
+  </div><div id="sc-settings" class="sc-settings hidden" role="dialog" aria-label="SmartChart Settings">
 
     <header class="sc-settings-header">
       <span class="sc-settings-title">Settings</span>
@@ -182,7 +158,6 @@
 
     <div id="sc-settings-body" class="sc-settings-body">
 
-      <!-- ── Tab: Note Template ── -->
       <div id="stab-note-template" class="sc-stab-content active">
         <div class="sc-field-group">
           <span class="sc-label sc-label-heading">Note Structure</span>
@@ -192,7 +167,6 @@
             Format freely — bold, italic, headings, lists are all supported.
           </p>
           <div class="sc-rich-editor">
-            <!-- toolbar is populated by settings.js createRichEditor() -->
             <div id="sc-note-template-tools" class="sc-rich-toolbar" aria-label="Note template formatting"></div>
             <div id="sc-note-template-input" class="sc-editor-content" contenteditable="true"
                  aria-label="Note template editor" spellcheck="false"></div>
@@ -212,16 +186,13 @@
         </div>
       </div>
 
-      <!-- ── Tab: Templates ── -->
       <div id="stab-templates" class="sc-stab-content hidden">
         <div class="sc-btn-row sc-btn-row--mb">
           <button id="sc-add-template-btn" class="sc-btn sc-btn-primary">+ New Template</button>
         </div>
 
-        <!-- Template list -->
         <div id="sc-template-list" class="sc-template-list"></div>
 
-        <!-- Inline edit/add form -->
         <div id="sc-template-form" class="sc-template-form hidden">
           <div class="sc-form-header">
             <span id="sc-form-title-label">New Template</span>
@@ -248,7 +219,6 @@
             </select>
           </div>
 
-          <!-- Rich content editor (replaces the old textarea) -->
           <div class="sc-field-group">
             <span class="sc-label sc-label-heading">Content</span>
             <div class="sc-rich-editor">
@@ -313,7 +283,6 @@
         </div>
       </div>
 
-      <!-- ── Tab: Behavior ── -->
       <div id="stab-behavior" class="sc-stab-content hidden">
         <div class="sc-field-group">
           <label class="sc-label" for="sc-autocopy-enabled">Auto-Copy</label>
@@ -355,6 +324,14 @@
           <label for="sc-sourcelabels-setting" class="sc-sr-only">Show Source Labels in Preview</label>
           <input type="checkbox" id="sc-sourcelabels-setting" class="sc-behavior-checkbox">
         </div>
+        <div class="sc-toggle-row">
+          <div class="sc-toggle-info">
+            <span class="sc-toggle-label">Use Hyphens for Bullets</span>
+            <span class="sc-toggle-desc">Changes all standard bullet points (•) to hardcoded hyphens (-) in the rendered note. Ideal for strict external text fields.</span>
+          </div>
+          <label for="sc-hyphenbullets-setting" class="sc-sr-only">Use Hyphens for Bullets</label>
+          <input type="checkbox" id="sc-hyphenbullets-setting" class="sc-behavior-checkbox">
+        </div>
         <div class="sc-btn-row sc-btn-row--mt">
           <button id="sc-save-behavior" class="sc-btn sc-btn-primary">Save</button>
         </div>
@@ -371,13 +348,7 @@
         </div>
       </div>
 
-    </div><!-- /#sc-settings-body -->
-  </div><!-- /#sc-settings -->
-
-  <!-- ═══════════════════════════════════════════════
-       TEMPLATE WIZARD PANEL (full-pane overlay)
-  ════════════════════════════════════════════════ -->
-  <div id="sc-wizard" class="sc-settings hidden" role="dialog" aria-label="SmartChart Template Wizard">
+    </div></div><div id="sc-wizard" class="sc-settings hidden" role="dialog" aria-label="SmartChart Template Wizard">
 
     <header class="sc-settings-header">
       <span class="sc-settings-title">Diagnosis Template Wizard</span>
@@ -393,7 +364,6 @@
         Create a custom diagnosis-specific template layout. Answer questions by adding common permutations/options below, and SmartChart will automatically generate nested dropdowns for you.
       </div>
 
-      <!-- Step 1: Meta -->
       <div class="sc-wiz-meta-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
         <div class="sc-field-group">
           <label class="sc-label" for="sc-wiz-name">Diagnosis or Problem Name</label>
@@ -407,7 +377,6 @@
 
       <hr class="sc-divider">
 
-      <!-- Step 2: Categories and Variations Table -->
       <div class="sc-field-group">
         <span class="sc-label sc-label-heading">Questions & Variations</span>
         <p class="sc-help-text" style="margin-bottom: 12px;">
@@ -425,13 +394,11 @@
               </tr>
             </thead>
             <tbody id="sc-wiz-categories-body">
-              <!-- Dynamically populated rows -->
-            </tbody>
+              </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Add Custom Category Button -->
       <div class="sc-wiz-custom-row" style="margin-bottom: 16px;">
         <button id="sc-wiz-add-category-btn" class="sc-btn sc-btn-ghost">
           + Add Custom Category
@@ -440,15 +407,13 @@
 
       <hr class="sc-divider">
 
-      <!-- Step 3: Linked Templates -->
       <div class="sc-field-group">
         <label class="sc-label">Include Predefined Templates</label>
         <p class="sc-help-text">
           Select existing templates that you want to trigger when typing this diagnosis (e.g. generic sick visit, supportive care templates).
         </p>
         <div id="sc-wiz-linked-templates" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; max-height: 160px; overflow-y: auto; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input);">
-          <!-- Dynamically populated templates checkboxes -->
-        </div>
+          </div>
       </div>
 
       <hr class="sc-divider">
@@ -458,17 +423,10 @@
         <button id="sc-wiz-cancel-btn" class="sc-btn sc-btn-ghost">Cancel</button>
       </div>
     </div>
-  </div><!-- /#sc-wizard -->
+  </div><div id="sc-resize-handle" class="sc-resize-handle" title="Drag to resize" aria-hidden="true"></div>
 
-  <!-- Custom resize handle -->
-  <div id="sc-resize-handle" class="sc-resize-handle" title="Drag to resize" aria-hidden="true"></div>
+</div><div id="sc-toast-container" class="sc-toast-container" aria-live="assertive" aria-atomic="true"></div>
 
-</div><!-- /#smartchart-pane -->
-
-<!-- Toast container -->
-<div id="sc-toast-container" class="sc-toast-container" aria-live="assertive" aria-atomic="true"></div>
-
-<!-- Service Worker Registration -->
 <script src="register-sw.js"></script>
 <script src="app.js"></script>
 <script src="settings.js"></script>
