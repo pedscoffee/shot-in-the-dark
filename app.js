@@ -100,6 +100,7 @@ const DEFAULT_TEMPLATES = [
     label: 'Follow-Up',
     join: 'lines',
     singleSelect: true,
+    showLabel: true,
     options: [
       'Follow up as needed.',
       'Follow up in 2-3 days.',
@@ -252,7 +253,12 @@ function renderDropdownValueHtml(t) {
   const selected = Array.isArray(selection.values) ? selection.values : [];
   if (selected.length === 0) return '';
   const join = selection.join || t.join || 'lines';
-  return `<p><strong>${t.label || t.name}:</strong></p>${joinTemplateOptions(selected, join)}`;
+  // showLabel defaults to false — only show if explicitly set to true.
+  // This avoids redundant headers from wizard-generated nested dropdowns.
+  if (t.showLabel === true) {
+    return `<p><strong>${t.label || t.name}:</strong></p>${joinTemplateOptions(selected, join)}`;
+  }
+  return joinTemplateOptions(selected, join);
 }
 
 function renderTemplateContentHtml(t, seen = new Set()) {

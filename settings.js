@@ -388,6 +388,8 @@
       formJoin.value = 'lines';
       const singleSelectEl = $('sc-form-single-select');
       if (singleSelectEl) singleSelectEl.checked = false;
+      const showLabelEl = $('sc-form-show-label');
+      if (showLabelEl) showLabelEl.checked = false;
       formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = '';
@@ -411,6 +413,8 @@
       formJoin.value = t.join || 'lines';
       const singleSelectEl = $('sc-form-single-select');
       if (singleSelectEl) singleSelectEl.checked = !!(t.singleSelect);
+      const showLabelEl = $('sc-form-show-label');
+      if (showLabelEl) showLabelEl.checked = !!(t.showLabel);
       formPriority.value = t.priority ?? 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = t.category || '';
@@ -442,13 +446,16 @@
       const category    = catEl ? (catEl.value || '').trim() : '';
 
       if (!name) { alert('Template name is required.'); formName.focus(); return; }
-      if (!triggersRaw) { alert('At least one trigger keyword is required.'); formTriggers.focus(); return; }
+      // Triggers are optional — templates with no triggers are valid nested dropdowns
+      // referenced via {dropdown:ID} rather than keyword-matching.
       if (type === 'text' && !content.trim()) { alert('Template content cannot be empty.'); formContentEditor.focus(); return; }
       if (type === 'dropdown' && options.length === 0) { alert('Dropdown templates need at least one option.'); formOptions.focus(); return; }
 
       const triggers = triggersRaw.split(',').map(s => s.trim()).filter(Boolean);
       const singleSelectEl = $('sc-form-single-select');
       const singleSelect = singleSelectEl ? singleSelectEl.checked : false;
+      const showLabelEl = $('sc-form-show-label');
+      const showLabel = showLabelEl ? showLabelEl.checked : false;
       const template = type === 'dropdown'
         ? {
             id, name, type, triggers,
@@ -456,6 +463,7 @@
             options,
             join:     formJoin.value || 'lines',
             singleSelect,
+            showLabel,
             priority,
             ...(category ? { category } : {}),
           }

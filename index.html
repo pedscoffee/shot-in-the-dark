@@ -236,7 +236,7 @@
             <input type="text" id="sc-form-name" class="sc-input-settings" placeholder="e.g. Dehydration Precautions">
           </div>
           <div class="sc-field-group">
-            <label class="sc-label" for="sc-form-triggers">Trigger Keywords <span class="sc-muted">(comma-separated)</span></label>
+            <label class="sc-label" for="sc-form-triggers">Trigger Keywords <span class="sc-muted">(comma-separated, optional for nested dropdowns)</span></label>
             <input type="text" id="sc-form-triggers" class="sc-input-settings"
               placeholder="e.g. dehydration, vomiting, diarrhea">
           </div>
@@ -287,6 +287,14 @@
                 <span class="sc-toggle-label">Single-select only (one option at a time)</span>
               </label>
               <p class="sc-help-text sc-help-text--mt">When enabled, users can only pick one option from this dropdown at a time — ideal for mutually exclusive choices like follow-up timing.</p>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-toggle-wrap">
+                <input type="checkbox" id="sc-form-show-label">
+                <span class="sc-toggle-track"></span>
+                <span class="sc-toggle-label">Show label heading in note output</span>
+              </label>
+              <p class="sc-help-text sc-help-text--mt">When enabled, a bold label (e.g. <strong>Follow-Up:</strong>) appears above the selected options. Disable for inline wizard-generated dropdowns where the surrounding text provides context.</p>
             </div>
           </div>
           <div class="sc-field-group">

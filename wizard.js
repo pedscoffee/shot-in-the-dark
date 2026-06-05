@@ -377,7 +377,9 @@
 
       // Start priority for new templates
       const templates = getTemplates();
-      let startPriority = Math.max(...templates.map(t => t.priority ?? 0), 0) + 10;
+      // Sub-templates (dropdown options) go to high priority numbers so they never auto-match.
+      // Main template gets priority 1 so it appears FIRST — before any linked general templates.
+      let subPriority = Math.max(...templates.map(t => t.priority ?? 0), 900) + 1;
       const diagSlug = slugify(diagName);
 
       const newTemplates = [];
@@ -391,14 +393,15 @@
 
         const dropdownTemplate = {
           id: dropdownId,
-          name: `${diagName} - ${cat.name}`,
+          name: `${diagName} — ${cat.name}`,
           type: 'dropdown',
-          triggers: [], // Nested, triggers only inside main
+          triggers: [], // Nested only — referenced via {dropdown:ID}, never auto-matched
           label: cat.name,
           join: isSingle ? 'lines' : cat.selectMode,
           singleSelect: isSingle,
+          showLabel: false, // Labels suppressed by default for inline wizard dropdowns
           options: cat.options,
-          priority: startPriority++,
+          priority: subPriority++,
           category: diagName
         };
 
@@ -409,21 +412,23 @@
         });
       });
 
-      // 2. Generate the main Diagnosis Template
+      // 2. Generate the main Diagnosis Template at priority 1 (appears first in matched output)
       const mainTemplateId = `wiz-${diagSlug}-main`;
-      let contentHtml = `<h3>Assessment & Plan: ${esc(diagName)}</h3>\n`;
-
-      // Build structured HTML referencing nested dropdowns
+      // Build content: each dropdown is on its own line without a redundant bold label
+      // (the user already knows from context what each selection means)
+      let contentHtml = '';
       dropdownReferences.forEach(ref => {
-        contentHtml += `<p><strong>${esc(ref.name)}:</strong> {dropdown:${ref.id}}</p>\n`;
+        contentHtml += `{dropdown:${ref.id}}<br>`;
       });
+      // Trim the trailing <br>
+      contentHtml = contentHtml.replace(/<br>$/, '');
 
       const mainTemplate = {
         id: mainTemplateId,
         name: diagName,
         triggers: triggers,
         content: contentHtml,
-        priority: startPriority++,
+        priority: 1,
         category: diagName
       };
 
