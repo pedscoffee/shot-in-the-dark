@@ -94,6 +94,63 @@ The input field supports several dot-expansion shortcuts:
 
 ---
 
+## Template Wizard
+
+The **Template Wizard** is a guided onboarding tool that lets you build a complete, structured diagnosis template in one step — no manual JSON editing or dropdown configuration required.
+
+Access it via the **✦ Wizard** button inside the Settings panel.
+
+### What It Does
+
+Given a diagnosis or clinical problem (e.g., *"Acute Otitis Media"*), the wizard generates a full suite of linked dropdown templates covering every stage of the clinical encounter — history, exam, differential, diagnosis, labs, imaging, medications, treatment plan, supportive care, complications, conditional plans, return precautions, discharge planning, nursing orders, and follow-up. Each category becomes its own dropdown embedded inside a single main template that fires whenever your trigger keywords match.
+
+### How to Use It
+
+1. **Enter a Diagnosis or Problem Name** — This becomes the name of the main template (e.g., `Acute Otitis Media`).
+2. **Enter Trigger Keywords** — Comma-separated words or phrases that activate this template from the input field (e.g., `ear pain, otitis, AOM`).
+3. **Configure Categories** — A table of 15 pre-defined clinical categories is shown. For each category you want to include:
+   - **Check the checkbox** to enable it (checking happens automatically when you start typing variations).
+   - **Enter variations** in the textarea — one per line. These become the selectable options in the dropdown at note time.
+   - **Choose an output mode** — how selected options are joined in the assembled note (single-select, bullets, comma list, comma + and/or, sentence, or paragraphs).
+4. **Add Custom Categories** — Click **+ Add Custom Category** to insert a free-form row with your own category name and variations (e.g., *School Excuse*, *Interpreter Used*).
+5. **Link Existing Templates** *(optional)* — Check any existing SmartChart templates to automatically add your new trigger keywords to them. This ensures your one-liner simultaneously fires both the new diagnosis-specific template and any relevant general-purpose templates (e.g., the default *Illness Supportive Care* template).
+6. **Click Generate** — The wizard saves all generated templates to localStorage and immediately activates them. No page refresh needed.
+
+### What Gets Generated
+
+For a diagnosis with *N* enabled categories, the wizard creates:
+
+- **N dropdown sub-templates** — one per enabled category, each containing the options you entered. These are embedded-only (no auto-trigger keywords), so they never fire independently.
+- **1 main template** — named after the diagnosis, fired by your trigger keywords, and composed entirely of `{dropdown:ID}` references to the sub-templates. At note time, each category appears as an inline selector in the preview panel.
+
+All generated templates are assigned a **category** matching the diagnosis name, making them easy to identify and manage in the Templates tab.
+
+### Re-Running the Wizard
+
+Re-running the wizard for the same diagnosis name safely **overwrites** only the previously generated templates for that diagnosis (matched by ID), preserving all other templates. This makes iteration painless — refine your variations, regenerate, and the updated templates are live immediately.
+
+### Pre-Defined Category Reference
+
+| Category | Default Output Mode | Description |
+|---|---|---|
+| Key elements of history | Single-select | Symptom onset, duration, quality, aggravating/alleviating factors |
+| Key exam findings | Single-select | Physical exam parameters (TMs, throat, lungs, abdomen, etc.) |
+| Key elements of differential | Single-select | Alternative or contributing diagnoses considered |
+| Likely diagnosis | Single-select | Working diagnosis or assessment |
+| Labs | Single-select | Laboratory testing ordered or reviewed |
+| Imaging | Single-select | Radiology or bedside imaging ordered/performed |
+| Medications with exact doses | Single-select | Pharmacological treatment with precise dosing |
+| Treatment / plan actions | Bullets | Active counseling, procedures, or clinic-specific interventions |
+| Supportive care | Bullets | Non-pharmacological measures, OTC meds, hydration, rest |
+| Complications | Bullets | Clinical risks the caregiver should monitor for |
+| Conditional plans (if X, then Y) | Bullets | Contingency plans if symptoms change or fail to resolve |
+| Return precautions | Bullets | Red flag symptoms indicating need for prompt re-evaluation |
+| Discharge planning | Bullets | Parameters for discharge or clinic wrap-up |
+| Nursing orders | Bullets | Instructions for clinic or nursing staff |
+| Follow-Up | Single-select | Schedule or criteria for follow-up evaluation |
+
+---
+
 ## Settings
 
 Access via the **⚙ gear icon** in the header.
