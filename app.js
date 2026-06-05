@@ -797,6 +797,10 @@ function init() {
   dom.minIcon           = $('sc-min-icon');
   dom.settingsPanel     = $('sc-settings');
   dom.settingsClose     = $('sc-settings-close');
+  dom.wizardBtn         = $('sc-wizard-btn');
+  dom.wizardPanel       = $('sc-wizard');
+  dom.wizardClose       = $('sc-wizard-close');
+  dom.wizardCancel      = $('sc-wiz-cancel-btn');
   dom.resizeHandle      = $('sc-resize-handle');
   dom.toastContainer    = $('sc-toast-container');
   dom.newPatientBtn     = $('sc-new-patient-btn');
@@ -840,6 +844,24 @@ function init() {
   dom.settingsClose.addEventListener('click', () => {
     dom.settingsPanel.classList.add('hidden');
   });
+
+  if (dom.wizardBtn) {
+    dom.wizardBtn.addEventListener('click', () => {
+      if (dom.pane.classList.contains('sc-focus-mode')) {
+        applyFocusMode(false);
+        savePaneState();
+      }
+      dom.wizardPanel.classList.remove('hidden');
+      if (window.SmartChartWizard) window.SmartChartWizard.open();
+    });
+  }
+
+  const closeWizard = () => {
+    dom.wizardPanel.classList.add('hidden');
+  };
+
+  if (dom.wizardClose) dom.wizardClose.addEventListener('click', closeWizard);
+  if (dom.wizardCancel) dom.wizardCancel.addEventListener('click', closeWizard);
 
   if (dom.newPatientBtn) {
     dom.newPatientBtn.addEventListener('click', () => {
@@ -887,8 +909,27 @@ function init() {
   }
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !dom.settingsPanel.classList.contains('hidden')) {
-      dom.settingsPanel.classList.add('hidden');
+    if (e.key === 'Escape') {
+      let handled = false;
+      if (!dom.settingsPanel.classList.contains('hidden')) {
+        dom.settingsPanel.classList.add('hidden');
+        handled = true;
+      }
+      if (dom.wizardPanel && !dom.wizardPanel.classList.contains('hidden')) {
+        dom.wizardPanel.classList.add('hidden');
+        handled = true;
+      }
+      if (handled) return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'W') {
+      e.preventDefault();
+      const isOpen = !dom.wizardPanel.classList.contains('hidden');
+      if (!isOpen && dom.pane.classList.contains('sc-focus-mode')) {
+        applyFocusMode(false);
+        savePaneState();
+      }
+      dom.wizardPanel.classList.toggle('hidden', isOpen);
+      if (!isOpen && window.SmartChartWizard) window.SmartChartWizard.open();
       return;
     }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {

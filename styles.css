@@ -1238,3 +1238,128 @@ body {
 .sc-btn-delete {
   color: var(--danger);
 }
+
+/* ═══════════════════════════════════════════════
+   DIAGNOSIS WIZARD CSS STYLE DEFINITIONS
+   ════════════════════════════════════════════════ */
+
+.sc-wiz-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.sc-wiz-table th {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-2);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  padding: 10px;
+}
+.sc-wiz-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.sc-wiz-table tr:last-child td {
+  border-bottom: none;
+}
+.sc-wiz-table textarea {
+  width: 100%;
+  min-height: 48px;
+  max-height: 120px;
+  resize: vertical;
+  background: var(--bg-pane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+}
+.sc-wiz-table textarea:focus {
+  border-color: var(--border-focus);
+}
+.sc-wiz-table select {
+  width: 100%;
+  background: var(--bg-pane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  padding: 5px 6px;
+  outline: none;
+}
+.sc-wiz-table select:focus {
+  border-color: var(--border-focus);
+}
+.sc-wiz-table input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.sc-wiz-category-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sc-wiz-category-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.sc-wiz-category-desc {
+  font-size: 10px;
+  color: var(--text-3);
+  line-height: 1.35;
+}
+.sc-wiz-linked-template-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+.sc-wiz-linked-template-item:hover {
+  background: var(--bg-hover);
+}
+.sc-wiz-linked-template-item span {
+  font-size: 11.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-wiz-linked-template-item input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sc-wiz-custom-row {
+  margin-top: 10px;
+}
+.sc-wiz-delete-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: auto;
+}
+.sc-wiz-delete-row-btn:hover {
+  background: rgba(242, 107, 94, 0.08);
+}
+.sc-wiz-category-title-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}

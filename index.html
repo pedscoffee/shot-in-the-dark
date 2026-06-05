@@ -58,6 +58,21 @@
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
         </svg>
       </button>
+      <!-- Wizard button -->
+      <button id="sc-wizard-btn" class="sc-btn sc-btn-icon" title="Template Wizard (Ctrl+Shift+W)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 4V2"/>
+          <path d="M15 16v-2"/>
+          <path d="M8 9h2"/>
+          <path d="M20 9h-2"/>
+          <path d="M17.8 11.8l-1.4-1.4"/>
+          <path d="M12.2 6.2L10.8 4.8"/>
+          <path d="M17.8 6.2l-1.4 1.4"/>
+          <path d="M12.2 11.8l-1.4-1.4"/>
+          <path d="M3 21l9-9"/>
+          <path d="M12.2 6.2l5.6 5.6"/>
+        </svg>
+      </button>
       <!-- Settings button -->
       <button id="sc-settings-btn" class="sc-btn sc-btn-icon" title="Settings (Ctrl+Shift+S)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -351,6 +366,92 @@
     </div><!-- /#sc-settings-body -->
   </div><!-- /#sc-settings -->
 
+  <!-- ═══════════════════════════════════════════════
+       TEMPLATE WIZARD PANEL (full-pane overlay)
+  ════════════════════════════════════════════════ -->
+  <div id="sc-wizard" class="sc-settings hidden" role="dialog" aria-label="SmartChart Template Wizard">
+
+    <header class="sc-settings-header">
+      <span class="sc-settings-title">Diagnosis Template Wizard</span>
+      <button id="sc-wizard-close" class="sc-btn sc-btn-icon" title="Close wizard (Escape)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="sc-settings-body">
+      <div class="sc-help-text">
+        Create a custom diagnosis-specific template layout. Answer questions by adding common permutations/options below, and SmartChart will automatically generate nested dropdowns for you.
+      </div>
+
+      <!-- Step 1: Meta -->
+      <div class="sc-wiz-meta-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-wiz-name">Diagnosis or Problem Name</label>
+          <input type="text" id="sc-wiz-name" class="sc-input-settings" placeholder="e.g. Acute Otitis Media, Ear Pain">
+        </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-wiz-triggers">Trigger Keywords <span class="sc-muted">(comma-separated)</span></label>
+          <input type="text" id="sc-wiz-triggers" class="sc-input-settings" placeholder="e.g. ear pain, earache, otitis, aom">
+        </div>
+      </div>
+
+      <hr class="sc-divider">
+
+      <!-- Step 2: Categories and Variations Table -->
+      <div class="sc-field-group">
+        <span class="sc-label sc-label-heading">Questions & Variations</span>
+        <p class="sc-help-text" style="margin-bottom: 12px;">
+          Type in the variations (one per line) for each category. Categories with variations will be automatically enabled and included in the note layout.
+        </p>
+
+        <div class="sc-wiz-table-container" style="overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); margin-bottom: 16px;">
+          <table class="sc-wiz-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border); background: var(--bg-header);">
+                <th style="padding: 10px; width: 40px; text-align: center;">Use</th>
+                <th style="padding: 10px; width: 220px;">Category</th>
+                <th style="padding: 10px;">Common Variations / Permutations <span class="sc-muted">(one per line)</span></th>
+                <th style="padding: 10px; width: 150px;">Select Mode</th>
+              </tr>
+            </thead>
+            <tbody id="sc-wiz-categories-body">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add Custom Category Button -->
+      <div class="sc-wiz-custom-row" style="margin-bottom: 16px;">
+        <button id="sc-wiz-add-category-btn" class="sc-btn sc-btn-ghost">
+          + Add Custom Category
+        </button>
+      </div>
+
+      <hr class="sc-divider">
+
+      <!-- Step 3: Linked Templates -->
+      <div class="sc-field-group">
+        <label class="sc-label">Include Predefined Templates</label>
+        <p class="sc-help-text">
+          Select existing templates that you want to trigger when typing this diagnosis (e.g. generic sick visit, supportive care templates).
+        </p>
+        <div id="sc-wiz-linked-templates" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; max-height: 160px; overflow-y: auto; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input);">
+          <!-- Dynamically populated templates checkboxes -->
+        </div>
+      </div>
+
+      <hr class="sc-divider">
+
+      <div class="sc-btn-row sc-btn-row--mt">
+        <button id="sc-wiz-generate-btn" class="sc-btn sc-btn-primary">Generate Templates</button>
+        <button id="sc-wiz-cancel-btn" class="sc-btn sc-btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div><!-- /#sc-wizard -->
+
   <!-- Custom resize handle -->
   <div id="sc-resize-handle" class="sc-resize-handle" title="Drag to resize" aria-hidden="true"></div>
 
@@ -363,5 +464,6 @@
 <script src="register-sw.js"></script>
 <script src="app.js"></script>
 <script src="settings.js"></script>
+<script src="wizard.js"></script>
 </body>
 </html>
