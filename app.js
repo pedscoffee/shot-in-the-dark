@@ -25,7 +25,7 @@ const STORAGE_KEYS = {
 };
 
 // Stored as HTML from here on
-const DEFAULT_NOTE_TEMPLATE = `{input}<br><br>{templates}`;
+const DEFAULT_NOTE_TEMPLATE = `{input}<br>{templates}`;
 
 /** Default templates — content stored as HTML strings. */
 const DEFAULT_TEMPLATES = [
