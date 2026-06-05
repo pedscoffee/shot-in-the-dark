@@ -210,13 +210,61 @@
       } else {
         const wrap = document.createElement('div');
         wrap.className = 'sc-wiz-category-label-wrap';
+
+        // Click-to-edit category name
+        const titleRow = document.createElement('div');
+        titleRow.className = 'sc-wiz-category-name-row';
+
         const title = document.createElement('span');
         title.className = 'sc-wiz-category-name';
         title.textContent = name;
+        title.title = 'Click to rename';
+
+        const editIcon = document.createElement('span');
+        editIcon.className = 'sc-wiz-category-edit-icon';
+        editIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+        editIcon.title = 'Rename category';
+
+        titleRow.appendChild(title);
+        titleRow.appendChild(editIcon);
+
+        // Inline input (hidden by default)
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'sc-input-settings sc-wiz-category-name-input';
+        nameInput.value = name;
+        nameInput.style.display = 'none';
+
+        function startEditing() {
+          title.style.display = 'none';
+          editIcon.style.display = 'none';
+          nameInput.style.display = '';
+          nameInput.focus();
+          nameInput.select();
+        }
+
+        function stopEditing() {
+          const val = nameInput.value.trim() || name;
+          nameInput.value = val;
+          title.textContent = val;
+          nameInput.style.display = 'none';
+          title.style.display = '';
+          editIcon.style.display = '';
+        }
+
+        titleRow.addEventListener('click', startEditing);
+        nameInput.addEventListener('blur', stopEditing);
+        nameInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter') { e.preventDefault(); stopEditing(); }
+          if (e.key === 'Escape') { nameInput.value = title.textContent; stopEditing(); }
+        });
+
+        wrap.appendChild(titleRow);
+        wrap.appendChild(nameInput);
+
         const descSpan = document.createElement('span');
         descSpan.className = 'sc-wiz-category-desc';
         descSpan.textContent = desc;
-        wrap.appendChild(title);
         wrap.appendChild(descSpan);
         nameTd.appendChild(wrap);
       }
@@ -332,8 +380,10 @@
           const input = row.querySelector('.sc-wiz-custom-name');
           name = input ? input.value.trim() : '';
         } else {
+          // Prefer the editable input value (covers mid-edit state), fall back to span text
+          const nameInput = row.querySelector('.sc-wiz-category-name-input');
           const nameSpan = row.querySelector('.sc-wiz-category-name');
-          name = nameSpan ? nameSpan.textContent.trim() : '';
+          name = (nameInput ? nameInput.value.trim() : '') || (nameSpan ? nameSpan.textContent.trim() : '');
         }
 
         if (!name) {
