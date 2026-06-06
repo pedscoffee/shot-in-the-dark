@@ -364,7 +364,7 @@
         Create a custom diagnosis-specific template layout. Answer questions by adding common permutations/options below, and SmartChart will automatically generate nested dropdowns for you.
       </div>
 
-      <div class="sc-wiz-meta-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+      <div class="sc-wiz-meta-row">
         <div class="sc-field-group">
           <label class="sc-label" for="sc-wiz-name">Diagnosis or Problem Name</label>
           <input type="text" id="sc-wiz-name" class="sc-input-settings" placeholder="e.g. Acute Otitis Media, Ear Pain">
@@ -379,19 +379,19 @@
 
       <div class="sc-field-group">
         <span class="sc-label sc-label-heading">Questions & Variations</span>
-        <p class="sc-help-text" style="margin-bottom: 12px;">
+        <p class="sc-help-text sc-help-text--wiz">
           Type in the variations (one per line) for each category. Categories with variations will be automatically enabled and included in the note layout.
         </p>
 
-        <div class="sc-wiz-table-container" style="overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input); margin-bottom: 16px;">
-          <table class="sc-wiz-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 12px;">
+        <div class="sc-wiz-table-container">
+          <table class="sc-wiz-table">
             <thead>
-              <tr style="border-bottom: 1px solid var(--border); background: var(--bg-header);">
-                <th style="padding: 10px; width: 40px; text-align: center;">Use</th>
-                <th style="padding: 10px; width: 220px;">Category</th>
-                <th style="padding: 10px;">Common Variations / Permutations <span class="sc-muted">(one per line)</span></th>
-                <th style="padding: 10px; width: 150px;">Select Mode</th>
-                <th style="padding: 10px; width: 44px; text-align: center;">Order</th>
+              <tr class="sc-wiz-thead-row">
+                <th class="sc-wiz-th sc-wiz-th--use">Use</th>
+                <th class="sc-wiz-th sc-wiz-th--cat">Category</th>
+                <th class="sc-wiz-th">Common Variations / Permutations <span class="sc-muted">(one per line)</span></th>
+                <th class="sc-wiz-th sc-wiz-th--mode">Select Mode</th>
+                <th class="sc-wiz-th sc-wiz-th--order">Order</th>
               </tr>
             </thead>
             <tbody id="sc-wiz-categories-body">
@@ -400,7 +400,7 @@
         </div>
       </div>
 
-      <div class="sc-wiz-custom-row" style="margin-bottom: 16px;">
+      <div class="sc-wiz-custom-row">
         <button id="sc-wiz-add-category-btn" class="sc-btn sc-btn-ghost">
           + Add Custom Category
         </button>
@@ -413,7 +413,7 @@
         <p class="sc-help-text">
           Select existing templates that you want to trigger when typing this diagnosis (e.g. generic sick visit, supportive care templates).
         </p>
-        <div id="sc-wiz-linked-templates" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; max-height: 160px; overflow-y: auto; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-input);">
+        <div id="sc-wiz-linked-templates" class="sc-wiz-linked-templates">
           </div>
       </div>
 

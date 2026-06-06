@@ -169,24 +169,20 @@
       row.dataset.custom = isCustom;
 
       const checkboxTd = document.createElement('td');
-      checkboxTd.style.textAlign = 'center';
-      checkboxTd.style.verticalAlign = 'middle';
-      checkboxTd.style.padding = '10px';
+      checkboxTd.className = 'sc-wiz-td sc-wiz-td--checkbox';
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.className = 'sc-wiz-checkbox';
       checkboxTd.appendChild(checkbox);
 
       const nameTd = document.createElement('td');
-      nameTd.style.padding = '10px';
+      nameTd.className = 'sc-wiz-td';
       if (isCustom) {
         const titleCell = document.createElement('div');
         titleCell.className = 'sc-wiz-category-title-cell';
         const input = document.createElement('input');
         input.type = 'text';
-        input.className = 'sc-input-settings sc-wiz-custom-name';
-        input.style.padding = '4px 6px';
-        input.style.fontSize = '12px';
+        input.className = 'sc-input-settings sc-wiz-custom-name sc-wiz-custom-name-input';
         input.value = name;
         input.placeholder = 'e.g. School Excuse';
         titleCell.appendChild(input);
@@ -222,7 +218,7 @@
       }
 
       const textareaTd = document.createElement('td');
-      textareaTd.style.padding = '10px';
+      textareaTd.className = 'sc-wiz-td';
       const textarea = document.createElement('textarea');
       textarea.placeholder = placeholder || 'Enter variations, one per line...';
       textarea.addEventListener('input', () => {
@@ -236,7 +232,7 @@
       textareaTd.appendChild(textarea);
 
       const modeTd = document.createElement('td');
-      modeTd.style.padding = '10px';
+      modeTd.className = 'sc-wiz-td';
       const select = document.createElement('select');
       [
         ['singleSelect', 'Single-select'],
@@ -256,8 +252,7 @@
       modeTd.appendChild(select);
 
       const reorderTd = document.createElement('td');
-      reorderTd.style.cssText = 'padding: 6px 4px; text-align: center; vertical-align: middle; white-space: nowrap;';
-      reorderTd.className = 'sc-wiz-reorder-td';
+      reorderTd.className = 'sc-wiz-td sc-wiz-reorder-td';
 
       const moveUp = document.createElement('button');
       moveUp.type = 'button';
@@ -561,8 +556,7 @@
           const textarea = row.querySelector('textarea');
           const select = row.querySelector('select');
           const checkbox = row.querySelector('.sc-wiz-checkbox');
-          if (textarea) textarea.value = (resolvedTpl.options || []).join('
-');
+          if (textarea) textarea.value = (resolvedTpl.options || []).join('\n');
           if (select) {
             const mode = resolvedTpl.singleSelect ? 'singleSelect' : (resolvedTpl.join || 'lines');
             select.value = mode;
@@ -586,8 +580,7 @@
         const row = listContainer.lastElementChild;
         const textarea = row.querySelector('textarea');
         const select = row.querySelector('select');
-        if (textarea) textarea.value = (t.options || []).join('
-');
+        if (textarea) textarea.value = (t.options || []).join('\n');
         if (select) select.value = t.singleSelect ? 'singleSelect' : (t.join || 'lines');
         handledIds.add(id);
       });

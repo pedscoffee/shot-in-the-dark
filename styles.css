@@ -1403,3 +1403,84 @@ body {
 .sc-wiz-edit-btn:hover {
   background: rgba(34, 197, 94, 0.08);
 }
+
+/* ── Wizard: layout classes (replaces inline styles) ── */
+.sc-wiz-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sc-help-text--wiz {
+  margin-bottom: 12px;
+}
+.sc-wiz-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  margin-bottom: 16px;
+}
+.sc-wiz-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+.sc-wiz-thead-row {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-header, var(--surface-2));
+}
+.sc-wiz-th {
+  padding: 10px;
+}
+.sc-wiz-th--use {
+  width: 40px;
+  text-align: center;
+}
+.sc-wiz-th--cat {
+  width: 220px;
+}
+.sc-wiz-th--mode {
+  width: 150px;
+}
+.sc-wiz-th--order {
+  width: 44px;
+  text-align: center;
+}
+.sc-wiz-custom-row {
+  margin-bottom: 16px;
+}
+.sc-wiz-linked-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+}
+
+/* ── Wizard: table cell base (replaces per-cell style=) ── */
+.sc-wiz-td {
+  padding: 10px;
+  vertical-align: top;
+}
+.sc-wiz-td--checkbox {
+  text-align: center;
+  vertical-align: middle;
+}
+.sc-wiz-reorder-td {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  padding: 6px 4px;
+}
+
+/* ── Wizard: custom name input sizing ── */
+.sc-wiz-custom-name-input {
+  padding: 4px 6px !important;
+  font-size: 12px !important;
+}
