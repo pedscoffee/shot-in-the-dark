@@ -534,6 +534,8 @@
       if (ptEl) ptEl.checked = !!state.behavior.plainTextCopy;
       const slEl = $('sc-sourcelabels-setting');
       if (slEl) slEl.checked = !!state.behavior.sourceLabels;
+      const bsEl = $('sc-bullet-style-setting');
+      if (bsEl) bsEl.value = state.behavior.bulletStyle || '-';
     }
 
     autoCopyDelayEl.addEventListener('input', () => {
@@ -555,6 +557,8 @@
         const labBtn = $('sc-source-labels-btn');
         if (labBtn) labBtn.classList.toggle('active', slEl2.checked);
       }
+      const bsEl2 = $('sc-bullet-style-setting');
+      if (bsEl2) state.behavior.bulletStyle = bsEl2.value;
       try { storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior); } catch(e) {
         showToast('Storage full — export your data first', 'error', 4000); return;
       }
@@ -639,6 +643,7 @@
                 autoCopyEnabled: typeof b.autoCopyEnabled === 'boolean' ? b.autoCopyEnabled : DEFAULT_BEHAVIOR.autoCopyEnabled,
                 plainTextCopy:   typeof b.plainTextCopy   === 'boolean' ? b.plainTextCopy   : DEFAULT_BEHAVIOR.plainTextCopy,
                 sourceLabels:    typeof b.sourceLabels    === 'boolean' ? b.sourceLabels    : DEFAULT_BEHAVIOR.sourceLabels,
+                bulletStyle:     ['-','*','–','disc'].includes(b.bulletStyle) ? b.bulletStyle : DEFAULT_BEHAVIOR.bulletStyle,
               };
               state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, safeBehavior);
               storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);

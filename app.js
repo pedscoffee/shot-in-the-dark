@@ -123,7 +123,7 @@ const DEFAULT_BEHAVIOR = {
   autoCopyEnabled: true,
   plainTextCopy:   false,
   sourceLabels:    false,
-  hyphenBullets:   false,
+  bulletStyle:     '-',
 };
 
 const state = {
@@ -302,11 +302,12 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
   // {static:TEXT} → plain span
   out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
 
-  // Transform standard bullets to hardcoded hyphens if enabled
-  if (opts.hyphenBullets) {
+  // Transform standard <ul>/<li> bullets to a hardcoded character if not using disc
+  const bulletChar = opts.bulletStyle;
+  if (bulletChar && bulletChar !== 'disc') {
     out = out.replace(/<ul[^>]*>/gi, '<div class="sc-list-hyphen">')
              .replace(/<\/ul>/gi, '</div>')
-             .replace(/<li[^>]*>/gi, '<div class="sc-hyphen-item">- ')
+             .replace(/<li[^>]*>/gi, `<div class="sc-hyphen-item">${bulletChar} `)
              .replace(/<\/li>/gi, '</div>');
   }
 
@@ -526,7 +527,7 @@ function updatePreview() {
 
   const htmlSource = renderNote(modifiedInput, bottomTemplates, nt, {
     sourceLabels: state.behavior.sourceLabels,
-    hyphenBullets: state.behavior.hyphenBullets,
+    bulletStyle: state.behavior.bulletStyle,
   });
 
   if (matched.length > 0) {

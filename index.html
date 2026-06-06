@@ -324,13 +324,15 @@
           <label for="sc-sourcelabels-setting" class="sc-sr-only">Show Source Labels in Preview</label>
           <input type="checkbox" id="sc-sourcelabels-setting" class="sc-behavior-checkbox">
         </div>
-        <div class="sc-toggle-row">
-          <div class="sc-toggle-info">
-            <span class="sc-toggle-label">Use Hyphens for Bullets</span>
-            <span class="sc-toggle-desc">Changes all standard bullet points (•) to hardcoded hyphens (-) in the rendered note. Ideal for strict external text fields.</span>
-          </div>
-          <label for="sc-hyphenbullets-setting" class="sc-sr-only">Use Hyphens for Bullets</label>
-          <input type="checkbox" id="sc-hyphenbullets-setting" class="sc-behavior-checkbox">
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-bullet-style-setting">Bullet Style</label>
+          <p class="sc-help-text">Character used for bullet points in the rendered note and plain-text copy.</p>
+          <select id="sc-bullet-style-setting" class="sc-input-settings">
+            <option value="disc">• Disc (default browser bullet)</option>
+            <option value="-" selected>- Hyphen</option>
+            <option value="*">* Asterisk</option>
+            <option value="–">– En dash</option>
+          </select>
         </div>
         <div class="sc-btn-row sc-btn-row--mt">
           <button id="sc-save-behavior" class="sc-btn sc-btn-primary">Save</button>
