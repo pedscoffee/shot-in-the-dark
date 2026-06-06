@@ -1484,3 +1484,43 @@ body {
   padding: 4px 6px !important;
   font-size: 12px !important;
 }
+
+/* ── Wizard: click-to-rename category name ── */
+.sc-wiz-category-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+  transition: background 0.12s;
+}
+.sc-wiz-category-name-row:hover {
+  background: var(--bg-hover, var(--surface-3));
+}
+.sc-wiz-category-name-row:hover .sc-wiz-category-edit-icon {
+  opacity: 1;
+}
+.sc-wiz-category-edit-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+.sc-wiz-category-name-input {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  background: var(--bg-input);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 1px 5px;
+  width: 100%;
+  max-width: 200px;
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
