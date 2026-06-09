@@ -2,11 +2,6 @@
  * SmartChart — settings.js
  * Settings panel: note template editor, templates CRUD,
  * behavior controls, export/import/reset.
- *
- * All template content and the note template are now stored and edited
- * as HTML — no Markdown conversion anywhere.
- *
- * Runs after app.js. Accesses shared state via window.SmartChart.
  */
 
 'use strict';
@@ -23,26 +18,9 @@
 
   const $ = id => document.getElementById(id);
 
-  /* ══════════════════════════════════════════
-     RICH EDITOR HELPERS
-  ══════════════════════════════════════════ */
-
-  /**
-   * createRichEditor(containerId, toolbarDef)
-   * Wires up a contenteditable div with a rich formatting toolbar.
-   *
-   * toolbarDef: array of:
-   *   { cmd, label, title }           — execCommand button (toggles active state)
-   *   { type: 'snippet', label, snippet, title }  — insert literal text
-   *   { type: 'divider' }
-   *   { type: 'heading', level }      — insert H1/H2/H3 via formatBlock
-   *
-   * Returns { getHtml(), setHtml(html), focus() }
-   */
   function createRichEditor(editorEl, toolbarEl, toolbarDef) {
     if (!editorEl || !toolbarEl) return null;
 
-    // Reflect active formatting states on toolbar buttons
     function updateToolbarState() {
       toolbarEl.querySelectorAll('button[data-cmd]').forEach(btn => {
         const cmd = btn.dataset.cmd;
@@ -56,7 +34,6 @@
     editorEl.addEventListener('mouseup', updateToolbarState);
     editorEl.addEventListener('selectionchange', updateToolbarState);
 
-    // Build toolbar
     toolbarEl.innerHTML = '';
     toolbarDef.forEach(item => {
       if (item.type === 'divider') {
@@ -91,7 +68,6 @@
         });
 
       } else {
-        // Standard execCommand
         btn.dataset.cmd = item.cmd;
         btn.innerHTML = item.label;
         btn.title = item.title || item.label;
@@ -108,7 +84,6 @@
 
     return {
       getHtml() {
-        // Normalize — collapse 3+ consecutive <br>s
         return editorEl.innerHTML
           .replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>')
           .trim();
@@ -120,7 +95,6 @@
     };
   }
 
-  // Shared toolbar definition for template content editors
   const CONTENT_TOOLBAR = [
     { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold (Ctrl+B)' },
     { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic (Ctrl+I)' },
@@ -143,7 +117,6 @@
     { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
   ];
 
-  // Toolbar for the Note Template editor (adds {placeholder} snippet buttons)
   const NOTE_TEMPLATE_TOOLBAR = [
     { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold' },
     { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic' },
@@ -160,10 +133,6 @@
     { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
   ];
 
-  /* ══════════════════════════════════════════
-     INIT
-  ══════════════════════════════════════════ */
-
   function init() {
     const App = window.SmartChart;
     if (!App) { console.error('[SmartChart] app.js not loaded'); return; }
@@ -176,7 +145,6 @@
       showToast, updatePreview, sanitizeHtml,
     } = App;
 
-    // Convenience: live references through getters so settings always sees current state
     const state = {
       get templates()    { return getTemplates(); },
       set templates(v)   { setTemplates(v); },
@@ -186,7 +154,6 @@
       set behavior(v)    { setBehavior(v); },
     };
 
-    /* ── Settings Tabs ── */
     function activateSettingsTab(tabId) {
       document.querySelectorAll('.sc-settings-tab').forEach(btn => {
         const active = btn.dataset.stab === tabId;
@@ -202,10 +169,6 @@
     document.querySelectorAll('.sc-settings-tab').forEach(btn => {
       btn.addEventListener('click', () => activateSettingsTab(btn.dataset.stab));
     });
-
-    /* ════════════════════════════════════════════════
-       TAB: NOTE TEMPLATE
-    ════════════════════════════════════════════════ */
 
     const noteTemplateEditorEl  = $('sc-note-template-input');
     const noteTemplateToolbarEl = $('sc-note-template-tools');
@@ -250,10 +213,6 @@
       updatePreview();
     });
 
-    /* ════════════════════════════════════════════════
-       TAB: TEMPLATES — LIST
-    ════════════════════════════════════════════════ */
-
     const templateListEl     = $('sc-template-list');
     const addTemplateBtn     = $('sc-add-template-btn');
     const templateFormEl     = $('sc-template-form');
@@ -264,6 +223,8 @@
     const formType           = $('sc-form-type');
     const formDropdownFields = $('sc-form-dropdown-fields');
     const formDropdownLabel  = $('sc-form-dropdown-label');
+    const formDropdownPrefix = $('sc-form-dropdown-prefix');
+    const formDropdownSuffix = $('sc-form-dropdown-suffix');
     const formOptions        = $('sc-form-options');
     const formJoin           = $('sc-form-join');
     const formPriority       = $('sc-form-priority');
@@ -271,7 +232,6 @@
     const formCancelBtn      = $('sc-form-cancel');
     const formCloseBtn       = $('sc-form-close');
 
-    // Rich editor for template content
     const formContentEditorEl  = $('sc-form-content-editor');
     const formContentToolbarEl = $('sc-form-content-toolbar');
     const formContentEditor = createRichEditor(
@@ -286,8 +246,6 @@
       const allSorted = [...state.templates].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
       const categories = [...new Set(allSorted.map(t => t.category || '').filter(Boolean))];
 
-      // Detect if the active category is a wizard-generated diagnosis
-      // (has a main template with id wiz-{slug}-main)
       const isWizardCategory = activeCategory
         ? allSorted.some(t => t.category === activeCategory && t.id && t.id.endsWith('-main') && t.id.startsWith('wiz-'))
         : false;
@@ -352,7 +310,6 @@
       if (wizEditBtn) {
         wizEditBtn.addEventListener('click', () => {
           const diagName = wizEditBtn.dataset.wizcat;
-          // Close settings, open wizard, load the diagnosis
           $('sc-settings').classList.add('hidden');
           const wizPanel = $('sc-wizard');
           if (wizPanel) wizPanel.classList.remove('hidden');
@@ -378,10 +335,8 @@
       const div = document.createElement('div');
       div.className = 'sc-template-preview-expand sc-md-content';
       if (t.type === 'dropdown') {
-        // Dropdown options are plain text — escape them, no sanitization needed
         div.innerHTML = `<p><strong>Dropdown options:</strong></p><ul>${(t.options || []).map(o => `<li>${esc(o)}</li>`).join('')}</ul>`;
       } else {
-        // Template content is user-authored HTML — sanitize before rendering
         div.innerHTML = sanitizeHtml(t.content || '');
       }
       item.appendChild(div);
@@ -402,6 +357,8 @@
       formType.value     = 'text';
       formContentEditor.setHtml('');
       formDropdownLabel.value = '';
+      if (formDropdownPrefix) formDropdownPrefix.value = '';
+      if (formDropdownSuffix) formDropdownSuffix.value = '';
       formOptions.value = '';
       formJoin.value = 'lines';
       const singleSelectEl = $('sc-form-single-select');
@@ -427,6 +384,8 @@
       formType.value     = t.type === 'dropdown' ? 'dropdown' : 'text';
       formContentEditor.setHtml(t.content || '');
       formDropdownLabel.value = t.label || t.name;
+      if (formDropdownPrefix) formDropdownPrefix.value = t.prefix || '';
+      if (formDropdownSuffix) formDropdownSuffix.value = t.suffix || '';
       formOptions.value = (t.options || []).join('\n');
       formJoin.value = t.join || 'lines';
       const singleSelectEl = $('sc-form-single-select');
@@ -458,14 +417,14 @@
       const type        = formType.value === 'dropdown' ? 'dropdown' : 'text';
       const content     = formContentEditor.getHtml();
       const options     = (formOptions.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+      const prefix      = formDropdownPrefix ? formDropdownPrefix.value : '';
+      const suffix      = formDropdownSuffix ? formDropdownSuffix.value : '';
       const priority    = parseInt(formPriority.value, 10) || 10;
       const id          = formId.value || `tpl-${Date.now()}`;
       const catEl       = $('sc-form-category');
       const category    = catEl ? (catEl.value || '').trim() : '';
 
       if (!name) { alert('Template name is required.'); formName.focus(); return; }
-      // Triggers are optional — templates with no triggers are valid nested dropdowns
-      // referenced via {dropdown:ID} rather than keyword-matching.
       if (type === 'text' && !content.trim()) { alert('Template content cannot be empty.'); formContentEditor.focus(); return; }
       if (type === 'dropdown' && options.length === 0) { alert('Dropdown templates need at least one option.'); formOptions.focus(); return; }
 
@@ -478,6 +437,8 @@
         ? {
             id, name, type, triggers,
             label:    (formDropdownLabel.value || '').trim() || name,
+            prefix:   prefix || undefined,
+            suffix:   suffix || undefined,
             options,
             join:     formJoin.value || 'lines',
             singleSelect,
@@ -512,10 +473,6 @@
       showToast(`"${t.name}" deleted`, 'warning');
       updatePreview();
     }
-
-    /* ════════════════════════════════════════════════
-       TAB: BEHAVIOR
-    ════════════════════════════════════════════════ */
 
     const autoCopyEnabledEl   = $('sc-autocopy-enabled');
     const autoCopyDelayEl     = $('sc-autocopy-delay');
@@ -566,10 +523,6 @@
       showToast('Behavior settings saved', 'success');
     });
 
-    /* ════════════════════════════════════════════════
-       DATA MANAGEMENT
-    ════════════════════════════════════════════════ */
-
     $('sc-export-btn').addEventListener('click', () => {
       const payload = {
         version: 2,
@@ -602,12 +555,10 @@
             let changes = 0;
 
             if (Array.isArray(data.templates) && data.templates.length > 0) {
-              // Sanitize every HTML content field before trusting imported data
               const sanitized = data.templates.map(t => {
                 if (!t || typeof t !== 'object') return null;
                 return {
                   ...t,
-                  // Coerce and sanitize string fields
                   id:       String(t.id       || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || `tpl-${Date.now()}`,
                   name:     String(t.name     || '').slice(0, 200),
                   content:  typeof t.content === 'string' ? sanitizeHtml(t.content) : '',
@@ -628,14 +579,12 @@
             }
 
             if (typeof data.noteTemplate === 'string' && data.noteTemplate.trim()) {
-              // Sanitize the note template HTML as well
               state.noteTemplate = sanitizeHtml(data.noteTemplate);
               storage.set(STORAGE_KEYS.NOTE_TEMPLATE, state.noteTemplate);
               changes++;
             }
 
             if (data.behavior && typeof data.behavior === 'object') {
-              // Only copy known numeric/boolean keys — never merge arbitrary properties
               const b = data.behavior;
               const safeBehavior = {
                 autoCopyDelay:   Number.isFinite(b.autoCopyDelay)   ? Math.min(Math.max(b.autoCopyDelay, 500), 30000)    : DEFAULT_BEHAVIOR.autoCopyDelay,
@@ -684,10 +633,6 @@
       updatePreview();
       showToast('All data reset to defaults', 'warning', 3000);
     });
-
-    /* ════════════════════════════════════════════════
-       OPEN — called by app.js when gear icon clicked
-    ════════════════════════════════════════════════ */
 
     function open() {
       loadNoteTemplateTab();

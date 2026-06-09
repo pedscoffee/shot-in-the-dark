@@ -234,6 +234,15 @@
               <input type="text" id="sc-form-dropdown-label" class="sc-input-settings" placeholder="e.g. Follow-Up">
             </div>
             <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-dropdown-prefix">Prefix Text <span class="sc-muted">(Optional)</span></label>
+              <input type="text" id="sc-form-dropdown-prefix" class="sc-input-settings" placeholder="e.g. - Pain Location: ">
+              <p class="sc-help-text sc-help-text--mt">Text inserted immediately before the selected options.</p>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-dropdown-suffix">Suffix Text <span class="sc-muted">(Optional)</span></label>
+              <input type="text" id="sc-form-dropdown-suffix" class="sc-input-settings" placeholder="e.g. .">
+            </div>
+            <div class="sc-field-group">
               <label class="sc-label" for="sc-form-options">Dropdown Options <span class="sc-muted">(one per line)</span></label>
               <textarea id="sc-form-options" class="sc-textarea-settings" rows="5"
                 placeholder="Follow up as needed&#10;Return sooner for worsening symptoms"></textarea>
@@ -375,6 +384,13 @@
           <label class="sc-label" for="sc-wiz-triggers">Trigger Keywords <span class="sc-muted">(comma-separated)</span></label>
           <input type="text" id="sc-wiz-triggers" class="sc-input-settings" placeholder="e.g. ear pain, earache, otitis, aom">
         </div>
+        <div class="sc-field-group" style="grid-column: 1 / -1;">
+          <label class="sc-label" for="sc-wiz-layout">Main Template Layout</label>
+          <select id="sc-wiz-layout" class="sc-input-settings">
+            <option value="divs">Separate Lines (List format)</option>
+            <option value="spaces">Inline (Paragraph format)</option>
+          </select>
+        </div>
       </div>
 
       <hr class="sc-divider">
@@ -391,6 +407,7 @@
               <tr class="sc-wiz-thead-row">
                 <th class="sc-wiz-th sc-wiz-th--use">Use</th>
                 <th class="sc-wiz-th sc-wiz-th--cat">Category</th>
+                <th class="sc-wiz-th sc-wiz-th--prefix">Prefix <span class="sc-muted">(Optional text)</span></th>
                 <th class="sc-wiz-th">Common Variations / Permutations <span class="sc-muted">(one per line)</span></th>
                 <th class="sc-wiz-th sc-wiz-th--mode">Select Mode</th>
                 <th class="sc-wiz-th sc-wiz-th--order">Order</th>

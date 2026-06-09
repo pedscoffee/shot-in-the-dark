@@ -2,8 +2,6 @@
  * SmartChart — wizard.js
  * Diagnosis Template Wizard: dynamic table generation, custom categories,
  * pre-defined template linking, template generation logic.
- *
- * Runs after app.js and settings.js. Accesses SmartChart APIs via window.SmartChart.
  */
 
 'use strict';
@@ -154,7 +152,6 @@
     const cancelBtn = $('sc-wiz-cancel-btn');
     const closeBtn = $('sc-wiz-close');
 
-    // Populate Default Categories
     function renderCategories() {
       listContainer.innerHTML = '';
       DEFAULT_CATEGORIES.forEach(cat => {
@@ -162,7 +159,6 @@
       });
     }
 
-    // Add Category Row Helper
     function addCategoryRow(name, desc, placeholder, defaultMode, id, isCustom = false) {
       const row = document.createElement('tr');
       row.dataset.id = id;
@@ -187,7 +183,6 @@
         input.placeholder = 'e.g. School Excuse';
         titleCell.appendChild(input);
 
-        // Delete Row Button
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
         delBtn.className = 'sc-wiz-delete-row-btn';
@@ -207,7 +202,6 @@
         const wrap = document.createElement('div');
         wrap.className = 'sc-wiz-category-label-wrap';
 
-        // ── Click-to-rename row ──
         const nameRow = document.createElement('div');
         nameRow.className = 'sc-wiz-category-name-row';
 
@@ -261,12 +255,19 @@
         nameTd.appendChild(wrap);
       }
 
+      const prefixTd = document.createElement('td');
+      prefixTd.className = 'sc-wiz-td';
+      const prefixInput = document.createElement('input');
+      prefixInput.type = 'text';
+      prefixInput.className = 'sc-input-settings sc-wiz-prefix';
+      prefixInput.placeholder = 'e.g. - Pain Location: ';
+      prefixTd.appendChild(prefixInput);
+
       const textareaTd = document.createElement('td');
       textareaTd.className = 'sc-wiz-td';
       const textarea = document.createElement('textarea');
       textarea.placeholder = placeholder || 'Enter variations, one per line...';
       textarea.addEventListener('input', () => {
-        // Auto-check the checkbox if they start typing variations!
         if (textarea.value.trim().length > 0) {
           checkbox.checked = true;
         } else {
@@ -319,19 +320,17 @@
       });
 
       reorderTd.append(moveUp, moveDown);
-      row.append(checkboxTd, nameTd, textareaTd, modeTd, reorderTd);
+      row.append(checkboxTd, nameTd, prefixTd, textareaTd, modeTd, reorderTd);
       listContainer.appendChild(row);
 
       if (isCustom) {
-        checkbox.checked = true; // custom rows checked by default
+        checkbox.checked = true;
       }
     }
 
-    // Populate Linked Templates Grid
     function renderLinkedTemplates() {
       linkedTemplatesContainer.innerHTML = '';
       const templates = getTemplates();
-      // Only link templates that aren't themselves nested diagnosis items or custom dropdowns
       const filterable = templates.filter(t => t.type !== 'dropdown');
       if (filterable.length === 0) {
         linkedTemplatesContainer.innerHTML = '<span class="sc-muted" style="grid-column: 1/-1; padding: 10px; font-style: italic;">No existing templates available.</span>';
@@ -351,18 +350,15 @@
       });
     }
 
-    // Add Custom Category button event listener
     addCustomBtn.addEventListener('click', () => {
       customCategoryCounter++;
       addCategoryRow('', '', 'Enter custom variations, one per line...', 'lines', `custom-${customCategoryCounter}`, true);
-      // Scroll to the bottom of the table
       const container = listContainer.closest('.sc-wiz-table-container');
       if (container) {
         container.scrollTop = container.scrollHeight;
       }
     });
 
-    // Save & Generate Templates
     generateBtn.addEventListener('click', () => {
       const diagName = ($('sc-wiz-name').value || '').trim();
       const triggersRaw = ($('sc-wiz-triggers').value || '').trim();
@@ -380,7 +376,6 @@
 
       const triggers = triggersRaw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
 
-      // Collect all enabled category rows
       const rows = Array.from(listContainer.querySelectorAll('tr'));
       const enabledCategories = [];
 
@@ -408,6 +403,9 @@
           return;
         }
 
+        const prefixInput = row.querySelector('.sc-wiz-prefix');
+        const prefixText = prefixInput ? prefixInput.value : '';
+
         const textarea = row.querySelector('textarea');
         const options = (textarea ? textarea.value : '')
           .split('\n')
@@ -415,8 +413,6 @@
           .filter(Boolean);
 
         if (options.length === 0) {
-          // If a row is checked but has no options, we skip it or alert.
-          // Let's alert to help prevent blank templates
           hasInvalidCategory = true;
           alert(`Please fill in some variations for the checked category "${name}".`);
           textarea.focus();
@@ -429,6 +425,7 @@
         enabledCategories.push({
           id: row.dataset.id,
           name,
+          prefix: prefixText,
           options,
           selectMode,
           isCustom
@@ -442,17 +439,13 @@
         return;
       }
 
-      // Start priority for new templates
       const templates = getTemplates();
-      // Sub-templates (dropdown options) go to high priority numbers so they never auto-match.
-      // Main template gets priority 1 so it appears FIRST — before any linked general templates.
       let subPriority = Math.max(...templates.map(t => t.priority ?? 0), 900) + 1;
       const diagSlug = slugify(diagName);
 
       const newTemplates = [];
-
-      // 1. Generate dropdown templates for each enabled category
       const dropdownReferences = [];
+
       enabledCategories.forEach(cat => {
         const catSlug = slugify(cat.name);
         const dropdownId = `wiz-${diagSlug}-${catSlug}`;
@@ -462,11 +455,12 @@
           id: dropdownId,
           name: `${diagName} — ${cat.name}`,
           type: 'dropdown',
-          triggers: [], // Nested only — referenced via {dropdown:ID}, never auto-matched
+          triggers: [],
           label: cat.name,
+          prefix: cat.prefix || undefined,
           join: isSingle ? 'lines' : cat.selectMode,
           singleSelect: isSingle,
-          showLabel: false, // Labels suppressed by default for inline wizard dropdowns
+          showLabel: false,
           options: cat.options,
           priority: subPriority++,
           category: diagName
@@ -479,16 +473,21 @@
         });
       });
 
-      // 2. Generate the main Diagnosis Template at priority 1 (appears first in matched output)
       const mainTemplateId = `wiz-${diagSlug}-main`;
-      // Build content: each dropdown is separated by a space rather than a <br>
-      // to avoid extra line breaks in the rendered output
+      const layoutSelect = $('sc-wiz-layout');
+      const useDivs = layoutSelect ? layoutSelect.value === 'divs' : true;
       let contentHtml = '';
-      dropdownReferences.forEach(ref => {
-        contentHtml += `{dropdown:${ref.id}} `;
-      });
-      // Trim the trailing space
-      contentHtml = contentHtml.replace(/ $/, '');
+      
+      if (useDivs) {
+        dropdownReferences.forEach(ref => {
+          contentHtml += `<div>{dropdown:${ref.id}}</div>`;
+        });
+      } else {
+        dropdownReferences.forEach(ref => {
+          contentHtml += `{dropdown:${ref.id}} `;
+        });
+        contentHtml = contentHtml.replace(/ $/, '');
+      }
 
       const mainTemplate = {
         id: mainTemplateId,
@@ -501,7 +500,6 @@
 
       newTemplates.push(mainTemplate);
 
-      // 3. Link existing templates by adding triggers
       const currentTemplates = [...templates];
       const selectedTemplateCheckboxes = Array.from(linkedTemplatesContainer.querySelectorAll('input[type="checkbox"]:checked'));
       const linkedTemplateIds = selectedTemplateCheckboxes.map(cb => cb.dataset.id);
@@ -509,7 +507,6 @@
       linkedTemplateIds.forEach(id => {
         const t = currentTemplates.find(t => t.id === id);
         if (t) {
-          // Add triggers that don't already exist
           const updatedTriggers = [...(t.triggers || [])];
           triggers.forEach(trg => {
             if (!updatedTriggers.includes(trg)) {
@@ -520,23 +517,19 @@
         }
       });
 
-      // 4. Overwrite any existing templates with the same IDs and append new templates
       const newTemplateIds = newTemplates.map(t => t.id);
       let updatedAllTemplates = currentTemplates.filter(t => !newTemplateIds.includes(t.id));
       updatedAllTemplates = updatedAllTemplates.concat(newTemplates);
 
-      // 5. Save back to local storage and refresh state
       try {
         storage.set(STORAGE_KEYS.TEMPLATES, updatedAllTemplates);
         setTemplates(updatedAllTemplates);
         showToast(`Successfully generated templates for ${diagName}!`, 'success', 3500);
         updatePreview();
 
-        // Close the wizard overlay
         const wizardPanel = $('sc-wizard');
         if (wizardPanel) wizardPanel.classList.add('hidden');
 
-        // Reset form
         $('sc-wiz-name').value = '';
         $('sc-wiz-triggers').value = '';
         renderCategories();
@@ -546,19 +539,21 @@
       }
     });
 
-    // ── loadDiagnosis: reconstruct wizard form from existing generated templates ──
     function loadDiagnosis(diagName) {
       const templates = getTemplates();
       const diagSlug = slugify(diagName);
       const mainId = `wiz-${diagSlug}-main`;
       const mainTpl = templates.find(t => t.id === mainId);
 
-      // Start with a clean slate
       $('sc-wiz-name').value = diagName;
       $('sc-wiz-triggers').value = mainTpl ? (mainTpl.triggers || []).join(', ') : '';
       customCategoryCounter = 0;
 
-      // Parse the ordered list of {dropdown:ID} references from the main template content
+      const layoutSelect = $('sc-wiz-layout');
+      if (layoutSelect && mainTpl && mainTpl.content) {
+        layoutSelect.value = mainTpl.content.includes('<div>') ? 'divs' : 'spaces';
+      }
+
       const dropdownIds = [];
       if (mainTpl && mainTpl.content) {
         const re = /\{dropdown:([^}]+)\}/g;
@@ -568,21 +563,16 @@
         }
       }
 
-      // Build a map from sub-template ID → sub-template
       const subMap = {};
       templates.forEach(t => {
         if (t.category === diagName && t.id !== mainId) subMap[t.id] = t;
       });
 
-      // Render default categories first (unchecked/empty unless they appear in dropdownIds)
       listContainer.innerHTML = '';
       DEFAULT_CATEGORIES.forEach(cat => {
-        // Find the sub-template that matches this default category slot
         const expectedId = `wiz-${diagSlug}-${slugify(cat.name)}`;
         const subTpl = subMap[expectedId];
 
-        // Also check if the sub-template's label was renamed (same id pattern, different label)
-        // Try to match by ID first; fall back to searching by label
         const actualId = dropdownIds.find(id => id === expectedId)
           || dropdownIds.find(id => {
             const t = subMap[id];
@@ -590,7 +580,6 @@
           });
         const resolvedTpl = actualId ? (subMap[actualId] || subTpl) : subTpl;
 
-        // Determine display name: prefer the sub-template label if it differs (user renamed it)
         const displayName = (resolvedTpl && resolvedTpl.label && resolvedTpl.label !== cat.name)
           ? resolvedTpl.label
           : cat.name;
@@ -598,26 +587,26 @@
         addCategoryRow(displayName, cat.desc, cat.placeholder, cat.defaultMode, cat.id, false);
 
         if (resolvedTpl) {
-          // Populate the row we just added (last child)
           const row = listContainer.lastElementChild;
           const textarea = row.querySelector('textarea');
           const select = row.querySelector('select');
           const checkbox = row.querySelector('.sc-wiz-checkbox');
+          const prefixInput = row.querySelector('.sc-wiz-prefix');
+          
           if (textarea) textarea.value = (resolvedTpl.options || []).join('\n');
           if (select) {
             const mode = resolvedTpl.singleSelect ? 'singleSelect' : (resolvedTpl.join || 'lines');
             select.value = mode;
           }
+          if (prefixInput) prefixInput.value = resolvedTpl.prefix || '';
           if (checkbox) checkbox.checked = true;
         }
       });
 
-      // Add custom category rows for any sub-templates NOT matched to a default category slot
       const defaultExpectedIds = DEFAULT_CATEGORIES.map(cat => `wiz-${diagSlug}-${slugify(cat.name)}`);
       const handledIds = new Set(defaultExpectedIds);
       handledIds.add(mainId);
 
-      // Only add custom rows for IDs that appear in the dropdown references order
       dropdownIds.forEach(id => {
         if (handledIds.has(id)) return;
         const t = subMap[id];
@@ -627,25 +616,22 @@
         const row = listContainer.lastElementChild;
         const textarea = row.querySelector('textarea');
         const select = row.querySelector('select');
+        const prefixInput = row.querySelector('.sc-wiz-prefix');
         if (textarea) textarea.value = (t.options || []).join('\n');
         if (select) select.value = t.singleSelect ? 'singleSelect' : (t.join || 'lines');
+        if (prefixInput) prefixInput.value = t.prefix || '';
         handledIds.add(id);
       });
 
-      // Now reorder rows to match the dropdownIds order (the user's saved order)
-      // Build id→row map based on which sub-template each row represents
       if (dropdownIds.length > 0) {
-        // Map each row to its expected sub-template ID
         const rowsInOrder = [];
         const unorderedRows = [];
         const allRows = Array.from(listContainer.querySelectorAll('tr'));
 
-        // For default rows, derive their expected sub-template ID
         const rowIdMap = new Map();
         allRows.forEach(row => {
           const isCustom = row.dataset.custom === 'true';
           if (isCustom) {
-            // Find the custom row's sub-template by matching its name input value
             const nameInput = row.querySelector('.sc-wiz-custom-name');
             const label = nameInput ? nameInput.value.trim() : '';
             const matchId = dropdownIds.find(id => {
@@ -658,7 +644,6 @@
             const cat = DEFAULT_CATEGORIES.find(c => c.id === catId);
             if (cat) {
               const expectedId = `wiz-${diagSlug}-${slugify(cat.name)}`;
-              // Also check if a renamed variant exists
               const altId = dropdownIds.find(id => {
                 const t = subMap[id];
                 return t && slugify(t.label || '') === slugify(cat.name);
@@ -670,7 +655,6 @@
           }
         });
 
-        // Sort rows: first those in dropdownIds order, then unchecked defaults at the end
         const inDropdown = [];
         const notInDropdown = [];
         allRows.forEach(row => {
@@ -683,7 +667,6 @@
         });
         inDropdown.sort((a, b) => a.idx - b.idx);
 
-        // Re-append in order
         inDropdown.forEach(({ row }) => listContainer.appendChild(row));
         notInDropdown.forEach(row => listContainer.appendChild(row));
       }
@@ -692,11 +675,12 @@
       $('sc-wiz-name').focus();
     }
 
-    // Public API
     window.SmartChartWizard = {
       open() {
         $('sc-wiz-name').value = '';
         $('sc-wiz-triggers').value = '';
+        const layoutSelect = $('sc-wiz-layout');
+        if (layoutSelect) layoutSelect.value = 'divs';
         renderCategories();
         renderLinkedTemplates();
         customCategoryCounter = 0;
@@ -706,7 +690,6 @@
     };
   }
 
-  // Load wizard script
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setTimeout(init, 50));
   } else {

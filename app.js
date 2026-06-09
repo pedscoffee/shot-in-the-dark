@@ -2,13 +2,6 @@
  * SmartChart — app.js
  * Core logic: template matching, note rendering, clipboard,
  * focus mode, auto-copy, auto-clear, state persistence.
- *
- * Design decisions:
- * - Stores & renders templates as HTML (no Markdown)
- * - Copies rich HTML + plain-text fallback to clipboard
- * - Debounce preview: 300ms | Auto-copy: 1.5s | Auto-clear: 30s
- * - Pane fills the browser window
- * - Focus mode hides everything below the input for EMR side-by-side use
  */
 
 'use strict';
@@ -163,12 +156,6 @@ function debounce(fn, ms) {
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
-/**
- * sanitizeHtml(html) → string
- * Runs HTML through DOMPurify before any innerHTML assignment.
- * Strips scripts, event handlers, and dangerous attributes.
- * Falls back to plain-text escaping if DOMPurify is not loaded (should not happen).
- */
 function sanitizeHtml(html) {
   if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) {
     return DOMPurify.sanitize(String(html || ''), {
@@ -177,7 +164,6 @@ function sanitizeHtml(html) {
       ALLOWED_ATTR: ['class','style'],
     });
   }
-  // Fallback: strip all tags if DOMPurify somehow unavailable
   console.warn('[SmartChart] DOMPurify not loaded — stripping all HTML as safety fallback.');
   return String(html || '').replace(/<[^>]*>/g, '');
 }
@@ -254,12 +240,18 @@ function renderDropdownValueHtml(t) {
   const selected = Array.isArray(selection.values) ? selection.values : [];
   if (selected.length === 0) return '';
   const join = selection.join || t.join || 'lines';
+  
+  let out = joinTemplateOptions(selected, join);
+
+  // Apply optional static prefix and suffix
+  if (t.prefix) out = t.prefix + out;
+  if (t.suffix) out = out + t.suffix;
+
   // showLabel defaults to false — only show if explicitly set to true.
-  // This avoids redundant headers from wizard-generated nested dropdowns.
   if (t.showLabel === true) {
-    return `<p><strong>${t.label || t.name}:</strong></p>${joinTemplateOptions(selected, join)}`;
+    return `<p><strong>${t.label || t.name}:</strong></p>${out}`;
   }
-  return joinTemplateOptions(selected, join);
+  return out;
 }
 
 function renderTemplateContentHtml(t, seen = new Set()) {
@@ -273,10 +265,6 @@ function renderTemplateContentHtml(t, seen = new Set()) {
   });
 }
 
-/**
- * renderNote(input, matched, noteTemplate) → HTML string
- * Replaces {input}, {templates}, dropdown placeholders, and {static:...}.
- */
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
 
@@ -287,7 +275,6 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
     return label + content;
   }).filter(Boolean).join('<hr class="sc-template-sep">');
 
-  // Escape the input text for safe HTML insertion
   const escapedInput = input
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -299,10 +286,8 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
     .replace(/\{templates\}/g, templatesHtml)
     .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContentHtml(getTemplateById(id)));
 
-  // {static:TEXT} → plain span
   out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
 
-  // Transform standard <ul>/<li> bullets to a hardcoded character if not using disc
   const bulletChar = opts.bulletStyle;
   if (bulletChar && bulletChar !== 'disc') {
     out = out.replace(/<ul[^>]*>/gi, '<div class="sc-list-hyphen">')
@@ -311,14 +296,15 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
              .replace(/<\/li>/gi, '</div>');
   }
 
+  // Clean up empty wrapping blocks left behind by unselected dropdowns
+  out = out.replace(/<div>\s*<\/div>/gi, '').replace(/<p>\s*<\/p>/gi, '');
+
   return out;
 }
 
-/** Extract plain text from an HTML string for plain-text clipboard copy. */
 function htmlToPlainText(html) {
   const div = document.createElement('div');
   div.innerHTML = html;
-  // Replace <br>, <p>, <li>, <hr> with newlines before innerText extraction
   div.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
   div.querySelectorAll('p, div, li, hr').forEach(el => {
     el.insertAdjacentText('afterend', '\n');
@@ -405,7 +391,6 @@ function renderDropdownControls(dropdowns) {
 
     const select = document.createElement('select');
     select.className = 'sc-dropdown-template-select';
-    // Single-select mode: use a <select> without multiple; add a blank "(none)" option
     if (isSingleSelect) {
       select.multiple = false;
       select.size = 1;
@@ -428,7 +413,6 @@ function renderDropdownControls(dropdowns) {
 
     const join = document.createElement('select');
     join.className = 'sc-dropdown-template-join';
-    // Hide join selector for single-select dropdowns (only one value, no joining needed)
     if (isSingleSelect) join.style.display = 'none';
     [
       ['lines', 'Bullets'],
@@ -538,7 +522,6 @@ function updatePreview() {
   }
 
   state.currentNoteHtml = htmlSource;
-  // Source tab shows cleaned HTML for transparency
   dom.sourceText.textContent = htmlSource;
 
   dom.previewRendered.innerHTML = sanitizeHtml(htmlSource);
@@ -575,8 +558,6 @@ function scheduleAutoCopy() {
   cancelAutoCopy();
   if (!state.behavior.autoCopyEnabled) return;
   if (!state.currentNoteHtml.trim()) return;
-  // Auto-copy proceeds even if dropdowns are unselected — unselected dropdowns
-  // simply render as empty and are excluded from the copied output.
 
   dom.autoCopyIndicator.classList.remove('hidden');
   state.autoCopyTimer = setTimeout(async () => {
@@ -713,22 +694,18 @@ function attachSmartTextareaBehavior(el, onChange) {
     onChange();
   });
   el.addEventListener('keydown', e => {
-    // Backspace on an otherwise-empty bullet line removes the bullet prefix
     if (e.key === 'Backspace' && !e.metaKey && !e.ctrlKey) {
       const cursor    = el.selectionStart ?? el.value.length;
       const selEnd    = el.selectionEnd ?? cursor;
-      if (cursor === selEnd) { // no selection
+      if (cursor === selEnd) {
         const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
         const lineBeforeCursor = el.value.slice(lineStart, cursor);
-        // If the line is exactly a bullet prefix ("- " or "* ") with nothing after,
-        // remove the entire prefix rather than deleting character-by-character
         const bulletOnly = lineBeforeCursor.match(/^(\s*[-*] )$/);
         if (bulletOnly) {
           e.preventDefault();
-          // Remove the prefix (and the preceding newline if not at start)
-          const removeFrom = lineStart > 0 ? lineStart - 1 : lineStart; // remove the \n before this line too
+          const removeFrom = lineStart > 0 ? lineStart - 1 : lineStart;
           const removeLength = lineStart > 0
-            ? 1 + bulletOnly[1].length  // \n + prefix chars
+            ? 1 + bulletOnly[1].length
             : bulletOnly[1].length;
           el.value = el.value.slice(0, removeFrom) + el.value.slice(removeFrom + removeLength);
           const newCursor = removeFrom;
@@ -990,10 +967,7 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 
-// Expose only the minimal API that settings.js requires.
-// Raw state, storage internals, and DOM references are NOT exported.
 window.SmartChart = {
-  // Read-only snapshots (settings.js reads these once on open)
   getState()           { return { ...state, autoCopyTimer: undefined, autoClearTimer: undefined, previewDebounce: undefined }; },
   getTemplates()       { return state.templates; },
   getNoteTemplate()    { return state.noteTemplate; },
@@ -1002,11 +976,9 @@ window.SmartChart = {
   DEFAULT_NOTE_TEMPLATE,
   DEFAULT_TEMPLATES,
   DEFAULT_BEHAVIOR,
-  // Mutators (settings.js uses these to save changes)
   setTemplates(tpls)   { state.templates    = tpls; },
   setNoteTemplate(nt)  { state.noteTemplate = nt;   },
   setBehavior(b)       { state.behavior     = b;    },
-  // Shared utilities
   storage,
   updatePreview,
   showToast,

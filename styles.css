@@ -4,9 +4,7 @@
    Fonts: Sora (UI) · IBM Plex Mono (content)
 ════════════════════════════════════════════════ */
 
-/* ─── Design Tokens ─── */
 :root {
-  /* Surfaces */
   --bg-base:      #0b0e14;
   --bg-pane:      #141820;
   --bg-header:    #1a1f2c;
@@ -14,39 +12,31 @@
   --bg-input:     #0e111a;
   --bg-code:      #1a1f2c;
 
-  /* Borders */
   --border:       #272d3d;
   --border-focus: #22c55e;
 
-  /* Accent: medical green */
   --accent:       #22c55e;
   --accent-dim:   rgba(34, 197, 94, 0.12);
   --accent-glow:  rgba(34, 197, 94, 0.25);
 
-  /* Text */
   --text-1:       #e8edf5;
   --text-2:       #8a95aa;
   --text-3:       #44505f;
 
-  /* Semantic */
   --danger:       #f26b5e;
   --warning:      #e5a840;
   --info:         #5b9cf6;
 
-  /* Fonts */
   --font-ui:      'Sora', system-ui, sans-serif;
   --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
 
-  /* Geometry */
   --radius:       8px;
   --radius-sm:    5px;
   --header-h:     46px;
 
-  /* Shadow */
   --shadow-pane:  0 2px 12px rgba(0,0,0,0.4);
 }
 
-/* ─── Reset ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -62,16 +52,11 @@ body {
   overflow: hidden;
 }
 
-/* ─── Scrollbar ─── */
 * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
-
-/* ══════════════════════════════════════
-   MAIN PANE — fills the browser window
-══════════════════════════════════════ */
 
 .sc-pane {
   position: fixed;
@@ -85,7 +70,6 @@ body {
   overflow: hidden;
 }
 
-/* Focus mode — keep only header and the clinical input visible */
 .sc-pane.sc-focus-mode,
 .sc-pane.sc-minimized {
   bottom: auto;
@@ -106,7 +90,6 @@ body {
   display: none !important;
 }
 
-/* ─── Header ─── */
 .sc-header {
   display: flex;
   align-items: center;
@@ -162,7 +145,6 @@ body {
   cursor: default;
 }
 
-/* ─── Buttons ─── */
 .sc-btn {
   font-family: var(--font-ui);
   cursor: pointer;
@@ -239,7 +221,6 @@ body {
 
 .sc-btn-full { width: 100%; justify-content: flex-start; }
 
-/* ── Body ── */
 .sc-body {
   flex: 1;
   display: flex;
@@ -248,7 +229,6 @@ body {
   min-height: 0;
 }
 
-/* ─── Input Section ─── */
 .sc-input-section {
   display: flex;
   flex-direction: column;
@@ -285,7 +265,6 @@ body {
 }
 .sc-input::placeholder { color: var(--text-3); font-style: italic; }
 
-/* ─── Status Bar ─── */
 .sc-status-bar {
   display: flex;
   align-items: center;
@@ -309,7 +288,6 @@ body {
 
 .sc-status-right { display: flex; align-items: center; gap: 6px; }
 
-/* Auto-copy pulse indicator */
 .sc-autocopy-dot {
   width: 7px;
   height: 7px;
@@ -322,7 +300,6 @@ body {
   50%      { opacity:0.35; transform:scale(0.75); }
 }
 
-/* ─── Preview Section ─── */
 .sc-preview-section {
   flex: 1;
   display: flex;
@@ -331,7 +308,7 @@ body {
   min-height: 0;
 }
 
-.sc-preview-tabs { /* v2: tab-actions support */
+.sc-preview-tabs { 
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--border);
@@ -366,7 +343,6 @@ body {
   min-height: 0;
 }
 
-/* ── Rendered Markdown Preview ── */
 .sc-md-content {
   font-family: var(--font-mono);
   font-size: 12.5px;
@@ -458,14 +434,12 @@ body {
   padding: 0 8px;
 }
 
-/* Template divider in preview */
 .sc-template-sep {
   border: none;
   border-top: 1px dashed var(--border);
   margin: 8px 0;
 }
 
-/* ── Source / Markdown tab ── */
 .sc-source-pre {
   font-family: var(--font-mono);
   font-size: 11.5px;
@@ -475,7 +449,6 @@ body {
   word-break: break-word;
 }
 
-/* ── Empty State ── */
 .sc-empty-state {
   height: 100%;
   display: flex;
@@ -498,10 +471,6 @@ body {
   height: 32px;
   opacity: 0.3;
 }
-
-/* ══════════════════════════════════════
-   SETTINGS 
-══════════════════════════════════════ */
 
 .sc-settings {
   position: absolute;
@@ -565,11 +534,9 @@ body {
   min-height: 0;
 }
 
-/* Settings tab content */
 .sc-stab-content { display: none; }
 .sc-stab-content.active { display: block; }
 
-/* ─── Settings Form Elements ─── */
 .sc-field-group { margin-bottom: 16px; }
 
 .sc-label {
@@ -638,7 +605,6 @@ body {
 }
 .sc-textarea-settings:focus { border-color: var(--border-focus); }
 
-/* Rich Text Editor for Note Template */
 .sc-rich-editor {
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -745,7 +711,6 @@ body {
   margin: 16px 0;
 }
 
-/* Example block in note template tab */
 .sc-example-block {
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -770,7 +735,6 @@ body {
   overflow-x: auto;
 }
 
-/* ── Range Input ── */
 .sc-range-row {
   display: flex;
   align-items: center;
@@ -790,7 +754,6 @@ body {
   text-align: right;
 }
 
-/* ── Toggle ── */
 .sc-toggle-wrap {
   display: flex;
   align-items: center;
@@ -834,7 +797,6 @@ body {
   font-weight: 400;
 }
 
-/* ── Template List ── */
 .sc-template-list {
   display: flex;
   flex-direction: column;
@@ -888,7 +850,6 @@ body {
 }
 .sc-template-actions .sc-btn-icon { width: 28px; height: 28px; }
 
-/* ── Template Form ── */
 .sc-template-form {
   margin-top: 12px;
   background: var(--bg-input);
@@ -908,9 +869,6 @@ body {
   color: var(--text-2);
 }
 
-/* ══════════════════════════════════════
-   TOAST NOTIFICATIONS
-══════════════════════════════════════ */
 .sc-toast-container {
   position: fixed;
   bottom: 24px;
@@ -950,9 +908,6 @@ body {
   to   { opacity: 0; transform: translateY(8px); }
 }
 
-/* ══════════════════════════════════════
-   UTILITIES
-══════════════════════════════════════ */
 .hidden { display: none !important; }
 
 .sc-resize-handle { display: none !important; }
@@ -963,11 +918,6 @@ body {
   }
 }
 
-/* ═══════════════════════════════════════════════
-   ENHANCEMENTS — v2
-════════════════════════════════════════════════ */
-
-/* New Patient button — distinct green tint */
 #sc-new-patient-btn {
   color: var(--accent);
   opacity: 0.85;
@@ -977,14 +927,12 @@ body {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
-/* Input label row with undo button */
 .sc-input-label-actions {
   display: flex;
   gap: 4px;
   align-items: center;
 }
 
-/* Undo clear button */
 .sc-undo-btn {
   color: var(--accent) !important;
   font-size: 11px !important;
@@ -995,7 +943,6 @@ body {
 }
 .sc-undo-btn.hidden { display: none; }
 
-/* Keyboard shortcut hint */
 .sc-kbd-hint {
   font-size: 11px;
   opacity: 0.45;
@@ -1003,7 +950,6 @@ body {
   margin-left: 3px;
 }
 
-/* Tab actions area (Labels / Plain buttons) */
 .sc-tab-actions {
   margin-left: auto;
   display: flex;
@@ -1027,7 +973,6 @@ body {
   color: var(--accent) !important;
 }
 
-/* Empty hint line */
 .sc-empty-hint {
   display: block;
   font-size: 11px;
@@ -1035,7 +980,6 @@ body {
   margin-top: 4px;
 }
 
-/* No-match message */
 .sc-no-match-msg {
   display: flex;
   flex-direction: column;
@@ -1050,7 +994,6 @@ body {
 .sc-no-match-icon { font-size: 22px; margin-bottom: 2px; }
 .sc-no-match-hint { font-size: 12px; color: var(--text-3); font-style: italic; }
 
-/* Category filter bar */
 .sc-cat-filter {
   display: flex;
   flex-wrap: wrap;
@@ -1077,7 +1020,6 @@ body {
   color: var(--accent);
 }
 
-/* Template name row with category badge */
 .sc-template-name-row {
   display: flex;
   align-items: center;
@@ -1095,7 +1037,6 @@ body {
   white-space: nowrap;
 }
 
-/* Template inline preview */
 .sc-template-preview-expand {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -1116,7 +1057,6 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Behavior tab new toggles */
 .sc-toggle-row {
   display: flex;
   align-items: flex-start;
@@ -1139,24 +1079,18 @@ body {
   color: var(--text-3);
   line-height: 1.4;
 }
-/* ════════════════════════════════════════════════
-   RICH EDITOR ADDITIONS
-════════════════════════════════════════════════ */
 
-/* Toolbar active (toggled) state — e.g. bold is ON */
 .sc-rich-toolbar button.sc-toolbar-active {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-/* Larger editor height for template content */
 .sc-editor-content {
   min-height: 160px;
   max-height: 340px;
 }
 
-/* Rich content rendered in the editor */
 .sc-editor-content h1 { font-size: 15px; font-weight: 700; margin: 6px 0 3px; }
 .sc-editor-content h2 { font-size: 13px; font-weight: 700; margin: 6px 0 3px; }
 .sc-editor-content h3 { font-size: 12px; font-weight: 600; margin: 5px 0 2px; }
@@ -1179,7 +1113,6 @@ body {
   pointer-events: none;
 }
 
-/* Toolbar scrolls on narrow screens instead of wrapping too aggressively */
 .sc-rich-toolbar {
   overflow-x: auto;
   flex-wrap: nowrap;
@@ -1187,17 +1120,10 @@ body {
 }
 .sc-rich-toolbar::-webkit-scrollbar { display: none; }
 
-/* ════════════════════════════════════════════════
-   UTILITY — replaces inline styles (CSP compliance)
-════════════════════════════════════════════════ */
-
-/* sc-label used as a section heading, not a <label> element */
 .sc-label-heading {
   display: block;
 }
 
-/* Visually hidden but screen-reader accessible — for labelling inputs
-   whose visible label text is provided by an adjacent <span> */
 .sc-sr-only {
   position: absolute;
   width: 1px;
@@ -1210,7 +1136,6 @@ body {
   border: 0;
 }
 
-/* Behaviour-tab standalone checkboxes (Plain Text / Source Labels) */
 .sc-behavior-checkbox {
   flex-shrink: 0;
   margin-top: 2px;
@@ -1219,14 +1144,11 @@ body {
   height: 16px;
 }
 
-/* btn-row spacing variants */
 .sc-btn-row--mb { margin-bottom: 10px; }
 .sc-btn-row--mt { margin-top: 10px; }
 
-/* help-text top-margin variant */
 .sc-help-text--mt { margin-top: 4px; }
 
-/* Empty-state paragraph in template list */
 .sc-list-empty {
   color: var(--text-3);
   font-size: 12px;
@@ -1234,14 +1156,9 @@ body {
   padding: 18px 0;
 }
 
-/* Delete button danger colour in template list */
 .sc-btn-delete {
   color: var(--danger);
 }
-
-/* ═══════════════════════════════════════════════
-   DIAGNOSIS WIZARD CSS STYLE DEFINITIONS
-   ════════════════════════════════════════════════ */
 
 .sc-wiz-table {
   border-collapse: collapse;
@@ -1363,7 +1280,6 @@ body {
   align-items: flex-start;
   gap: 6px;
 }
-/* ── Wizard: reorder buttons ── */
 .sc-wiz-move-btn {
   display: flex;
   align-items: center;
@@ -1390,7 +1306,6 @@ body {
   cursor: default;
 }
 
-/* ── Settings: Edit in Wizard button ── */
 .sc-wiz-edit-btn {
   margin-left: auto;
   font-size: 11px;
@@ -1404,7 +1319,6 @@ body {
   background: rgba(34, 197, 94, 0.08);
 }
 
-/* ── Wizard: layout classes (replaces inline styles) ── */
 .sc-wiz-meta-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1441,6 +1355,9 @@ body {
 .sc-wiz-th--cat {
   width: 220px;
 }
+.sc-wiz-th--prefix {
+  width: 150px;
+}
 .sc-wiz-th--mode {
   width: 150px;
 }
@@ -1463,7 +1380,6 @@ body {
   background: var(--bg-input);
 }
 
-/* ── Wizard: table cell base (replaces per-cell style=) ── */
 .sc-wiz-td {
   padding: 10px;
   vertical-align: top;
@@ -1479,13 +1395,11 @@ body {
   padding: 6px 4px;
 }
 
-/* ── Wizard: custom name input sizing ── */
 .sc-wiz-custom-name-input {
   padding: 4px 6px !important;
   font-size: 12px !important;
 }
 
-/* ── Wizard: click-to-rename category name ── */
 .sc-wiz-category-name-row {
   display: inline-flex;
   align-items: center;
