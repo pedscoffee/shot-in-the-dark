@@ -115,6 +115,310 @@ const DEFAULT_TEMPLATES = [
     priority: 20,
     category: 'Dropdown',
   },
+  // ════════════════════════════════════════════════
+  // ACUTE OTITIS MEDIA (AOM)
+  // ════════════════════════════════════════════════
+  {
+    id: 'wiz-aom-main',
+    name: 'Acute Otitis Media',
+    category: 'Infectious',
+    triggers: ['aom', 'ear infection', 'otitis media', 'ear pain', 'earache'],
+    content: '<p><strong>Assessment: Acute Otitis Media</strong></p>{dropdown:aom-abx}{dropdown:aom-rationale}{dropdown:aom-supportive}{dropdown:aom-followup}',
+    priority: 10,
+  },
+  {
+    id: 'aom-abx',
+    name: 'AOM Antibiotic Selection',
+    type: 'dropdown',
+    label: 'Antibiotic Prescribed',
+    showLabel: true,
+    singleSelect: true,
+    join: 'sentence',
+    options: [
+      'Amoxicillin',
+      'Amoxicillin-clavulanate',
+      'Ceftriaxone',
+      'Cefprozil',
+      'Cefdinir',
+      'Azithromycin'
+    ],
+    category: 'Infectious',
+  },
+  {
+    id: 'aom-rationale',
+    name: 'AOM Rationale',
+    type: 'dropdown',
+    label: 'Rationale',
+    showLabel: true,
+    singleSelect: true,
+    join: 'sentence',
+    options: [
+      'First-line treatment.',
+      'Recent amoxicillin use within 30 days.',
+      'Treatment failure on initial antibiotic.',
+      'Recurrent infection.',
+      'Mild penicillin allergy.',
+      'Severe/anaphylactic penicillin allergy.'
+    ],
+    category: 'Infectious',
+  },
+  {
+    id: 'aom-supportive',
+    name: 'AOM Supportive Care',
+    type: 'dropdown',
+    label: 'Supportive Care',
+    showLabel: true,
+    singleSelect: false,
+    join: 'and',
+    options: ['Acetaminophen', 'Ibuprofen', 'Fluids'],
+    category: 'Infectious',
+  },
+  {
+    id: 'aom-followup',
+    name: 'AOM Follow-up',
+    type: 'dropdown',
+    label: 'Follow-up Plan',
+    showLabel: true,
+    singleSelect: true,
+    join: 'lines',
+    options: [
+      'Return if worsening or not improving in 48-72 hours.',
+      'Recheck in several days (perforation).',
+      'Recheck in 2–4 weeks (perforation resolution).',
+      'Recheck in 1–3 months (persistent effusion).'
+    ],
+    category: 'Infectious',
+  },
+
+  // ════════════════════════════════════════════════
+  // ACUTE GASTROENTERITIS (AGE)
+  // ════════════════════════════════════════════════
+  {
+    id: 'wiz-age-main',
+    name: 'Acute Gastroenteritis',
+    category: 'GI',
+    triggers: ['age', 'gastroenteritis', 'vomiting', 'diarrhea', 'stomach bug'],
+    content: '<p><strong>Assessment: Acute Gastroenteritis</strong></p>{dropdown:age-meds}{dropdown:age-hydration}{dropdown:age-followup}',
+    priority: 11,
+  },
+  {
+    id: 'age-meds',
+    name: 'AGE Medications',
+    type: 'dropdown',
+    label: 'Medications',
+    showLabel: true,
+    singleSelect: false,
+    join: 'and',
+    options: ['Ondansetron', 'Acetaminophen', 'Ibuprofen'],
+    category: 'GI',
+  },
+  {
+    id: 'age-hydration',
+    name: 'AGE Hydration',
+    type: 'dropdown',
+    label: 'Hydration Strategy',
+    showLabel: true,
+    singleSelect: false,
+    join: 'and',
+    options: ['Strict oral hydration protocols', 'Pedialyte', 'Frequent, small volumes of clear fluids'],
+    category: 'GI',
+  },
+  {
+    id: 'age-followup',
+    name: 'AGE Follow-up',
+    type: 'dropdown',
+    label: 'Precautions',
+    showLabel: true,
+    singleSelect: false,
+    join: 'lines',
+    options: [
+      'Strict dehydration precautions discussed.',
+      'Return immediately for lethargy, lack of tears, or no urine output in 8 hours.',
+      'Follow up if symptoms persist beyond expected viral course.'
+    ],
+    category: 'GI',
+  },
+
+  // ════════════════════════════════════════════════
+  // GENERALIZED ABDOMINAL PAIN
+  // ════════════════════════════════════════════════
+  {
+    id: 'wiz-abd-pain-main',
+    name: 'Abdominal Pain',
+    category: 'GI',
+    triggers: ['abdominal pain', 'stomach ache', 'stomach pain', 'belly ache'],
+    content: '<p><strong>Assessment: Abdominal Pain</strong></p>{dropdown:abd-redflags}{dropdown:abd-location}{dropdown:abd-exam}{dropdown:abd-ddx}{dropdown:abd-labs}{dropdown:abd-imaging}',
+    priority: 12,
+  },
+  {
+    id: 'abd-redflags',
+    name: 'Abdominal Red Flags',
+    type: 'dropdown',
+    label: 'Red Flag History',
+    showLabel: true,
+    singleSelect: false,
+    join: 'lines',
+    options: ['Weight loss', 'Fever', 'Night sweats', 'Blood in stool', 'Joint pain', 'Rash', 'No red flag symptoms present'],
+    category: 'GI',
+  },
+  {
+    id: 'abd-ddx',
+    name: 'Abdominal DDx',
+    type: 'dropdown',
+    label: 'Differential Diagnosis Considered',
+    showLabel: true,
+    singleSelect: false,
+    join: 'lines',
+    options: [
+      'Surgical (Appendicitis, Acute cholecystitis)',
+      'Infectious (Gastroenteritis, Parasitic infection)',
+      'Gastrointestinal (Constipation, IBD, Pancreatitis)',
+      'Genitourinary (Cystitis, Nephrolithiasis)'
+    ],
+    category: 'GI',
+  },
+  {
+    id: 'abd-labs',
+    name: 'Abdominal Labs',
+    type: 'dropdown',
+    label: 'Laboratory Evaluation',
+    showLabel: true,
+    singleSelect: false,
+    join: 'comma',
+    options: ['CBC', 'CMP', 'ESR', 'CRP', 'Lipase', 'Celiac panel', 'Ova and parasite', 'Fecal occult blood', 'Fecal calprotectin', 'Urinalysis', 'Urine pregnancy test'],
+    category: 'GI',
+  },
+  {
+    id: 'abd-imaging',
+    name: 'Abdominal Imaging',
+    type: 'dropdown',
+    label: 'Imaging Ordered',
+    showLabel: true,
+    singleSelect: false,
+    join: 'comma',
+    options: ['KUB', 'Abdominal ultrasound', 'RUQ ultrasound', 'RLQ ultrasound', 'CT abdomen/pelvis'],
+    category: 'GI',
+  },
+
+  // ════════════════════════════════════════════════
+  // ADHD INITIAL EVALUATION
+  // ════════════════════════════════════════════════
+  {
+    id: 'wiz-adhd-initial-main',
+    name: 'ADHD Initial Evaluation',
+    category: 'Behavioral',
+    triggers: ['adhd initial', 'adhd eval', 'focus issues', 'hyperactive'],
+    content: '<p><strong>Assessment: ADHD Initial Evaluation</strong></p>{dropdown:adhd-diag}{dropdown:adhd-counseling}{dropdown:adhd-meds}',
+    priority: 20,
+  },
+  {
+    id: 'adhd-diag',
+    name: 'ADHD Diagnostic Process',
+    type: 'dropdown',
+    label: 'Diagnostics',
+    showLabel: true,
+    singleSelect: false,
+    join: 'lines',
+    options: [
+      'Vanderbilt forms distributed to parents and teachers.',
+      'Referral placed to pediatric psychology.',
+      'Formal neuropsychological evaluation requested.'
+    ],
+    category: 'Behavioral',
+  },
+  {
+    id: 'adhd-counseling',
+    name: 'ADHD Counseling',
+    type: 'dropdown',
+    label: 'Counseling Provided',
+    showLabel: true,
+    singleSelect: false,
+    join: 'lines',
+    options: [
+      'Discussed natural history and trajectory of ADHD.',
+      'Reviewed multimodal treatment options.',
+      'Discussed 504 plan / IEP school accommodations.',
+      'Reviewed expected benefits of medication.',
+      'Discussed potential medication side effects (appetite suppression, sleep latency, mood changes).'
+    ],
+    category: 'Behavioral',
+  },
+  {
+    id: 'adhd-meds',
+    name: 'ADHD Medication Options',
+    type: 'dropdown',
+    label: 'Medication Initiated/Discussed',
+    showLabel: true,
+    singleSelect: false,
+    join: 'lines',
+    options: [
+      'Methylphenidate-based stimulant.',
+      'Amphetamine-based stimulant.',
+      'Atomoxetine.',
+      'Guanfacine.',
+      'Clonidine.'
+    ],
+    category: 'Behavioral',
+  },
+
+  // ════════════════════════════════════════════════
+  // WELL CHILD CHECK / HEALTH MAINTENANCE
+  // ════════════════════════════════════════════════
+  {
+    id: 'wiz-wcc-main',
+    name: 'Well Child Check (Detailed)',
+    category: 'Health Maintenance',
+    triggers: ['wcc', 'well child', 'checkup', 'annual exam', 'preventive'],
+    content: '<p><strong>Health Maintenance Visit</strong></p><em>All forms, labs, and immunizations reviewed.</em><br>{dropdown:wcc-general}{dropdown:wcc-growth}{dropdown:wcc-guidance}{dropdown:wcc-adolescent}',
+    priority: 5,
+  },
+  {
+    id: 'wcc-general',
+    name: 'WCC General',
+    type: 'dropdown',
+    label: 'General Assessment',
+    showLabel: true,
+    singleSelect: true,
+    join: 'sentence',
+    options: [
+      'Patient is growing and developing well. No acute concerns today.',
+      'Developmentally appropriate. Mild concerns addressed as noted.',
+      'Global developmental delay noted; referrals placed.'
+    ],
+    category: 'Health Maintenance',
+  },
+  {
+    id: 'wcc-growth',
+    name: 'WCC Growth Concerns',
+    type: 'dropdown',
+    label: 'Growth Assessment',
+    showLabel: true,
+    singleSelect: true,
+    join: 'sentence',
+    options: [
+      'Tracking well on established growth curves.',
+      'Tracking well; BMI counseling provided.',
+      'Poor weight gain noted.',
+      'Short stature / poor linear growth noted.'
+    ],
+    category: 'Health Maintenance',
+  },
+  {
+    id: 'wcc-adolescent',
+    name: 'WCC Adolescent Counseling',
+    type: 'dropdown',
+    label: 'Adolescent Counseling',
+    showLabel: true,
+    singleSelect: false,
+    join: 'lines',
+    options: [
+      'Smoking / vaping cessation counseling provided.',
+      'STI prevention and safe sex practices discussed.',
+      'Mental health screening tools reviewed and discussed.',
+      'Contraceptive options reviewed.'
+    ],
+    category: 'Health Maintenance',
+  }
 ];
 
 const DEFAULT_BEHAVIOR = {
