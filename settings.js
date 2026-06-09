@@ -365,6 +365,8 @@
       if (singleSelectEl) singleSelectEl.checked = false;
       const showLabelEl = $('sc-form-show-label');
       if (showLabelEl) showLabelEl.checked = false;
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      if (wrapBulletEl) wrapBulletEl.checked = false;
       formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = '';
@@ -392,6 +394,8 @@
       if (singleSelectEl) singleSelectEl.checked = !!(t.singleSelect);
       const showLabelEl = $('sc-form-show-label');
       if (showLabelEl) showLabelEl.checked = !!(t.showLabel);
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      if (wrapBulletEl) wrapBulletEl.checked = !!(t.wrapBullet);
       formPriority.value = t.priority ?? 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = t.category || '';
@@ -433,6 +437,9 @@
       const singleSelect = singleSelectEl ? singleSelectEl.checked : false;
       const showLabelEl = $('sc-form-show-label');
       const showLabel = showLabelEl ? showLabelEl.checked : false;
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      const wrapBullet = wrapBulletEl ? wrapBulletEl.checked : false;
+
       const template = type === 'dropdown'
         ? {
             id, name, type, triggers,
@@ -443,6 +450,7 @@
             join:     formJoin.value || 'lines',
             singleSelect,
             showLabel,
+            wrapBullet,
             priority,
             ...(category ? { category } : {}),
           }
@@ -571,6 +579,7 @@
                   label:    t.label    ? String(t.label).slice(0, 200)    : undefined,
                   category: t.category ? String(t.category).slice(0, 100) : undefined,
                   priority: Number.isFinite(t.priority) ? t.priority : 10,
+                  wrapBullet: typeof t.wrapBullet === 'boolean' ? t.wrapBullet : undefined,
                 };
               }).filter(Boolean);
               state.templates = sanitized;

@@ -240,12 +240,33 @@ function renderDropdownValueHtml(t) {
   const selected = Array.isArray(selection.values) ? selection.values : [];
   if (selected.length === 0) return '';
   const join = selection.join || t.join || 'lines';
-  
+
+  let prefix = t.prefix || '';
+  let suffix = t.suffix || '';
+  let wrapBullet = !!t.wrapBullet;
+
+  // Auto-detect bullet preference if the user typed a hyphen/bullet in the prefix box
+  const hasBulletPrefix = /^[-*•]\s*/.test(prefix);
+  const cleanPrefix = hasBulletPrefix ? prefix.replace(/^[-*•]\s*/, '') : prefix;
+  const shouldBullet = wrapBullet || hasBulletPrefix;
+
   let out = joinTemplateOptions(selected, join);
 
-  // Apply optional static prefix and suffix
-  if (t.prefix) out = t.prefix + out;
-  if (t.suffix) out = out + t.suffix;
+  if (join === 'lines') {
+    // Put prefix inside the first bullet, and suffix inside the last bullet
+    if (cleanPrefix) {
+      out = out.replace('<ul><li>', `<ul><li>${cleanPrefix}`);
+    }
+    if (suffix) {
+      out = out.replace(/<\/li><\/ul>$/, `${suffix}</li></ul>`);
+    }
+  } else {
+    // For commas, sentences, etc.
+    out = cleanPrefix + out + suffix;
+    if (shouldBullet) {
+      out = `<ul><li>${out}</li></ul>`;
+    }
+  }
 
   // showLabel defaults to false — only show if explicitly set to true.
   if (t.showLabel === true) {
