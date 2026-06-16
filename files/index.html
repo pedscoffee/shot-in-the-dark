@@ -8,1261 +8,1459 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
-                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-                 font-src 'self' https://fonts.gstatic.com;
-                 connect-src 'self' https://cdnjs.cloudflare.com;
-                 object-src 'none';
-                 base-uri 'self';">
+        content="default-src 'self'; script-src 'self' 'sha256-pV1s4y0SJo7/RqDg9YB1pwqDoCifxOIJ9OxTbVvksS0=' 'sha256-OE1p7cGI7LuzW30JB4s7YTyVRG4tiXInbo77ZtG7qGo=' 'sha256-FdmrtSsGPoN72J0z2J+nsXiP+qIxqrjFZXWDcPWBdHs=' 'sha256-BQIKIMbFBPzi+2VxXt1wnUQCL7eR0UCRD0XB7+2P7qE=' https://cdnjs.cloudflare.com; style-src 'sha256-+WYMkR9BhTZdp8LpeyPX4HlFNf5jTw96vU/B/XqbeZ4=' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; worker-src 'self'; object-src 'none'; base-uri 'self';">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
   <title>SmartChart</title>
-  
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-  
   <style>
-    /* ════════════════════════════════════════════════
-       SmartChart — styles.css
-       Clinical Dark Theme: Deep Charcoal + Medical Green
-       Fonts: Sora (UI) · IBM Plex Mono (content)
-    ════════════════════════════════════════════════ */
-
-    /* ─── Design Tokens ─── */
-    :root {
-      /* Surfaces */
-      --bg-base:      #0b0e14;
-      --bg-pane:      #141820;
-      --bg-header:    #1a1f2c;
-      --bg-hover:     #1f2535;
-      --bg-input:     #0e111a;
-      --bg-code:      #1a1f2c;
-
-      /* Borders */
-      --border:       #272d3d;
-      --border-focus: #22c55e;
-
-      /* Accent: medical green */
-      --accent:       #22c55e;
-      --accent-dim:   rgba(34, 197, 94, 0.12);
-      --accent-glow:  rgba(34, 197, 94, 0.25);
-
-      /* Text */
-      --text-1:       #e8edf5;
-      --text-2:       #8a95aa;
-      --text-3:       #44505f;
-
-      /* Semantic */
-      --danger:       #f26b5e;
-      --warning:      #e5a840;
-      --info:         #5b9cf6;
-
-      /* Fonts */
-      --font-ui:      'Sora', system-ui, sans-serif;
-      --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
-
-      /* Geometry */
-      --radius:       8px;
-      --radius-sm:    5px;
-      --header-h:     46px;
-
-      /* Shadow */
-      --shadow-pane:  0 2px 12px rgba(0,0,0,0.4);
-    }
-
-    /* ─── Reset ─── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      min-height: 100%;
-    }
-
-    body {
-      background: var(--bg-base);
-      font-family: var(--font-ui);
-      color: var(--text-1);
-      overflow: hidden;
-    }
-
-    /* ─── Scrollbar ─── */
-    * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
-
-    /* ══════════════════════════════════════
-       MAIN PANE — fills the browser window
-    ══════════════════════════════════════ */
-
-    .sc-pane {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100dvh;
-      background: var(--bg-pane);
-      border: none;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    /* Focus mode — keep only header and the clinical input visible */
-    .sc-pane.sc-focus-mode,
-    .sc-pane.sc-minimized {
-      bottom: auto;
-      height: auto !important;
-      min-height: 0 !important;
-    }
-    .sc-pane.sc-focus-mode .sc-body,
-    .sc-pane.sc-minimized .sc-body {
-      display: flex;
-      flex: 0 0 auto;
-    }
-    .sc-pane.sc-focus-mode .sc-status-bar,
-    .sc-pane.sc-focus-mode .sc-preview-section,
-    .sc-pane.sc-focus-mode .sc-settings,
-    .sc-pane.sc-minimized .sc-status-bar,
-    .sc-pane.sc-minimized .sc-preview-section,
-    .sc-pane.sc-minimized .sc-settings {
-      display: none !important;
-    }
-
-    /* ─── Header ─── */
-    .sc-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: var(--header-h);
-      padding: 0 10px 0 14px;
-      background: var(--bg-header);
-      border-bottom: 1px solid var(--border);
-      user-select: none;
-      flex-shrink: 0;
-    }
-
-    .sc-header-left {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-
-    .sc-logo {
-      color: var(--accent);
-      font-size: 18px;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .sc-title {
-      font-family: var(--font-ui);
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--text-1);
-    }
-
-    .sc-match-badge {
-      background: var(--accent-dim);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      border-radius: 10px;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: 500;
-      padding: 1px 7px;
-      min-width: 22px;
-      text-align: center;
-      transition: all 0.2s;
-    }
-
-    .sc-header-right {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      cursor: default;
-    }
-
-    /* ─── Buttons ─── */
-    .sc-btn {
-      font-family: var(--font-ui);
-      cursor: pointer;
-      border: none;
-      outline: none;
-      transition: all 0.15s;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      white-space: nowrap;
-    }
-
-    .sc-btn:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-
-    .sc-btn-icon {
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      background: transparent;
-      color: var(--text-2);
-      border-radius: var(--radius-sm);
-    }
-    .sc-btn-icon svg { width: 16px; height: 16px; }
-    .sc-btn-icon:hover { background: var(--bg-hover); color: var(--text-1); }
-
-    .sc-btn-primary {
-      background: var(--accent);
-      color: #051208;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      padding: 6px 16px;
-      border-radius: var(--radius-sm);
-    }
-    .sc-btn-primary:hover { filter: brightness(1.1); }
-
-    .sc-btn-ghost {
-      background: transparent;
-      color: var(--text-2);
-      font-size: 12px;
-      font-weight: 500;
-      padding: 6px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-    }
-    .sc-btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); border-color: var(--text-3); }
-
-    .sc-btn-text {
-      background: transparent;
-      color: var(--text-3);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 2px 7px;
-      border-radius: 3px;
-    }
-    .sc-btn-text:hover { color: var(--danger); background: rgba(242, 107, 94, 0.08); }
-
-    .sc-btn-danger {
-      background: transparent;
-      color: var(--danger);
-      font-size: 12px;
-      font-weight: 500;
-      padding: 6px 12px;
-      border: 1px solid rgba(242, 107, 94, 0.35);
-      border-radius: var(--radius-sm);
-    }
-    .sc-btn-danger:hover { background: rgba(242, 107, 94, 0.08); }
-
-    .sc-btn-full { width: 100%; justify-content: flex-start; }
-
-    /* ── Body ── */
-    .sc-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      min-height: 0;
-    }
-
-    /* ─── Input Section ─── */
-    .sc-input-section {
-      display: flex;
-      flex-direction: column;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .sc-input-label {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px 12px 4px;
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--text-3);
-    }
-
-    .sc-input {
-      width: 100%;
-      background: var(--bg-input);
-      border: none;
-      outline: none;
-      resize: none;
-      color: var(--text-1);
-      font-family: var(--font-mono);
-      font-size: 13px;
-      line-height: 1.65;
-      padding: 8px 12px 10px;
-      min-height: 74px;
-      max-height: 180px;
-      overflow-y: auto;
-    }
-    .sc-input::placeholder { color: var(--text-3); font-style: italic; }
-
-    /* ─── Status Bar ─── */
-    .sc-status-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 4px 12px;
-      background: var(--bg-header);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-      min-height: 26px;
-    }
-
-    .sc-status-text {
-      font-size: 10px;
-      font-family: var(--font-mono);
-      color: var(--text-3);
-      letter-spacing: 0.04em;
-      transition: color 0.2s;
-    }
-    .sc-status-text.sc-matched { color: var(--accent); }
-    .sc-status-text.sc-error-text { color: var(--danger); }
-
-    .sc-status-right { display: flex; align-items: center; gap: 6px; }
-
-    /* Auto-copy pulse indicator */
-    .sc-autocopy-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: sc-pulse 1.2s ease-in-out infinite;
-    }
-    @keyframes sc-pulse {
-      0%,100% { opacity:1; transform:scale(1); }
-      50%      { opacity:0.35; transform:scale(0.75); }
-    }
-
-    /* ─── Preview Section ─── */
-    .sc-preview-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      min-height: 0;
-    }
-
-    .sc-preview-tabs { /* v2: tab-actions support */
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-header);
-      padding: 0 10px;
-      flex-shrink: 0;
-      gap: 0;
-    }
-
-    .sc-tab {
-      background: transparent;
-      border: none;
-      font-family: var(--font-ui);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-3);
-      padding: 8px 12px;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      transition: all 0.15s;
-    }
-    .sc-tab:hover { color: var(--text-2); }
-    .sc-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-    .sc-preview-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px 14px;
-      min-height: 0;
-    }
-
-    /* ── Rendered Markdown Preview ── */
-    .sc-md-content {
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      line-height: 1.75;
-      color: var(--text-1);
-    }
-    .sc-md-content p            { margin: 0 0 8px; }
-    .sc-md-content p:last-child { margin-bottom: 0; }
-    .sc-md-content strong       { color: #fff; font-weight: 600; }
-    .sc-md-content em           { color: var(--text-2); font-style: italic; }
-    .sc-md-content h1,.sc-md-content h2,.sc-md-content h3 {
-      font-family: var(--font-ui);
-      font-weight: 600;
-      color: var(--text-1);
-      margin: 12px 0 4px;
-      line-height: 1.3;
-    }
-    .sc-md-content h1 { font-size: 15px; }
-    .sc-md-content h2 { font-size: 13px; }
-    .sc-md-content h3 { font-size: 12px; }
-    .sc-md-content ul,.sc-md-content ol { padding-left: 1.4em; margin: 4px 0 8px; }
-    .sc-md-content li { margin: 2px 0; }
-    .sc-md-content code {
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 1px 5px;
-      font-size: 11.5px;
-    }
-    .sc-md-content hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
-    .sc-md-content blockquote {
-      border-left: 3px solid var(--border);
-      padding-left: 10px;
-      color: var(--text-2);
-    }
-
-    .sc-dropdown-template-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .sc-dropdown-template {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--bg-input);
-      padding: 10px;
-    }
-
-    .sc-dropdown-template-header {
-      font-family: var(--font-ui);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-2);
-      margin-bottom: 7px;
-    }
-
-    .sc-dropdown-template-controls {
-      display: grid;
-      grid-template-columns: minmax(220px, 1fr) minmax(120px, 160px);
-      gap: 8px;
-    }
-
-    .sc-dropdown-template-select,
-    .sc-dropdown-template-join {
-      width: 100%;
-      background: var(--bg-pane);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-1);
-      font-family: var(--font-ui);
-      font-size: 11px;
-      outline: none;
-    }
-
-    .sc-dropdown-template-select {
-      padding: 5px 7px;
-    }
-
-    .sc-dropdown-template-select option {
-      padding: 4px 3px;
-    }
-
-    .sc-dropdown-template-join {
-      height: 30px;
-      padding: 0 8px;
-    }
-
-    /* Template divider in preview */
-    .sc-template-sep {
-      border: none;
-      border-top: 1px dashed var(--border);
-      margin: 8px 0;
-    }
-
-    /* ── Source / Markdown tab ── */
-    .sc-source-pre {
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      line-height: 1.7;
-      color: var(--text-2);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    /* ── Empty State ── */
-    .sc-empty-state {
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .sc-empty-inner {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      color: var(--text-3);
-      font-size: 12px;
-      font-style: italic;
-      font-family: var(--font-mono);
-      text-align: center;
-    }
-    .sc-empty-icon {
-      width: 32px;
-      height: 32px;
-      opacity: 0.3;
-    }
-
-    /* ══════════════════════════════════════
-       SETTINGS 
-    ══════════════════════════════════════ */
-
-    .sc-settings {
-      position: absolute;
-      inset: 0;
-      background: var(--bg-pane);
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .sc-settings-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: var(--header-h);
-      padding: 0 10px 0 14px;
-      background: var(--bg-header);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .sc-settings-title {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-2);
-    }
-
-    .sc-settings-tabs {
-      display: flex;
-      align-items: center;
-      background: var(--bg-header);
-      border-bottom: 1px solid var(--border);
-      padding: 0 10px;
-      flex-shrink: 0;
-    }
-
-    .sc-settings-tab {
-      background: transparent;
-      border: none;
-      font-family: var(--font-ui);
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-3);
-      padding: 8px 11px;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      transition: all 0.15s;
-    }
-    .sc-settings-tab:hover { color: var(--text-2); }
-    .sc-settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-    .sc-settings-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      min-height: 0;
-    }
-
-    /* Settings tab content */
-    .sc-stab-content { display: none; }
-    .sc-stab-content.active { display: block; }
-
-    /* ─── Settings Form Elements ─── */
-    .sc-field-group { margin-bottom: 16px; }
-
-    .sc-label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-2);
-      margin-bottom: 6px;
-    }
-
-    .sc-muted {
-      color: var(--text-3);
-      font-weight: 400;
-      text-transform: none;
-      letter-spacing: 0;
-      font-size: 10px;
-    }
-
-    .sc-help-text {
-      font-size: 11px;
-      color: var(--text-3);
-      line-height: 1.55;
-      margin-bottom: 8px;
-    }
-    .sc-help-text code {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      padding: 0 4px;
-      color: var(--accent);
-    }
-
-    .sc-input-settings {
-      width: 100%;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-1);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      padding: 7px 10px;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .sc-input-settings:focus { border-color: var(--border-focus); }
-    .sc-input-narrow { max-width: 90px; }
-
-    .sc-textarea-settings {
-      width: 100%;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-1);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      padding: 8px 10px;
-      outline: none;
-      resize: vertical;
-      min-height: 80px;
-      line-height: 1.6;
-      transition: border-color 0.15s;
-    }
-    .sc-textarea-settings:focus { border-color: var(--border-focus); }
-
-    /* Rich Text Editor for Note Template */
-    .sc-rich-editor {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      display: flex;
-      flex-direction: column;
-      transition: border-color 0.15s;
-      margin-bottom: 8px;
-    }
-    .sc-rich-editor:focus-within {
-      border-color: var(--border-focus);
-    }
-    .sc-rich-toolbar {
-      display: flex;
-      gap: 4px;
-      padding: 6px 8px;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-pane);
-      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .sc-rich-toolbar button {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-2);
-      border-radius: 4px;
-      padding: 4px 8px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 13px;
-      transition: background 0.1s, color 0.1s;
-    }
-    .sc-rich-toolbar button:hover {
-      background: var(--bg-hover);
-      color: var(--text-1);
-    }
-    .sc-rich-toolbar button.sc-template-tool {
-      font-size: 11px;
-    }
-    .sc-toolbar-divider {
-      width: 1px;
-      height: 16px;
-      background: var(--border);
-      margin: 0 4px;
-    }
-    .sc-editor-content {
-      padding: 10px 12px;
-      min-height: 140px;
-      max-height: 300px;
-      overflow-y: auto;
-      color: var(--text-1);
-      font-family: var(--font-ui);
-      font-size: 13px;
-      line-height: 1.6;
-      outline: none;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-    .sc-editor-content b, .sc-editor-content strong { font-weight: bold; }
-    .sc-editor-content i, .sc-editor-content em { font-style: italic; }
-    .sc-editor-content u { text-decoration: underline; }
-    .sc-editor-content ul { padding-left: 20px; list-style: disc; margin: 0; }
-    .sc-editor-content li { margin-bottom: 2px; }
-
-    .sc-template-tools {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin: 0 0 8px;
-    }
-
-    .sc-template-tool {
-      font-size: 11px;
-      padding: 4px 8px;
-    }
-
-    .sc-btn-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .sc-btn-col {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-
-    .sc-error {
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--danger);
-      margin-top: 5px;
-      padding: 5px 8px;
-      background: rgba(242, 107, 94, 0.06);
-      border: 1px solid rgba(242, 107, 94, 0.25);
-      border-radius: 4px;
-    }
-
-    .sc-divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 16px 0;
-    }
-
-    /* Example block in note template tab */
-    .sc-example-block {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      margin-bottom: 12px;
-    }
-    .sc-example-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-3);
-      margin-bottom: 6px;
-    }
-    .sc-example-pre {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      line-height: 1.6;
-      color: var(--text-2);
-      white-space: pre;
-      overflow-x: auto;
-    }
-
-    /* ── Range Input ── */
-    .sc-range-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .sc-range-row input[type="range"] {
-      flex: 1;
-      accent-color: var(--accent);
-      cursor: pointer;
-      height: 4px;
-    }
-    .sc-range-val {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--accent);
-      min-width: 34px;
-      text-align: right;
-    }
-
-    /* ── Toggle ── */
-    .sc-toggle-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      width: fit-content;
-    }
-    .sc-toggle-wrap input[type="checkbox"] { display: none; }
-    .sc-toggle-track {
-      width: 38px;
-      height: 22px;
-      background: var(--border);
-      border-radius: 11px;
-      position: relative;
-      transition: background 0.2s, border 0.2s;
-      border: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .sc-toggle-track::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--text-3);
-      transition: all 0.2s;
-    }
-    .sc-toggle-wrap input:checked + .sc-toggle-track {
-      background: var(--accent-dim);
-      border-color: var(--accent);
-    }
-    .sc-toggle-wrap input:checked + .sc-toggle-track::after {
-      left: 20px;
-      background: var(--accent);
-    }
-    .sc-toggle-label {
-      font-size: 12px;
-      color: var(--text-2);
-      font-weight: 400;
-    }
-
-    /* ── Template List ── */
-    .sc-template-list {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .sc-template-item {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 9px 10px;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 8px;
-      cursor: default;
-      transition: border-color 0.15s;
-    }
-    .sc-template-item:hover { border-color: var(--text-3); }
-
-    .sc-template-info { flex: 1; min-width: 0; }
-    .sc-template-name {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-1);
-      margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .sc-template-triggers {
-      font-size: 10px;
-      font-family: var(--font-mono);
-      color: var(--text-3);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .sc-template-priority {
-      font-size: 9px;
-      font-family: var(--font-mono);
-      color: var(--text-3);
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .sc-template-actions {
-      display: flex;
-      gap: 1px;
-      flex-shrink: 0;
-      align-self: center;
-    }
-    .sc-template-actions .sc-btn-icon { width: 28px; height: 28px; }
-
-    /* ── Template Form ── */
-    .sc-template-form {
-      margin-top: 12px;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-    }
-    .sc-form-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-2);
-    }
-
-    /* ══════════════════════════════════════
-       TOAST NOTIFICATIONS
-    ══════════════════════════════════════ */
-    .sc-toast-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 99999;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 8px;
-      pointer-events: none;
-    }
-
-    .sc-toast {
-      background: var(--bg-header);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 8px 14px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--text-1);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      pointer-events: auto;
-      animation: sc-toast-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-      border-left-width: 3px;
-    }
-    .sc-toast.success { border-left-color: var(--accent); }
-    .sc-toast.error   { border-left-color: var(--danger); }
-    .sc-toast.warning { border-left-color: var(--warning); }
-    .sc-toast.sc-fade-out { animation: sc-toast-out 0.25s ease-in forwards; }
-
-    @keyframes sc-toast-in {
-      from { opacity: 0; transform: translateY(12px) scale(0.95); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    @keyframes sc-toast-out {
-      from { opacity: 1; transform: translateY(0); }
-      to   { opacity: 0; transform: translateY(8px); }
-    }
-
-    /* ══════════════════════════════════════
-       UTILITIES
-    ══════════════════════════════════════ */
-    .hidden { display: none !important; }
-
-    .sc-resize-handle { display: none !important; }
-
-    @media (max-width: 560px) {
-      .sc-dropdown-template-controls {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* ═══════════════════════════════════════════════
-       ENHANCEMENTS — v2
-    ════════════════════════════════════════════════ */
-
-    /* New Patient button — distinct green tint */
-    #sc-new-patient-btn {
-      color: var(--accent);
-      opacity: 0.85;
-    }
-    #sc-new-patient-btn:hover {
-      opacity: 1;
-      background: color-mix(in srgb, var(--accent) 12%, transparent);
-    }
-
-    /* Input label row with undo button */
-    .sc-input-label-actions {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-
-    /* Undo clear button */
-    .sc-undo-btn {
-      color: var(--accent) !important;
-      font-size: 11px !important;
-      padding: 2px 6px !important;
-      border: 1px solid var(--accent) !important;
-      border-radius: 4px !important;
-      animation: sc-fade-in 0.2s ease;
-    }
-    .sc-undo-btn.hidden { display: none; }
-
-    /* Keyboard shortcut hint */
-    .sc-kbd-hint {
-      font-size: 11px;
-      opacity: 0.45;
-      cursor: help;
-      margin-left: 3px;
-    }
-
-    /* Tab actions area (Labels / Plain buttons) */
-    .sc-tab-actions {
-      margin-left: auto;
-      display: flex;
-      gap: 2px;
-      align-items: center;
-    }
-
-    .sc-tab-action-btn {
-      font-size: 11px !important;
-      padding: 2px 7px !important;
-      border-radius: 4px !important;
-      opacity: 0.6;
-      border: 1px solid var(--border) !important;
-      line-height: 1.4;
-    }
-    .sc-tab-action-btn:hover { opacity: 1; background: var(--surface-3) !important; }
-    .sc-tab-action-btn.active {
-      opacity: 1;
-      background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
-      border-color: var(--accent) !important;
-      color: var(--accent) !important;
-    }
-
-    /* Empty hint line */
-    .sc-empty-hint {
-      display: block;
-      font-size: 11px;
-      color: var(--text-3);
-      margin-top: 4px;
-    }
-
-    /* No-match message */
-    .sc-no-match-msg {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24px 16px;
-      gap: 6px;
-      text-align: center;
-      color: var(--text-2);
-      font-family: var(--font-ui);
-      font-size: 13px;
-    }
-    .sc-no-match-icon { font-size: 22px; margin-bottom: 2px; }
-    .sc-no-match-hint { font-size: 12px; color: var(--text-3); font-style: italic; }
-
-    /* Category filter bar */
-    .sc-cat-filter {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      padding: 4px 0 8px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 8px;
-    }
-    .sc-cat-btn {
-      font-family: var(--font-ui);
-      font-size: 11px;
-      padding: 2px 9px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--surface-2);
-      color: var(--text-2);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .sc-cat-btn:hover { background: var(--surface-3); color: var(--text-1); }
-    .sc-cat-btn.active {
-      background: color-mix(in srgb, var(--accent) 18%, transparent);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    /* Template name row with category badge */
-    .sc-template-name-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .sc-template-cat-badge {
-      font-size: 10px;
-      font-family: var(--font-ui);
-      padding: 1px 6px;
-      border-radius: 8px;
-      background: color-mix(in srgb, var(--accent) 14%, transparent);
-      color: var(--accent);
-      border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-      white-space: nowrap;
-    }
-
-    /* Template inline preview */
-    .sc-template-preview-expand {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      line-height: 1.5;
-      color: var(--text-2);
-      background: var(--surface-1);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 8px 10px;
-      margin-top: 8px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      animation: sc-fade-in 0.18s ease;
-    }
-
-    @keyframes sc-fade-in {
-      from { opacity: 0; transform: translateY(-3px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Behavior tab new toggles */
-    .sc-toggle-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 0;
-      border-top: 1px solid var(--border);
-    }
-    .sc-toggle-info { flex: 1; }
-    .sc-toggle-label {
-      font-family: var(--font-ui);
-      font-size: 13px;
-      color: var(--text-1);
-      font-weight: 500;
-      display: block;
-      margin-bottom: 2px;
-    }
-    .sc-toggle-desc {
-      font-family: var(--font-ui);
-      font-size: 11px;
-      color: var(--text-3);
-      line-height: 1.4;
-    }
-    /* ════════════════════════════════════════════════
-       RICH EDITOR ADDITIONS
-    ════════════════════════════════════════════════ */
-
-    /* Toolbar active (toggled) state — e.g. bold is ON */
-    .sc-rich-toolbar button.sc-toolbar-active {
-      background: color-mix(in srgb, var(--accent) 18%, transparent);
-      color: var(--accent);
-      border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-    }
-
-    /* Larger editor height for template content */
-    .sc-editor-content {
-      min-height: 160px;
-      max-height: 340px;
-    }
-
-    /* Rich content rendered in the editor */
-    .sc-editor-content h1 { font-size: 15px; font-weight: 700; margin: 6px 0 3px; }
-    .sc-editor-content h2 { font-size: 13px; font-weight: 700; margin: 6px 0 3px; }
-    .sc-editor-content h3 { font-size: 12px; font-weight: 600; margin: 5px 0 2px; }
-    .sc-editor-content ul,
-    .sc-editor-content ol { padding-left: 22px; margin: 4px 0; }
-    .sc-editor-content ol { list-style: decimal; }
-    .sc-editor-content blockquote {
-      border-left: 3px solid var(--border);
-      padding-left: 10px;
-      color: var(--text-2);
-      margin: 4px 0;
-    }
-    .sc-editor-content a { color: var(--info); text-decoration: underline; }
-    .sc-editor-content s { opacity: 0.55; }
-    .sc-editor-content p { margin: 0 0 4px; }
-    .sc-editor-content:empty::before {
-      content: attr(data-placeholder);
-      color: var(--text-3);
-      font-style: italic;
-      pointer-events: none;
-    }
-
-    /* Toolbar scrolls on narrow screens instead of wrapping too aggressively */
-    .sc-rich-toolbar {
-      overflow-x: auto;
-      flex-wrap: nowrap;
-      scrollbar-width: none;
-    }
-    .sc-rich-toolbar::-webkit-scrollbar { display: none; }
-
-    /* ════════════════════════════════════════════════
-       UTILITY — replaces inline styles (CSP compliance)
-    ════════════════════════════════════════════════ */
-
-    /* sc-label used as a section heading, not a <label> element */
-    .sc-label-heading {
-      display: block;
-    }
-
-    /* Visually hidden but screen-reader accessible — for labelling inputs
-       whose visible label text is provided by an adjacent <span> */
-    .sc-sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    /* Behaviour-tab standalone checkboxes (Plain Text / Source Labels) */
-    .sc-behavior-checkbox {
-      flex-shrink: 0;
-      margin-top: 2px;
-      accent-color: var(--accent);
-      width: 16px;
-      height: 16px;
-    }
-
-    /* btn-row spacing variants */
-    .sc-btn-row--mb { margin-bottom: 10px; }
-    .sc-btn-row--mt { margin-top: 10px; }
-
-    /* help-text top-margin variant */
-    .sc-help-text--mt { margin-top: 4px; }
-
-    /* Empty-state paragraph in template list */
-    .sc-list-empty {
-      color: var(--text-3);
-      font-size: 12px;
-      text-align: center;
-      padding: 18px 0;
-    }
-
-    /* Delete button danger colour in template list */
-    .sc-btn-delete {
-      color: var(--danger);
-    }
+/* ════════════════════════════════════════════════
+   SmartChart — styles.css
+   Clinical Dark Theme: Deep Charcoal + Medical Green
+   Fonts: Sora (UI) · IBM Plex Mono (content)
+════════════════════════════════════════════════ */
+
+:root {
+  --bg-base:      #0b0e14;
+  --bg-pane:      #141820;
+  --bg-header:    #1a1f2c;
+  --bg-hover:     #1f2535;
+  --bg-input:     #0e111a;
+  --bg-code:      #1a1f2c;
+
+  --border:       #272d3d;
+  --border-focus: #22c55e;
+
+  --accent:       #22c55e;
+  --accent-dim:   rgba(34, 197, 94, 0.12);
+  --accent-glow:  rgba(34, 197, 94, 0.25);
+
+  --text-1:       #e8edf5;
+  --text-2:       #8a95aa;
+  --text-3:       #44505f;
+
+  --danger:       #f26b5e;
+  --warning:      #e5a840;
+  --info:         #5b9cf6;
+
+  --font-ui:      'Sora', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+  --radius:       8px;
+  --radius-sm:    5px;
+  --header-h:     46px;
+
+  --shadow-pane:  0 2px 12px rgba(0,0,0,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg-base);
+  font-family: var(--font-ui);
+  color: var(--text-1);
+  overflow: hidden;
+}
+
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+.sc-pane {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  background: var(--bg-pane);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sc-pane.sc-focus-mode,
+.sc-pane.sc-minimized {
+  bottom: auto;
+  height: auto !important;
+  min-height: 0 !important;
+}
+.sc-pane.sc-focus-mode .sc-body,
+.sc-pane.sc-minimized .sc-body {
+  display: flex;
+  flex: 0 0 auto;
+}
+.sc-pane.sc-focus-mode .sc-status-bar,
+.sc-pane.sc-focus-mode .sc-preview-section,
+.sc-pane.sc-focus-mode .sc-settings,
+.sc-pane.sc-minimized .sc-status-bar,
+.sc-pane.sc-minimized .sc-preview-section,
+.sc-pane.sc-minimized .sc-settings {
+  display: none !important;
+}
+
+.sc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-h);
+  padding: 0 10px 0 14px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.sc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sc-logo {
+  color: var(--accent);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sc-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+
+.sc-match-badge {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 7px;
+  min-width: 22px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.sc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: default;
+}
+
+.sc-btn {
+  font-family: var(--font-ui);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.sc-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sc-btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+}
+.sc-btn-icon svg { width: 16px; height: 16px; }
+.sc-btn-icon:hover { background: var(--bg-hover); color: var(--text-1); }
+
+.sc-btn-primary {
+  background: var(--accent);
+  color: #051208;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+}
+.sc-btn-primary:hover { filter: brightness(1.1); }
+
+.sc-btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.sc-btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); border-color: var(--text-3); }
+
+.sc-btn-text {
+  background: transparent;
+  color: var(--text-3);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.sc-btn-text:hover { color: var(--danger); background: rgba(242, 107, 94, 0.08); }
+
+.sc-btn-danger {
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border: 1px solid rgba(242, 107, 94, 0.35);
+  border-radius: var(--radius-sm);
+}
+.sc-btn-danger:hover { background: rgba(242, 107, 94, 0.08); }
+
+.sc-btn-full { width: 100%; justify-content: flex-start; }
+
+.sc-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sc-input-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sc-input-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.sc-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  padding: 8px 12px 10px;
+  min-height: 74px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.sc-input::placeholder { color: var(--text-3); font-style: italic; }
+
+.sc-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 26px;
+}
+
+.sc-status-text {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+.sc-status-text.sc-matched { color: var(--accent); }
+.sc-status-text.sc-error-text { color: var(--danger); }
+
+.sc-status-right { display: flex; align-items: center; gap: 6px; }
+
+.sc-autocopy-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: sc-pulse 1.2s ease-in-out infinite;
+}
+@keyframes sc-pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.35; transform:scale(0.75); }
+}
+
+.sc-preview-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sc-preview-tabs { 
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-header);
+  padding: 0 10px;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.sc-tab {
+  background: transparent;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.sc-tab:hover { color: var(--text-2); }
+.sc-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.sc-preview-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  min-height: 0;
+}
+
+.sc-md-content {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--text-1);
+}
+.sc-md-content p            { margin: 0 0 8px; }
+.sc-md-content p:last-child { margin-bottom: 0; }
+.sc-md-content strong       { color: #fff; font-weight: 600; }
+.sc-md-content em           { color: var(--text-2); font-style: italic; }
+.sc-md-content h1,.sc-md-content h2,.sc-md-content h3 {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--text-1);
+  margin: 12px 0 4px;
+  line-height: 1.3;
+}
+.sc-md-content h1 { font-size: 15px; }
+.sc-md-content h2 { font-size: 13px; }
+.sc-md-content h3 { font-size: 12px; }
+.sc-md-content ul,.sc-md-content ol { padding-left: 1.4em; margin: 4px 0 8px; }
+.sc-md-content li { margin: 2px 0; }
+.sc-md-content code {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11.5px;
+}
+.sc-md-content hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+.sc-md-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 10px;
+  color: var(--text-2);
+}
+
+.sc-dropdown-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sc-dropdown-template {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  padding: 10px;
+}
+
+.sc-dropdown-template-header {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: 7px;
+}
+
+.sc-dropdown-template-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(120px, 160px);
+  gap: 8px;
+}
+
+.sc-dropdown-template-select,
+.sc-dropdown-template-join {
+  width: 100%;
+  background: var(--bg-pane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  outline: none;
+}
+
+.sc-dropdown-template-select {
+  padding: 5px 7px;
+}
+
+.sc-dropdown-template-select option {
+  padding: 4px 3px;
+}
+
+.sc-dropdown-template-join {
+  height: 30px;
+  padding: 0 8px;
+}
+
+.sc-template-sep {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 8px 0;
+}
+
+.sc-source-pre {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sc-empty-state {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sc-empty-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-style: italic;
+  font-family: var(--font-mono);
+  text-align: center;
+}
+.sc-empty-icon {
+  width: 32px;
+  height: 32px;
+  opacity: 0.3;
+}
+
+.sc-settings {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-pane);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sc-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-h);
+  padding: 0 10px 0 14px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sc-settings-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.sc-settings-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+
+.sc-settings-tab {
+  background: transparent;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 11px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.sc-settings-tab:hover { color: var(--text-2); }
+.sc-settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.sc-settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  min-height: 0;
+}
+
+.sc-stab-content { display: none; }
+.sc-stab-content.active { display: block; }
+
+.sc-field-group { margin-bottom: 16px; }
+
+.sc-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+
+.sc-muted {
+  color: var(--text-3);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 10px;
+}
+
+.sc-help-text {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+.sc-help-text code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 4px;
+  color: var(--accent);
+}
+
+.sc-input-settings {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sc-input-settings:focus { border-color: var(--border-focus); }
+.sc-input-narrow { max-width: 90px; }
+
+.sc-textarea-settings {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+  transition: border-color 0.15s;
+}
+.sc-textarea-settings:focus { border-color: var(--border-focus); }
+
+.sc-rich-editor {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s;
+  margin-bottom: 8px;
+}
+.sc-rich-editor:focus-within {
+  border-color: var(--border-focus);
+}
+.sc-rich-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-pane);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.sc-rich-toolbar button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  transition: background 0.1s, color 0.1s;
+}
+.sc-rich-toolbar button:hover {
+  background: var(--bg-hover);
+  color: var(--text-1);
+}
+.sc-rich-toolbar button.sc-template-tool {
+  font-size: 11px;
+}
+.sc-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 4px;
+}
+.sc-editor-content {
+  padding: 10px 12px;
+  min-height: 140px;
+  max-height: 300px;
+  overflow-y: auto;
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.sc-editor-content b, .sc-editor-content strong { font-weight: bold; }
+.sc-editor-content i, .sc-editor-content em { font-style: italic; }
+.sc-editor-content u { text-decoration: underline; }
+.sc-editor-content ul { padding-left: 20px; list-style: disc; margin: 0; }
+.sc-editor-content li { margin-bottom: 2px; }
+
+.sc-template-tools {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+
+.sc-template-tool {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.sc-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sc-btn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sc-error {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--danger);
+  margin-top: 5px;
+  padding: 5px 8px;
+  background: rgba(242, 107, 94, 0.06);
+  border: 1px solid rgba(242, 107, 94, 0.25);
+  border-radius: 4px;
+}
+
+.sc-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.sc-example-block {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.sc-example-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.sc-example-pre {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-2);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.sc-range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sc-range-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+}
+.sc-range-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 34px;
+  text-align: right;
+}
+
+.sc-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  width: fit-content;
+}
+.sc-toggle-wrap input[type="checkbox"] { display: none; }
+.sc-toggle-track {
+  width: 38px;
+  height: 22px;
+  background: var(--border);
+  border-radius: 11px;
+  position: relative;
+  transition: background 0.2s, border 0.2s;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sc-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: all 0.2s;
+}
+.sc-toggle-wrap input:checked + .sc-toggle-track {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.sc-toggle-wrap input:checked + .sc-toggle-track::after {
+  left: 20px;
+  background: var(--accent);
+}
+.sc-toggle-label {
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+.sc-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sc-template-item {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: default;
+  transition: border-color 0.15s;
+}
+.sc-template-item:hover { border-color: var(--text-3); }
+
+.sc-template-info { flex: 1; min-width: 0; }
+.sc-template-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-template-triggers {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-template-priority {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.sc-template-actions {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+  align-self: center;
+}
+.sc-template-actions .sc-btn-icon { width: 28px; height: 28px; }
+
+.sc-template-form {
+  margin-top: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.sc-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.sc-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.sc-toast {
+  background: var(--bg-header);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  pointer-events: auto;
+  animation: sc-toast-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  border-left-width: 3px;
+}
+.sc-toast.success { border-left-color: var(--accent); }
+.sc-toast.error   { border-left-color: var(--danger); }
+.sc-toast.warning { border-left-color: var(--warning); }
+.sc-toast.sc-fade-out { animation: sc-toast-out 0.25s ease-in forwards; }
+
+@keyframes sc-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes sc-toast-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(8px); }
+}
+
+.hidden { display: none !important; }
+
+.sc-resize-handle { display: none !important; }
+
+@media (max-width: 560px) {
+  .sc-dropdown-template-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+#sc-new-patient-btn {
+  color: var(--accent);
+  opacity: 0.85;
+}
+#sc-new-patient-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.sc-input-label-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.sc-undo-btn {
+  color: var(--accent) !important;
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+  border: 1px solid var(--accent) !important;
+  border-radius: 4px !important;
+  animation: sc-fade-in 0.2s ease;
+}
+.sc-undo-btn.hidden { display: none; }
+
+.sc-kbd-hint {
+  font-size: 11px;
+  opacity: 0.45;
+  cursor: help;
+  margin-left: 3px;
+}
+
+.sc-tab-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.sc-tab-action-btn {
+  font-size: 11px !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  opacity: 0.6;
+  border: 1px solid var(--border) !important;
+  line-height: 1.4;
+}
+.sc-tab-action-btn:hover { opacity: 1; background: var(--surface-3) !important; }
+.sc-tab-action-btn.active {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+.sc-empty-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+
+.sc-no-match-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  gap: 6px;
+  text-align: center;
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+.sc-no-match-icon { font-size: 22px; margin-bottom: 2px; }
+.sc-no-match-hint { font-size: 12px; color: var(--text-3); font-style: italic; }
+
+.sc-cat-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.sc-cat-btn {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sc-cat-btn:hover { background: var(--surface-3); color: var(--text-1); }
+.sc-cat-btn.active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sc-template-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sc-template-cat-badge {
+  font-size: 10px;
+  font-family: var(--font-ui);
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  white-space: nowrap;
+}
+
+.sc-template-preview-expand {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-2);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  animation: sc-fade-in 0.18s ease;
+}
+
+@keyframes sc-fade-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.sc-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.sc-toggle-info { flex: 1; }
+.sc-toggle-label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-1);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 2px;
+}
+.sc-toggle-desc {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+.sc-rich-toolbar button.sc-toolbar-active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.sc-editor-content {
+  min-height: 160px;
+  max-height: 340px;
+}
+
+.sc-editor-content h1 { font-size: 15px; font-weight: 700; margin: 6px 0 3px; }
+.sc-editor-content h2 { font-size: 13px; font-weight: 700; margin: 6px 0 3px; }
+.sc-editor-content h3 { font-size: 12px; font-weight: 600; margin: 5px 0 2px; }
+.sc-editor-content ul,
+.sc-editor-content ol { padding-left: 22px; margin: 4px 0; }
+.sc-editor-content ol { list-style: decimal; }
+.sc-editor-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 10px;
+  color: var(--text-2);
+  margin: 4px 0;
+}
+.sc-editor-content a { color: var(--info); text-decoration: underline; }
+.sc-editor-content s { opacity: 0.55; }
+.sc-editor-content p { margin: 0 0 4px; }
+.sc-editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  font-style: italic;
+  pointer-events: none;
+}
+
+.sc-rich-toolbar {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+.sc-rich-toolbar::-webkit-scrollbar { display: none; }
+
+.sc-label-heading {
+  display: block;
+}
+
+.sc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sc-behavior-checkbox {
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+.sc-btn-row--mb { margin-bottom: 10px; }
+.sc-btn-row--mt { margin-top: 10px; }
+
+.sc-help-text--mt { margin-top: 4px; }
+
+.sc-list-empty {
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+  padding: 18px 0;
+}
+
+.sc-btn-delete {
+  color: var(--danger);
+}
+
+.sc-wiz-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.sc-wiz-table th {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-2);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  padding: 10px;
+}
+.sc-wiz-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.sc-wiz-table tr:last-child td {
+  border-bottom: none;
+}
+.sc-wiz-table textarea {
+  width: 100%;
+  min-height: 48px;
+  max-height: 120px;
+  resize: vertical;
+  background: var(--bg-pane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+}
+.sc-wiz-table textarea:focus {
+  border-color: var(--border-focus);
+}
+.sc-wiz-table select {
+  width: 100%;
+  background: var(--bg-pane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  padding: 5px 6px;
+  outline: none;
+}
+.sc-wiz-table select:focus {
+  border-color: var(--border-focus);
+}
+.sc-wiz-table input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.sc-wiz-category-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sc-wiz-category-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.sc-wiz-category-desc {
+  font-size: 10px;
+  color: var(--text-3);
+  line-height: 1.35;
+}
+.sc-wiz-linked-template-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+.sc-wiz-linked-template-item:hover {
+  background: var(--bg-hover);
+}
+.sc-wiz-linked-template-item span {
+  font-size: 11.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-wiz-linked-template-item input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sc-wiz-custom-row {
+  margin-top: 10px;
+}
+.sc-wiz-delete-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: auto;
+}
+.sc-wiz-delete-row-btn:hover {
+  background: rgba(242, 107, 94, 0.08);
+}
+.sc-wiz-category-title-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.sc-wiz-move-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-3);
+  cursor: pointer;
+  margin: 2px auto;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.sc-wiz-move-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-1);
+  border-color: var(--text-3);
+}
+.sc-wiz-move-btn:first-child:disabled,
+.sc-wiz-move-btn:last-child:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.sc-wiz-edit-btn {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 10px;
+  color: var(--accent);
+  border-color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sc-wiz-edit-btn:hover {
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.sc-wiz-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sc-help-text--wiz {
+  margin-bottom: 12px;
+}
+.sc-wiz-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  margin-bottom: 16px;
+}
+.sc-wiz-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+.sc-wiz-thead-row {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-header, var(--surface-2));
+}
+.sc-wiz-th {
+  padding: 10px;
+}
+.sc-wiz-th--use {
+  width: 40px;
+  text-align: center;
+}
+.sc-wiz-th--cat {
+  width: 220px;
+}
+.sc-wiz-th--prefix {
+  width: 150px;
+}
+.sc-wiz-th--mode {
+  width: 150px;
+}
+.sc-wiz-th--order {
+  width: 44px;
+  text-align: center;
+}
+.sc-wiz-custom-row {
+  margin-bottom: 16px;
+}
+.sc-wiz-linked-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+}
+
+.sc-wiz-td {
+  padding: 10px;
+  vertical-align: top;
+}
+.sc-wiz-td--checkbox {
+  text-align: center;
+  vertical-align: middle;
+}
+.sc-wiz-reorder-td {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  padding: 6px 4px;
+}
+
+.sc-wiz-custom-name-input {
+  padding: 4px 6px !important;
+  font-size: 12px !important;
+}
+
+.sc-wiz-category-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+  transition: background 0.12s;
+}
+.sc-wiz-category-name-row:hover {
+  background: var(--bg-hover, var(--surface-3));
+}
+.sc-wiz-category-name-row:hover .sc-wiz-category-edit-icon {
+  opacity: 1;
+}
+.sc-wiz-category-edit-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+.sc-wiz-category-name-input {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  background: var(--bg-input);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 1px 5px;
+  width: 100%;
+  max-width: 200px;
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+
+/* Wizard layout helpers */
+.sc-wiz-fullspan { grid-column: 1 / -1; }
+.sc-wiz-no-templates { grid-column: 1 / -1; padding: 10px; font-style: italic; }
   </style>
 </head>
 <body>
@@ -1290,10 +1488,24 @@
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
         </svg>
       </button>
+      <button id="sc-wizard-btn" class="sc-btn sc-btn-icon" title="Template Wizard (Ctrl+Shift+W)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 4V2"/>
+          <path d="M15 16v-2"/>
+          <path d="M8 9h2"/>
+          <path d="M20 9h-2"/>
+          <path d="M17.8 11.8l-1.4-1.4"/>
+          <path d="M12.2 6.2L10.8 4.8"/>
+          <path d="M17.8 6.2l-1.4 1.4"/>
+          <path d="M12.2 11.8l-1.4-1.4"/>
+          <path d="M3 21l9-9"/>
+          <path d="M12.2 6.2l5.6 5.6"/>
+        </svg>
+      </button>
       <button id="sc-settings-btn" class="sc-btn sc-btn-icon" title="Settings (Ctrl+Shift+S)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
       </button>
       <button id="sc-minimize-btn" class="sc-btn sc-btn-icon" title="Focus mode" aria-label="Focus mode">
@@ -1435,7 +1647,7 @@
             <input type="text" id="sc-form-name" class="sc-input-settings" placeholder="e.g. Dehydration Precautions">
           </div>
           <div class="sc-field-group">
-            <label class="sc-label" for="sc-form-triggers">Trigger Keywords <span class="sc-muted">(comma-separated)</span></label>
+            <label class="sc-label" for="sc-form-triggers">Trigger Keywords <span class="sc-muted">(comma-separated, optional for nested dropdowns)</span></label>
             <input type="text" id="sc-form-triggers" class="sc-input-settings"
               placeholder="e.g. dehydration, vomiting, diarrhea">
           </div>
@@ -1462,6 +1674,15 @@
               <input type="text" id="sc-form-dropdown-label" class="sc-input-settings" placeholder="e.g. Follow-Up">
             </div>
             <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-dropdown-prefix">Prefix Text <span class="sc-muted">(Optional)</span></label>
+              <input type="text" id="sc-form-dropdown-prefix" class="sc-input-settings" placeholder="e.g. - Pain Location: ">
+              <p class="sc-help-text sc-help-text--mt">Text inserted immediately before the selected options.</p>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-dropdown-suffix">Suffix Text <span class="sc-muted">(Optional)</span></label>
+              <input type="text" id="sc-form-dropdown-suffix" class="sc-input-settings" placeholder="e.g. .">
+            </div>
+            <div class="sc-field-group">
               <label class="sc-label" for="sc-form-options">Dropdown Options <span class="sc-muted">(one per line)</span></label>
               <textarea id="sc-form-options" class="sc-textarea-settings" rows="5"
                 placeholder="Follow up as needed&#10;Return sooner for worsening symptoms"></textarea>
@@ -1485,6 +1706,22 @@
                 <span class="sc-toggle-label">Single-select only (one option at a time)</span>
               </label>
               <p class="sc-help-text sc-help-text--mt">When enabled, users can only pick one option from this dropdown at a time — ideal for mutually exclusive choices like follow-up timing.</p>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-toggle-wrap">
+                <input type="checkbox" id="sc-form-wrap-bullet">
+                <span class="sc-toggle-track"></span>
+                <span class="sc-toggle-label">Wrap entire line in a bullet point</span>
+              </label>
+              <p class="sc-help-text sc-help-text--mt">Forces the prefix, selected options, and suffix to appear together as a single bulleted item.</p>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-toggle-wrap">
+                <input type="checkbox" id="sc-form-show-label">
+                <span class="sc-toggle-track"></span>
+                <span class="sc-toggle-label">Show label heading in note output</span>
+              </label>
+              <p class="sc-help-text sc-help-text--mt">When enabled, a bold label (e.g. <strong>Follow-Up:</strong>) appears above the selected options. Disable for inline wizard-generated dropdowns where the surrounding text provides context.</p>
             </div>
           </div>
           <div class="sc-field-group">
@@ -1544,6 +1781,16 @@
           <label for="sc-sourcelabels-setting" class="sc-sr-only">Show Source Labels in Preview</label>
           <input type="checkbox" id="sc-sourcelabels-setting" class="sc-behavior-checkbox">
         </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-bullet-style-setting">Bullet Style</label>
+          <p class="sc-help-text">Character used for bullet points in the rendered note and plain-text copy.</p>
+          <select id="sc-bullet-style-setting" class="sc-input-settings">
+            <option value="disc">• Disc (default browser bullet)</option>
+            <option value="-" selected>- Hyphen</option>
+            <option value="*">* Asterisk</option>
+            <option value="–">– En dash</option>
+          </select>
+        </div>
         <div class="sc-btn-row sc-btn-row--mt">
           <button id="sc-save-behavior" class="sc-btn sc-btn-primary">Save</button>
         </div>
@@ -1560,11 +1807,110 @@
         </div>
       </div>
 
-    </div></div><div id="sc-resize-handle" class="sc-resize-handle" title="Drag to resize" aria-hidden="true"></div>
+    </div></div><div id="sc-wizard" class="sc-settings hidden" role="dialog" aria-label="SmartChart Template Wizard">
+
+    <header class="sc-settings-header">
+      <span class="sc-settings-title">Diagnosis Template Wizard</span>
+      <button id="sc-wizard-close" class="sc-btn sc-btn-icon" title="Close wizard (Escape)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="sc-settings-body">
+      <div class="sc-help-text">
+        Create a custom diagnosis-specific template layout. Answer questions by adding common permutations/options below, and SmartChart will automatically generate nested dropdowns for you.
+      </div>
+
+      <div class="sc-wiz-meta-row">
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-wiz-name">Diagnosis or Problem Name</label>
+          <input type="text" id="sc-wiz-name" class="sc-input-settings" placeholder="e.g. Acute Otitis Media, Ear Pain">
+        </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-wiz-triggers">Trigger Keywords <span class="sc-muted">(comma-separated)</span></label>
+          <input type="text" id="sc-wiz-triggers" class="sc-input-settings" placeholder="e.g. ear pain, earache, otitis, aom">
+        </div>
+        <div class="sc-field-group sc-wiz-fullspan">
+          <label class="sc-label" for="sc-wiz-layout">Main Template Layout</label>
+          <select id="sc-wiz-layout" class="sc-input-settings">
+            <option value="divs">Separate Lines (List format)</option>
+            <option value="spaces">Inline (Paragraph format)</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="sc-divider">
+
+      <div class="sc-field-group">
+        <span class="sc-label sc-label-heading">Questions & Variations</span>
+        <p class="sc-help-text sc-help-text--wiz">
+          Type in the variations (one per line) for each category. Categories with variations will be automatically enabled and included in the note layout.
+        </p>
+
+        <div class="sc-wiz-table-container">
+          <table class="sc-wiz-table">
+            <thead>
+              <tr class="sc-wiz-thead-row">
+                <th class="sc-wiz-th sc-wiz-th--use">Use</th>
+                <th class="sc-wiz-th sc-wiz-th--cat">Category</th>
+                <th class="sc-wiz-th sc-wiz-th--prefix">Prefix <span class="sc-muted">(Optional text)</span></th>
+                <th class="sc-wiz-th">Common Variations / Permutations <span class="sc-muted">(one per line)</span></th>
+                <th class="sc-wiz-th sc-wiz-th--mode">Select Mode</th>
+                <th class="sc-wiz-th sc-wiz-th--order">Order</th>
+              </tr>
+            </thead>
+            <tbody id="sc-wiz-categories-body">
+              </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sc-wiz-custom-row">
+        <button id="sc-wiz-add-category-btn" class="sc-btn sc-btn-ghost">
+          + Add Custom Category
+        </button>
+      </div>
+
+      <hr class="sc-divider">
+
+      <div class="sc-field-group">
+        <label class="sc-label">Include Predefined Templates</label>
+        <p class="sc-help-text">
+          Select existing templates that you want to trigger when typing this diagnosis (e.g. generic sick visit, supportive care templates).
+        </p>
+        <div id="sc-wiz-linked-templates" class="sc-wiz-linked-templates">
+          </div>
+      </div>
+
+      <hr class="sc-divider">
+
+      <div class="sc-btn-row sc-btn-row--mt">
+        <button id="sc-wiz-generate-btn" class="sc-btn sc-btn-primary">Generate Templates</button>
+        <button id="sc-wiz-cancel-btn" class="sc-btn sc-btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div><div id="sc-resize-handle" class="sc-resize-handle" title="Drag to resize" aria-hidden="true"></div>
 
 </div><div id="sc-toast-container" class="sc-toast-container" aria-live="assertive" aria-atomic="true"></div>
 
 <script>
+/* ── register-sw.js ── */
+/**
+ * SmartChart — register-sw.js
+ * Service worker registration. Kept as a separate file so no inline
+ * scripts are needed, satisfying the Content-Security-Policy.
+ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+</script>
+<script>
+/* ── app.js ── */
 /**
  * SmartChart — app.js
  * Core logic: template matching, note rendering, clipboard,
@@ -1585,7 +1931,7 @@ const STORAGE_KEYS = {
 };
 
 // Stored as HTML from here on
-const DEFAULT_NOTE_TEMPLATE = `{input}<br><br>{templates}`;
+const DEFAULT_NOTE_TEMPLATE = `{input}<br>{templates}`;
 
 /** Default templates — content stored as HTML strings. */
 const DEFAULT_TEMPLATES = [
@@ -1660,6 +2006,7 @@ const DEFAULT_TEMPLATES = [
     label: 'Follow-Up',
     join: 'lines',
     singleSelect: true,
+    showLabel: true,
     options: [
       'Follow up as needed.',
       'Follow up in 2-3 days.',
@@ -1682,6 +2029,7 @@ const DEFAULT_BEHAVIOR = {
   autoCopyEnabled: true,
   plainTextCopy:   false,
   sourceLabels:    false,
+  bulletStyle:     '-',
 };
 
 const state = {
@@ -1721,12 +2069,6 @@ function debounce(fn, ms) {
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
-/**
- * sanitizeHtml(html) → string
- * Runs HTML through DOMPurify before any innerHTML assignment.
- * Strips scripts, event handlers, and dangerous attributes.
- * Falls back to plain-text escaping if DOMPurify is not loaded (should not happen).
- */
 function sanitizeHtml(html) {
   if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) {
     return DOMPurify.sanitize(String(html || ''), {
@@ -1735,7 +2077,6 @@ function sanitizeHtml(html) {
       ALLOWED_ATTR: ['class','style'],
     });
   }
-  // Fallback: strip all tags if DOMPurify somehow unavailable
   console.warn('[SmartChart] DOMPurify not loaded — stripping all HTML as safety fallback.');
   return String(html || '').replace(/<[^>]*>/g, '');
 }
@@ -1812,7 +2153,39 @@ function renderDropdownValueHtml(t) {
   const selected = Array.isArray(selection.values) ? selection.values : [];
   if (selected.length === 0) return '';
   const join = selection.join || t.join || 'lines';
-  return `<p><strong>${t.label || t.name}:</strong></p>${joinTemplateOptions(selected, join)}`;
+
+  let prefix = t.prefix || '';
+  let suffix = t.suffix || '';
+  let wrapBullet = !!t.wrapBullet;
+
+  // Auto-detect bullet preference if the user typed a hyphen/bullet in the prefix box
+  const hasBulletPrefix = /^[-*•]\s*/.test(prefix);
+  const cleanPrefix = hasBulletPrefix ? prefix.replace(/^[-*•]\s*/, '') : prefix;
+  const shouldBullet = wrapBullet || hasBulletPrefix;
+
+  let out = joinTemplateOptions(selected, join);
+
+  if (join === 'lines') {
+    // Put prefix inside the first bullet, and suffix inside the last bullet
+    if (cleanPrefix) {
+      out = out.replace('<ul><li>', `<ul><li>${cleanPrefix}`);
+    }
+    if (suffix) {
+      out = out.replace(/<\/li><\/ul>$/, `${suffix}</li></ul>`);
+    }
+  } else {
+    // For commas, sentences, etc.
+    out = cleanPrefix + out + suffix;
+    if (shouldBullet) {
+      out = `<ul><li>${out}</li></ul>`;
+    }
+  }
+
+  // showLabel defaults to false — only show if explicitly set to true.
+  if (t.showLabel === true) {
+    return `<p><strong>${t.label || t.name}:</strong></p>${out}`;
+  }
+  return out;
 }
 
 function renderTemplateContentHtml(t, seen = new Set()) {
@@ -1826,10 +2199,6 @@ function renderTemplateContentHtml(t, seen = new Set()) {
   });
 }
 
-/**
- * renderNote(input, matched, noteTemplate) → HTML string
- * Replaces {input}, {templates}, dropdown placeholders, and {static:...}.
- */
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
 
@@ -1840,7 +2209,6 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
     return label + content;
   }).filter(Boolean).join('<hr class="sc-template-sep">');
 
-  // Escape the input text for safe HTML insertion
   const escapedInput = input
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -1852,17 +2220,25 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
     .replace(/\{templates\}/g, templatesHtml)
     .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContentHtml(getTemplateById(id)));
 
-  // {static:TEXT} → plain span
   out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
+
+  const bulletChar = opts.bulletStyle;
+  if (bulletChar && bulletChar !== 'disc') {
+    out = out.replace(/<ul[^>]*>/gi, '<div class="sc-list-hyphen">')
+             .replace(/<\/ul>/gi, '</div>')
+             .replace(/<li[^>]*>/gi, `<div class="sc-hyphen-item">${bulletChar} `)
+             .replace(/<\/li>/gi, '</div>');
+  }
+
+  // Clean up empty wrapping blocks left behind by unselected dropdowns
+  out = out.replace(/<div>\s*<\/div>/gi, '').replace(/<p>\s*<\/p>/gi, '');
 
   return out;
 }
 
-/** Extract plain text from an HTML string for plain-text clipboard copy. */
 function htmlToPlainText(html) {
   const div = document.createElement('div');
   div.innerHTML = html;
-  // Replace <br>, <p>, <li>, <hr> with newlines before innerText extraction
   div.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
   div.querySelectorAll('p, div, li, hr').forEach(el => {
     el.insertAdjacentText('afterend', '\n');
@@ -1949,7 +2325,6 @@ function renderDropdownControls(dropdowns) {
 
     const select = document.createElement('select');
     select.className = 'sc-dropdown-template-select';
-    // Single-select mode: use a <select> without multiple; add a blank "(none)" option
     if (isSingleSelect) {
       select.multiple = false;
       select.size = 1;
@@ -1972,7 +2347,6 @@ function renderDropdownControls(dropdowns) {
 
     const join = document.createElement('select');
     join.className = 'sc-dropdown-template-join';
-    // Hide join selector for single-select dropdowns (only one value, no joining needed)
     if (isSingleSelect) join.style.display = 'none';
     [
       ['lines', 'Bullets'],
@@ -2071,6 +2445,7 @@ function updatePreview() {
 
   const htmlSource = renderNote(modifiedInput, bottomTemplates, nt, {
     sourceLabels: state.behavior.sourceLabels,
+    bulletStyle: state.behavior.bulletStyle,
   });
 
   if (matched.length > 0) {
@@ -2081,7 +2456,6 @@ function updatePreview() {
   }
 
   state.currentNoteHtml = htmlSource;
-  // Source tab shows cleaned HTML for transparency
   dom.sourceText.textContent = htmlSource;
 
   dom.previewRendered.innerHTML = sanitizeHtml(htmlSource);
@@ -2118,8 +2492,6 @@ function scheduleAutoCopy() {
   cancelAutoCopy();
   if (!state.behavior.autoCopyEnabled) return;
   if (!state.currentNoteHtml.trim()) return;
-  // Auto-copy proceeds even if dropdowns are unselected — unselected dropdowns
-  // simply render as empty and are excluded from the copied output.
 
   dom.autoCopyIndicator.classList.remove('hidden');
   state.autoCopyTimer = setTimeout(async () => {
@@ -2256,22 +2628,18 @@ function attachSmartTextareaBehavior(el, onChange) {
     onChange();
   });
   el.addEventListener('keydown', e => {
-    // Backspace on an otherwise-empty bullet line removes the bullet prefix
     if (e.key === 'Backspace' && !e.metaKey && !e.ctrlKey) {
       const cursor    = el.selectionStart ?? el.value.length;
       const selEnd    = el.selectionEnd ?? cursor;
-      if (cursor === selEnd) { // no selection
+      if (cursor === selEnd) {
         const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
         const lineBeforeCursor = el.value.slice(lineStart, cursor);
-        // If the line is exactly a bullet prefix ("- " or "* ") with nothing after,
-        // remove the entire prefix rather than deleting character-by-character
         const bulletOnly = lineBeforeCursor.match(/^(\s*[-*] )$/);
         if (bulletOnly) {
           e.preventDefault();
-          // Remove the prefix (and the preceding newline if not at start)
-          const removeFrom = lineStart > 0 ? lineStart - 1 : lineStart; // remove the \n before this line too
+          const removeFrom = lineStart > 0 ? lineStart - 1 : lineStart;
           const removeLength = lineStart > 0
-            ? 1 + bulletOnly[1].length  // \n + prefix chars
+            ? 1 + bulletOnly[1].length
             : bulletOnly[1].length;
           el.value = el.value.slice(0, removeFrom) + el.value.slice(removeFrom + removeLength);
           const newCursor = removeFrom;
@@ -2357,6 +2725,10 @@ function init() {
   dom.minIcon           = $('sc-min-icon');
   dom.settingsPanel     = $('sc-settings');
   dom.settingsClose     = $('sc-settings-close');
+  dom.wizardBtn         = $('sc-wizard-btn');
+  dom.wizardPanel       = $('sc-wizard');
+  dom.wizardClose       = $('sc-wizard-close');
+  dom.wizardCancel      = $('sc-wiz-cancel-btn');
   dom.resizeHandle      = $('sc-resize-handle');
   dom.toastContainer    = $('sc-toast-container');
   dom.newPatientBtn     = $('sc-new-patient-btn');
@@ -2400,6 +2772,24 @@ function init() {
   dom.settingsClose.addEventListener('click', () => {
     dom.settingsPanel.classList.add('hidden');
   });
+
+  if (dom.wizardBtn) {
+    dom.wizardBtn.addEventListener('click', () => {
+      if (dom.pane.classList.contains('sc-focus-mode')) {
+        applyFocusMode(false);
+        savePaneState();
+      }
+      dom.wizardPanel.classList.remove('hidden');
+      if (window.SmartChartWizard) window.SmartChartWizard.open();
+    });
+  }
+
+  const closeWizard = () => {
+    dom.wizardPanel.classList.add('hidden');
+  };
+
+  if (dom.wizardClose) dom.wizardClose.addEventListener('click', closeWizard);
+  if (dom.wizardCancel) dom.wizardCancel.addEventListener('click', closeWizard);
 
   if (dom.newPatientBtn) {
     dom.newPatientBtn.addEventListener('click', () => {
@@ -2447,8 +2837,27 @@ function init() {
   }
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !dom.settingsPanel.classList.contains('hidden')) {
-      dom.settingsPanel.classList.add('hidden');
+    if (e.key === 'Escape') {
+      let handled = false;
+      if (!dom.settingsPanel.classList.contains('hidden')) {
+        dom.settingsPanel.classList.add('hidden');
+        handled = true;
+      }
+      if (dom.wizardPanel && !dom.wizardPanel.classList.contains('hidden')) {
+        dom.wizardPanel.classList.add('hidden');
+        handled = true;
+      }
+      if (handled) return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'W') {
+      e.preventDefault();
+      const isOpen = !dom.wizardPanel.classList.contains('hidden');
+      if (!isOpen && dom.pane.classList.contains('sc-focus-mode')) {
+        applyFocusMode(false);
+        savePaneState();
+      }
+      dom.wizardPanel.classList.toggle('hidden', isOpen);
+      if (!isOpen && window.SmartChartWizard) window.SmartChartWizard.open();
       return;
     }
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
@@ -2493,7 +2902,6 @@ function init() {
 document.addEventListener('DOMContentLoaded', init);
 
 window.SmartChart = {
-  // Read-only snapshots
   getState()           { return { ...state, autoCopyTimer: undefined, autoClearTimer: undefined, previewDebounce: undefined }; },
   getTemplates()       { return state.templates; },
   getNoteTemplate()    { return state.noteTemplate; },
@@ -2502,11 +2910,9 @@ window.SmartChart = {
   DEFAULT_NOTE_TEMPLATE,
   DEFAULT_TEMPLATES,
   DEFAULT_BEHAVIOR,
-  // Mutators
   setTemplates(tpls)   { state.templates    = tpls; },
   setNoteTemplate(nt)  { state.noteTemplate = nt;   },
   setBehavior(b)       { state.behavior     = b;    },
-  // Shared utilities
   storage,
   updatePreview,
   showToast,
@@ -2518,8 +2924,8 @@ window.SmartChart = {
   attachSmartTextareaBehavior,
 };
 </script>
-
 <script>
+/* ── settings.js ── */
 /**
  * SmartChart — settings.js
  * Settings panel: note template editor, templates CRUD,
@@ -2540,14 +2946,9 @@ window.SmartChart = {
 
   const $ = id => document.getElementById(id);
 
-  /* ══════════════════════════════════════════
-     RICH EDITOR HELPERS
-  ══════════════════════════════════════════ */
-
   function createRichEditor(editorEl, toolbarEl, toolbarDef) {
     if (!editorEl || !toolbarEl) return null;
 
-    // Reflect active formatting states on toolbar buttons
     function updateToolbarState() {
       toolbarEl.querySelectorAll('button[data-cmd]').forEach(btn => {
         const cmd = btn.dataset.cmd;
@@ -2561,7 +2962,6 @@ window.SmartChart = {
     editorEl.addEventListener('mouseup', updateToolbarState);
     editorEl.addEventListener('selectionchange', updateToolbarState);
 
-    // Build toolbar
     toolbarEl.innerHTML = '';
     toolbarDef.forEach(item => {
       if (item.type === 'divider') {
@@ -2596,7 +2996,6 @@ window.SmartChart = {
         });
 
       } else {
-        // Standard execCommand
         btn.dataset.cmd = item.cmd;
         btn.innerHTML = item.label;
         btn.title = item.title || item.label;
@@ -2613,7 +3012,6 @@ window.SmartChart = {
 
     return {
       getHtml() {
-        // Normalize — collapse 3+ consecutive <br>s
         return editorEl.innerHTML
           .replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>')
           .trim();
@@ -2625,7 +3023,6 @@ window.SmartChart = {
     };
   }
 
-  // Shared toolbar definition for template content editors
   const CONTENT_TOOLBAR = [
     { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold (Ctrl+B)' },
     { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic (Ctrl+I)' },
@@ -2648,7 +3045,6 @@ window.SmartChart = {
     { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
   ];
 
-  // Toolbar for the Note Template editor (adds {placeholder} snippet buttons)
   const NOTE_TEMPLATE_TOOLBAR = [
     { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold' },
     { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic' },
@@ -2665,10 +3061,6 @@ window.SmartChart = {
     { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
   ];
 
-  /* ══════════════════════════════════════════
-     INIT
-  ══════════════════════════════════════════ */
-
   function init() {
     const App = window.SmartChart;
     if (!App) { console.error('[SmartChart] app.js not loaded'); return; }
@@ -2681,7 +3073,6 @@ window.SmartChart = {
       showToast, updatePreview, sanitizeHtml,
     } = App;
 
-    // Convenience: live references through getters so settings always sees current state
     const state = {
       get templates()    { return getTemplates(); },
       set templates(v)   { setTemplates(v); },
@@ -2691,7 +3082,6 @@ window.SmartChart = {
       set behavior(v)    { setBehavior(v); },
     };
 
-    /* ── Settings Tabs ── */
     function activateSettingsTab(tabId) {
       document.querySelectorAll('.sc-settings-tab').forEach(btn => {
         const active = btn.dataset.stab === tabId;
@@ -2707,10 +3097,6 @@ window.SmartChart = {
     document.querySelectorAll('.sc-settings-tab').forEach(btn => {
       btn.addEventListener('click', () => activateSettingsTab(btn.dataset.stab));
     });
-
-    /* ════════════════════════════════════════════════
-       TAB: NOTE TEMPLATE
-    ════════════════════════════════════════════════ */
 
     const noteTemplateEditorEl  = $('sc-note-template-input');
     const noteTemplateToolbarEl = $('sc-note-template-tools');
@@ -2755,10 +3141,6 @@ window.SmartChart = {
       updatePreview();
     });
 
-    /* ════════════════════════════════════════════════
-       TAB: TEMPLATES — LIST
-    ════════════════════════════════════════════════ */
-
     const templateListEl     = $('sc-template-list');
     const addTemplateBtn     = $('sc-add-template-btn');
     const templateFormEl     = $('sc-template-form');
@@ -2769,6 +3151,8 @@ window.SmartChart = {
     const formType           = $('sc-form-type');
     const formDropdownFields = $('sc-form-dropdown-fields');
     const formDropdownLabel  = $('sc-form-dropdown-label');
+    const formDropdownPrefix = $('sc-form-dropdown-prefix');
+    const formDropdownSuffix = $('sc-form-dropdown-suffix');
     const formOptions        = $('sc-form-options');
     const formJoin           = $('sc-form-join');
     const formPriority       = $('sc-form-priority');
@@ -2776,7 +3160,6 @@ window.SmartChart = {
     const formCancelBtn      = $('sc-form-cancel');
     const formCloseBtn       = $('sc-form-close');
 
-    // Rich editor for template content
     const formContentEditorEl  = $('sc-form-content-editor');
     const formContentToolbarEl = $('sc-form-content-toolbar');
     const formContentEditor = createRichEditor(
@@ -2791,10 +3174,15 @@ window.SmartChart = {
       const allSorted = [...state.templates].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
       const categories = [...new Set(allSorted.map(t => t.category || '').filter(Boolean))];
 
+      const isWizardCategory = activeCategory
+        ? allSorted.some(t => t.category === activeCategory && t.id && t.id.endsWith('-main') && t.id.startsWith('wiz-'))
+        : false;
+
       const filterHtml = categories.length > 0 ? `
         <div class="sc-cat-filter">
           <button class="sc-cat-btn${activeCategory === '' ? ' active' : ''}" data-cat="">All</button>
           ${categories.map(c => `<button class="sc-cat-btn${activeCategory === c ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
+          ${isWizardCategory ? `<button class="sc-btn sc-btn-ghost sc-wiz-edit-btn" data-wizcat="${esc(activeCategory)}" title="Re-open this diagnosis in the Template Wizard to edit and regenerate it">✦ Edit in Wizard</button>` : ''}
         </div>
       ` : '';
 
@@ -2846,6 +3234,16 @@ window.SmartChart = {
       templateListEl.querySelectorAll('.sc-cat-btn').forEach(btn => {
         btn.addEventListener('click', () => { activeCategory = btn.dataset.cat; renderTemplateList(); });
       });
+      const wizEditBtn = templateListEl.querySelector('.sc-wiz-edit-btn');
+      if (wizEditBtn) {
+        wizEditBtn.addEventListener('click', () => {
+          const diagName = wizEditBtn.dataset.wizcat;
+          $('sc-settings').classList.add('hidden');
+          const wizPanel = $('sc-wizard');
+          if (wizPanel) wizPanel.classList.remove('hidden');
+          if (window.SmartChartWizard) window.SmartChartWizard.loadDiagnosis(diagName);
+        });
+      }
       templateListEl.querySelectorAll('[data-action]').forEach(btn => {
         btn.addEventListener('click', () => {
           const { action, id } = btn.dataset;
@@ -2865,10 +3263,8 @@ window.SmartChart = {
       const div = document.createElement('div');
       div.className = 'sc-template-preview-expand sc-md-content';
       if (t.type === 'dropdown') {
-        // Dropdown options are plain text — escape them, no sanitization needed
         div.innerHTML = `<p><strong>Dropdown options:</strong></p><ul>${(t.options || []).map(o => `<li>${esc(o)}</li>`).join('')}</ul>`;
       } else {
-        // Template content is user-authored HTML — sanitize before rendering
         div.innerHTML = sanitizeHtml(t.content || '');
       }
       item.appendChild(div);
@@ -2889,10 +3285,16 @@ window.SmartChart = {
       formType.value     = 'text';
       formContentEditor.setHtml('');
       formDropdownLabel.value = '';
+      if (formDropdownPrefix) formDropdownPrefix.value = '';
+      if (formDropdownSuffix) formDropdownSuffix.value = '';
       formOptions.value = '';
       formJoin.value = 'lines';
       const singleSelectEl = $('sc-form-single-select');
       if (singleSelectEl) singleSelectEl.checked = false;
+      const showLabelEl = $('sc-form-show-label');
+      if (showLabelEl) showLabelEl.checked = false;
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      if (wrapBulletEl) wrapBulletEl.checked = false;
       formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = '';
@@ -2912,10 +3314,16 @@ window.SmartChart = {
       formType.value     = t.type === 'dropdown' ? 'dropdown' : 'text';
       formContentEditor.setHtml(t.content || '');
       formDropdownLabel.value = t.label || t.name;
+      if (formDropdownPrefix) formDropdownPrefix.value = t.prefix || '';
+      if (formDropdownSuffix) formDropdownSuffix.value = t.suffix || '';
       formOptions.value = (t.options || []).join('\n');
       formJoin.value = t.join || 'lines';
       const singleSelectEl = $('sc-form-single-select');
       if (singleSelectEl) singleSelectEl.checked = !!(t.singleSelect);
+      const showLabelEl = $('sc-form-show-label');
+      if (showLabelEl) showLabelEl.checked = !!(t.showLabel);
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      if (wrapBulletEl) wrapBulletEl.checked = !!(t.wrapBullet);
       formPriority.value = t.priority ?? 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = t.category || '';
@@ -2941,26 +3349,36 @@ window.SmartChart = {
       const type        = formType.value === 'dropdown' ? 'dropdown' : 'text';
       const content     = formContentEditor.getHtml();
       const options     = (formOptions.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+      const prefix      = formDropdownPrefix ? formDropdownPrefix.value : '';
+      const suffix      = formDropdownSuffix ? formDropdownSuffix.value : '';
       const priority    = parseInt(formPriority.value, 10) || 10;
       const id          = formId.value || `tpl-${Date.now()}`;
       const catEl       = $('sc-form-category');
       const category    = catEl ? (catEl.value || '').trim() : '';
 
       if (!name) { alert('Template name is required.'); formName.focus(); return; }
-      if (!triggersRaw) { alert('At least one trigger keyword is required.'); formTriggers.focus(); return; }
       if (type === 'text' && !content.trim()) { alert('Template content cannot be empty.'); formContentEditor.focus(); return; }
       if (type === 'dropdown' && options.length === 0) { alert('Dropdown templates need at least one option.'); formOptions.focus(); return; }
 
       const triggers = triggersRaw.split(',').map(s => s.trim()).filter(Boolean);
       const singleSelectEl = $('sc-form-single-select');
       const singleSelect = singleSelectEl ? singleSelectEl.checked : false;
+      const showLabelEl = $('sc-form-show-label');
+      const showLabel = showLabelEl ? showLabelEl.checked : false;
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      const wrapBullet = wrapBulletEl ? wrapBulletEl.checked : false;
+
       const template = type === 'dropdown'
         ? {
             id, name, type, triggers,
             label:    (formDropdownLabel.value || '').trim() || name,
+            prefix:   prefix || undefined,
+            suffix:   suffix || undefined,
             options,
             join:     formJoin.value || 'lines',
             singleSelect,
+            showLabel,
+            wrapBullet,
             priority,
             ...(category ? { category } : {}),
           }
@@ -2992,10 +3410,6 @@ window.SmartChart = {
       updatePreview();
     }
 
-    /* ════════════════════════════════════════════════
-       TAB: BEHAVIOR
-    ════════════════════════════════════════════════ */
-
     const autoCopyEnabledEl   = $('sc-autocopy-enabled');
     const autoCopyDelayEl     = $('sc-autocopy-delay');
     const autoCopyDelayValEl  = $('sc-autocopy-delay-val');
@@ -3013,6 +3427,8 @@ window.SmartChart = {
       if (ptEl) ptEl.checked = !!state.behavior.plainTextCopy;
       const slEl = $('sc-sourcelabels-setting');
       if (slEl) slEl.checked = !!state.behavior.sourceLabels;
+      const bsEl = $('sc-bullet-style-setting');
+      if (bsEl) bsEl.value = state.behavior.bulletStyle || '-';
     }
 
     autoCopyDelayEl.addEventListener('input', () => {
@@ -3034,16 +3450,14 @@ window.SmartChart = {
         const labBtn = $('sc-source-labels-btn');
         if (labBtn) labBtn.classList.toggle('active', slEl2.checked);
       }
+      const bsEl2 = $('sc-bullet-style-setting');
+      if (bsEl2) state.behavior.bulletStyle = bsEl2.value;
       try { storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior); } catch(e) {
         showToast('Storage full — export your data first', 'error', 4000); return;
       }
       updatePreview();
       showToast('Behavior settings saved', 'success');
     });
-
-    /* ════════════════════════════════════════════════
-       DATA MANAGEMENT
-    ════════════════════════════════════════════════ */
 
     $('sc-export-btn').addEventListener('click', () => {
       const payload = {
@@ -3077,12 +3491,10 @@ window.SmartChart = {
             let changes = 0;
 
             if (Array.isArray(data.templates) && data.templates.length > 0) {
-              // Sanitize every HTML content field before trusting imported data
               const sanitized = data.templates.map(t => {
                 if (!t || typeof t !== 'object') return null;
                 return {
                   ...t,
-                  // Coerce and sanitize string fields
                   id:       String(t.id       || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || `tpl-${Date.now()}`,
                   name:     String(t.name     || '').slice(0, 200),
                   content:  typeof t.content === 'string' ? sanitizeHtml(t.content) : '',
@@ -3095,6 +3507,7 @@ window.SmartChart = {
                   label:    t.label    ? String(t.label).slice(0, 200)    : undefined,
                   category: t.category ? String(t.category).slice(0, 100) : undefined,
                   priority: Number.isFinite(t.priority) ? t.priority : 10,
+                  wrapBullet: typeof t.wrapBullet === 'boolean' ? t.wrapBullet : undefined,
                 };
               }).filter(Boolean);
               state.templates = sanitized;
@@ -3103,14 +3516,12 @@ window.SmartChart = {
             }
 
             if (typeof data.noteTemplate === 'string' && data.noteTemplate.trim()) {
-              // Sanitize the note template HTML as well
               state.noteTemplate = sanitizeHtml(data.noteTemplate);
               storage.set(STORAGE_KEYS.NOTE_TEMPLATE, state.noteTemplate);
               changes++;
             }
 
             if (data.behavior && typeof data.behavior === 'object') {
-              // Only copy known numeric/boolean keys — never merge arbitrary properties
               const b = data.behavior;
               const safeBehavior = {
                 autoCopyDelay:   Number.isFinite(b.autoCopyDelay)   ? Math.min(Math.max(b.autoCopyDelay, 500), 30000)    : DEFAULT_BEHAVIOR.autoCopyDelay,
@@ -3118,6 +3529,7 @@ window.SmartChart = {
                 autoCopyEnabled: typeof b.autoCopyEnabled === 'boolean' ? b.autoCopyEnabled : DEFAULT_BEHAVIOR.autoCopyEnabled,
                 plainTextCopy:   typeof b.plainTextCopy   === 'boolean' ? b.plainTextCopy   : DEFAULT_BEHAVIOR.plainTextCopy,
                 sourceLabels:    typeof b.sourceLabels    === 'boolean' ? b.sourceLabels    : DEFAULT_BEHAVIOR.sourceLabels,
+                bulletStyle:     ['-','*','–','disc'].includes(b.bulletStyle) ? b.bulletStyle : DEFAULT_BEHAVIOR.bulletStyle,
               };
               state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, safeBehavior);
               storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
@@ -3159,10 +3571,6 @@ window.SmartChart = {
       showToast('All data reset to defaults', 'warning', 3000);
     });
 
-    /* ════════════════════════════════════════════════
-       OPEN — called by app.js when gear icon clicked
-    ════════════════════════════════════════════════ */
-
     function open() {
       loadNoteTemplateTab();
       renderTemplateList();
@@ -3181,6 +3589,709 @@ window.SmartChart = {
   }
 
 })();
+</script>
+<script>
+/* ── wizard.js ── */
+/**
+ * SmartChart — wizard.js
+ * Diagnosis Template Wizard: dynamic table generation, custom categories,
+ * pre-defined template linking, template generation logic.
+ */
+
+'use strict';
+
+(function () {
+
+  const $ = id => document.getElementById(id);
+
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function slugify(str) {
+    return String(str || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '')
+      .slice(0, 50);
+  }
+
+  const DEFAULT_CATEGORIES = [
+    {
+      id: 'history',
+      name: 'Key elements of history',
+      desc: 'Symptom details (e.g. onset, duration, quality, aggravating/alleviating factors)',
+      placeholder: 'Left ear pain for 2 days; positive congestion\nRight ear pain for 1 day; positive fever\nBilateral ear pain for 3 days; no drainage\nNo ear pain; positive tugging at ears',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'exam',
+      name: 'Key exam findings',
+      desc: 'Physical exam parameters (e.g. tympanic membrane, throat, lungs, abdomen findings)',
+      placeholder: 'Left TM red and bulging with middle ear effusion; right TM normal\nRight TM red and bulging with middle ear effusion; left TM normal\nBilateral TMs red and bulging with middle ear effusion\nNormal TMs bilaterally; no erythema or effusion',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'differential',
+      name: 'Key elements of differential',
+      desc: 'Alternative or contributing diagnoses considered and/or ruled out',
+      placeholder: 'Acute Otitis Media vs. Otitis Externa vs. Referred Otalgia\nAcute Otitis Media vs. Myringitis\nOtitis Media with Effusion vs. Acute Otitis Media',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'likely-diagnosis',
+      name: 'Likely diagnosis',
+      desc: 'The working diagnosis or assessment',
+      placeholder: 'Acute otitis media of left ear\nAcute otitis media of right ear\nBilateral acute otitis media\nOtitis media with effusion',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'labs',
+      name: 'Labs',
+      desc: 'Laboratory testing ordered or reviewed',
+      placeholder: 'Rapid strep test: negative; culture pending\nRapid strep test: positive\nUrinalysis and culture ordered\nNo labs indicated at this time',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'imaging',
+      name: 'Imaging',
+      desc: 'Radiology or bedside imaging ordered/performed',
+      placeholder: 'Chest X-ray ordered to rule out pneumonia\nBedside ultrasound performed showing no effusion\nNo imaging indicated at this time',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'medications',
+      name: 'Medications with exact doses if stated',
+      desc: 'Pharmacological treatment prescriptions with precise dosing guidance',
+      placeholder: 'Amoxicillin 90 mg/kg/day divided BID x10 days\nCefdinir 14 mg/kg/day QD x10 days\nAmoxicillin-Clavulanate 90 mg/kg/day (amoxicillin component) divided BID x10 days\nOTC pain relievers for comfort; no antibiotics indicated at this time',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'treatment-plan-actions',
+      name: 'Treatment / plan actions',
+      desc: 'Active counseling, procedures, or clinic-specific interventions',
+      placeholder: 'Counseled parents on diagnosis, treatment options, and watchful waiting.\nEar drop application instructions reviewed.\nReviewed importance of completing full antibiotic course.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'supportive-care',
+      name: 'Supportive care',
+      desc: 'Non-pharmacological measures, OTC medications, hydration, rest',
+      placeholder: 'Supportive care with OTC Tylenol/Motrin for pain and fever.\nEnsure adequate hydration with water, electrolyte solutions, or popsicles.\nRecommend rest and warm compresses over the ear for comfort.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'complications',
+      name: 'Complications patient is at risk for',
+      desc: 'Clinical risks caregiver should monitor for (e.g. dehydration, mastoiditis)',
+      placeholder: 'Untreated or worsening infection could lead to TM perforation or hearing loss.\nRisk of worsening respiratory distress or clinical deterioration.\nRisk of dehydration if PO intake remains poor.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'conditional-plans',
+      name: 'Conditional plans (if X, then Y)',
+      desc: 'Contingency plans if symptoms change or fail to resolve',
+      placeholder: 'If fever persists past 48 hours of antibiotics, contact clinic for reassessment.\nIf unable to keep fluids down or urinates <3 times a day, go to the nearest ER.\nIf watchful waiting fails after 48-72 hours, fill the standby antibiotic prescription.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'return-precautions',
+      name: 'Return precautions',
+      desc: 'Red flag symptoms indicating the need for prompt re-evaluation',
+      placeholder: 'Return immediately for high fever, lethargy, stiff neck, persistent vomiting, or drainage from the ear.\nReturn immediately for fast breathing, retractions, grunting, or blue lips.\nReturn immediately for inability to tolerate oral fluids, extreme listlessness, or no wet diapers for 8+ hours.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'discharge-planning',
+      name: 'Discharge planning',
+      desc: 'Parameters for discharge or clinic wrap-up',
+      placeholder: 'Discharged home in stable condition; parent agreeable to plan.\nDischarged home with AVS and educational handouts printed.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'nursing-orders',
+      name: 'Nursing orders',
+      desc: 'Instructions for clinic or nursing staff (e.g., vital signs, administering dose)',
+      placeholder: 'Administer one dose of Acetaminophen in clinic before discharge.\nNursing to check vital signs and check out patient.\nNursing to provide educational handout on ear infections.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'follow-up',
+      name: 'Follow-Up',
+      desc: 'Schedule or criteria for follow-up evaluation',
+      placeholder: 'Follow up in 2 to 3 days if not improving or worsening.\nFollow up in 10 to 14 days for ear recheck.\nFollow up as needed for recurring symptoms.',
+      defaultMode: 'singleSelect'
+    }
+  ];
+
+  let customCategoryCounter = 0;
+
+  function init() {
+    const App = window.SmartChart;
+    if (!App) { console.error('[SmartChart] app.js not loaded'); return; }
+
+    const {
+      getTemplates, setTemplates, storage, STORAGE_KEYS,
+      showToast, updatePreview
+    } = App;
+
+    const listContainer = $('sc-wiz-categories-body');
+    const linkedTemplatesContainer = $('sc-wiz-linked-templates');
+    const addCustomBtn = $('sc-wiz-add-category-btn');
+    const generateBtn = $('sc-wiz-generate-btn');
+    const cancelBtn = $('sc-wiz-cancel-btn');
+    const closeBtn = $('sc-wiz-close');
+
+    function renderCategories() {
+      listContainer.innerHTML = '';
+      DEFAULT_CATEGORIES.forEach(cat => {
+        addCategoryRow(cat.name, cat.desc, cat.placeholder, cat.defaultMode, cat.id, false);
+      });
+    }
+
+    function addCategoryRow(name, desc, placeholder, defaultMode, id, isCustom = false) {
+      const row = document.createElement('tr');
+      row.dataset.id = id;
+      row.dataset.custom = isCustom;
+
+      const checkboxTd = document.createElement('td');
+      checkboxTd.className = 'sc-wiz-td sc-wiz-td--checkbox';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'sc-wiz-checkbox';
+      checkboxTd.appendChild(checkbox);
+
+      const nameTd = document.createElement('td');
+      nameTd.className = 'sc-wiz-td';
+      if (isCustom) {
+        const titleCell = document.createElement('div');
+        titleCell.className = 'sc-wiz-category-title-cell';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'sc-input-settings sc-wiz-custom-name sc-wiz-custom-name-input';
+        input.value = name;
+        input.placeholder = 'e.g. School Excuse';
+        titleCell.appendChild(input);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'sc-wiz-delete-row-btn';
+        delBtn.title = 'Remove custom category';
+        delBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+          </svg>
+        `;
+        delBtn.addEventListener('click', () => {
+          row.remove();
+        });
+        titleCell.appendChild(delBtn);
+        nameTd.appendChild(titleCell);
+      } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'sc-wiz-category-label-wrap';
+
+        const nameRow = document.createElement('div');
+        nameRow.className = 'sc-wiz-category-name-row';
+
+        const title = document.createElement('span');
+        title.className = 'sc-wiz-category-name';
+        title.textContent = name;
+
+        const editIcon = document.createElement('span');
+        editIcon.className = 'sc-wiz-category-edit-icon';
+        editIcon.title = 'Rename category';
+        editIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'sc-wiz-category-name-input';
+        nameInput.value = name;
+        nameInput.style.display = 'none';
+
+        function startEditing() {
+          title.style.display = 'none';
+          editIcon.style.display = 'none';
+          nameInput.style.display = '';
+          nameInput.focus();
+          nameInput.select();
+        }
+        function stopEditing() {
+          const val = nameInput.value.trim() || title.textContent;
+          nameInput.value = val;
+          title.textContent = val;
+          nameInput.style.display = 'none';
+          title.style.display = '';
+          editIcon.style.display = '';
+        }
+
+        nameRow.addEventListener('click', startEditing);
+        nameInput.addEventListener('blur', stopEditing);
+        nameInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter')  { e.preventDefault(); stopEditing(); }
+          if (e.key === 'Escape') { nameInput.value = title.textContent; stopEditing(); }
+        });
+
+        nameRow.appendChild(title);
+        nameRow.appendChild(editIcon);
+        wrap.appendChild(nameRow);
+        wrap.appendChild(nameInput);
+
+        const descSpan = document.createElement('span');
+        descSpan.className = 'sc-wiz-category-desc';
+        descSpan.textContent = desc;
+        wrap.appendChild(descSpan);
+        nameTd.appendChild(wrap);
+      }
+
+      const prefixTd = document.createElement('td');
+      prefixTd.className = 'sc-wiz-td';
+      const prefixInput = document.createElement('input');
+      prefixInput.type = 'text';
+      prefixInput.className = 'sc-input-settings sc-wiz-prefix';
+      prefixInput.placeholder = 'e.g. - Pain Location: ';
+      prefixTd.appendChild(prefixInput);
+
+      const textareaTd = document.createElement('td');
+      textareaTd.className = 'sc-wiz-td';
+      const textarea = document.createElement('textarea');
+      textarea.placeholder = placeholder || 'Enter variations, one per line...';
+      textarea.addEventListener('input', () => {
+        if (textarea.value.trim().length > 0) {
+          checkbox.checked = true;
+        } else {
+          checkbox.checked = false;
+        }
+      });
+      textareaTd.appendChild(textarea);
+
+      const modeTd = document.createElement('td');
+      modeTd.className = 'sc-wiz-td';
+      const select = document.createElement('select');
+      [
+        ['singleSelect', 'Single-select'],
+        ['lines', 'Bullets'],
+        ['comma', 'Comma list'],
+        ['and', 'Comma + and'],
+        ['or', 'Comma + or'],
+        ['sentence', 'Sentence'],
+        ['paragraphs', 'Paragraphs']
+      ].forEach(([val, text]) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = text;
+        opt.selected = val === defaultMode;
+        select.appendChild(opt);
+      });
+      modeTd.appendChild(select);
+
+      const reorderTd = document.createElement('td');
+      reorderTd.className = 'sc-wiz-td sc-wiz-reorder-td';
+
+      const moveUp = document.createElement('button');
+      moveUp.type = 'button';
+      moveUp.className = 'sc-wiz-move-btn';
+      moveUp.title = 'Move up';
+      moveUp.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="18 15 12 9 6 15"/></svg>';
+      moveUp.addEventListener('click', () => {
+        const prev = row.previousElementSibling;
+        if (prev) listContainer.insertBefore(row, prev);
+      });
+
+      const moveDown = document.createElement('button');
+      moveDown.type = 'button';
+      moveDown.className = 'sc-wiz-move-btn';
+      moveDown.title = 'Move down';
+      moveDown.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>';
+      moveDown.addEventListener('click', () => {
+        const next = row.nextElementSibling;
+        if (next) listContainer.insertBefore(next, row);
+      });
+
+      reorderTd.append(moveUp, moveDown);
+      row.append(checkboxTd, nameTd, prefixTd, textareaTd, modeTd, reorderTd);
+      listContainer.appendChild(row);
+
+      if (isCustom) {
+        checkbox.checked = true;
+      }
+    }
+
+    function renderLinkedTemplates() {
+      linkedTemplatesContainer.innerHTML = '';
+      const templates = getTemplates();
+      const filterable = templates.filter(t => t.type !== 'dropdown');
+      if (filterable.length === 0) {
+        linkedTemplatesContainer.innerHTML = '<span class="sc-muted sc-wiz-no-templates">No existing templates available.</span>';
+        return;
+      }
+      filterable.forEach(t => {
+        const item = document.createElement('label');
+        item.className = 'sc-wiz-linked-template-item';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.dataset.id = t.id;
+        const name = document.createElement('span');
+        name.textContent = t.name;
+        name.title = t.name;
+        item.append(checkbox, name);
+        linkedTemplatesContainer.appendChild(item);
+      });
+    }
+
+    addCustomBtn.addEventListener('click', () => {
+      customCategoryCounter++;
+      addCategoryRow('', '', 'Enter custom variations, one per line...', 'lines', `custom-${customCategoryCounter}`, true);
+      const container = listContainer.closest('.sc-wiz-table-container');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
+
+    generateBtn.addEventListener('click', () => {
+      const diagName = ($('sc-wiz-name').value || '').trim();
+      const triggersRaw = ($('sc-wiz-triggers').value || '').trim();
+
+      if (!diagName) {
+        alert('Diagnosis or Problem Name is required.');
+        $('sc-wiz-name').focus();
+        return;
+      }
+      if (!triggersRaw) {
+        alert('At least one trigger keyword is required.');
+        $('sc-wiz-triggers').focus();
+        return;
+      }
+
+      const triggers = triggersRaw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
+      const rows = Array.from(listContainer.querySelectorAll('tr'));
+      const enabledCategories = [];
+
+      let hasInvalidCategory = false;
+
+      rows.forEach(row => {
+        const checkbox = row.querySelector('.sc-wiz-checkbox');
+        if (!checkbox || !checkbox.checked) return;
+
+        let name = '';
+        const isCustom = row.dataset.custom === 'true';
+        if (isCustom) {
+          const input = row.querySelector('.sc-wiz-custom-name');
+          name = input ? input.value.trim() : '';
+        } else {
+          const nameInput = row.querySelector('.sc-wiz-category-name-input');
+          const nameSpan  = row.querySelector('.sc-wiz-category-name');
+          name = (nameInput && nameInput.value.trim())
+               || (nameSpan  && nameSpan.textContent.trim())
+               || '';
+        }
+
+        if (!name) {
+          hasInvalidCategory = true;
+          return;
+        }
+
+        const prefixInput = row.querySelector('.sc-wiz-prefix');
+        const prefixText = prefixInput ? prefixInput.value : '';
+
+        const textarea = row.querySelector('textarea');
+        const options = (textarea ? textarea.value : '')
+          .split('\n')
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        if (options.length === 0) {
+          hasInvalidCategory = true;
+          alert(`Please fill in some variations for the checked category "${name}".`);
+          textarea.focus();
+          return;
+        }
+
+        const select = row.querySelector('select');
+        const selectMode = select ? select.value : 'lines';
+
+        enabledCategories.push({
+          id: row.dataset.id,
+          name,
+          prefix: prefixText,
+          options,
+          selectMode,
+          isCustom
+        });
+      });
+
+      if (hasInvalidCategory) return;
+
+      if (enabledCategories.length === 0) {
+        alert('Please enable at least one category and enter variations to generate the template.');
+        return;
+      }
+
+      const templates = getTemplates();
+      let subPriority = Math.max(...templates.map(t => t.priority ?? 0), 900) + 1;
+      const diagSlug = slugify(diagName);
+
+      const newTemplates = [];
+      const dropdownReferences = [];
+
+      enabledCategories.forEach(cat => {
+        const catSlug = slugify(cat.name);
+        const dropdownId = `wiz-${diagSlug}-${catSlug}`;
+        const isSingle = cat.selectMode === 'singleSelect';
+
+        const dropdownTemplate = {
+          id: dropdownId,
+          name: `${diagName} — ${cat.name}`,
+          type: 'dropdown',
+          triggers: [],
+          label: cat.name,
+          prefix: cat.prefix || undefined,
+          join: isSingle ? 'lines' : cat.selectMode,
+          singleSelect: isSingle,
+          showLabel: false,
+          options: cat.options,
+          priority: subPriority++,
+          category: diagName
+        };
+
+        newTemplates.push(dropdownTemplate);
+        dropdownReferences.push({
+          name: cat.name,
+          id: dropdownId
+        });
+      });
+
+      const mainTemplateId = `wiz-${diagSlug}-main`;
+      const layoutSelect = $('sc-wiz-layout');
+      const useDivs = layoutSelect ? layoutSelect.value === 'divs' : true;
+      let contentHtml = '';
+      
+      if (useDivs) {
+        dropdownReferences.forEach(ref => {
+          contentHtml += `<div>{dropdown:${ref.id}}</div>`;
+        });
+      } else {
+        dropdownReferences.forEach(ref => {
+          contentHtml += `{dropdown:${ref.id}} `;
+        });
+        contentHtml = contentHtml.replace(/ $/, '');
+      }
+
+      const mainTemplate = {
+        id: mainTemplateId,
+        name: diagName,
+        triggers: triggers,
+        content: contentHtml,
+        priority: 1,
+        category: diagName
+      };
+
+      newTemplates.push(mainTemplate);
+
+      const currentTemplates = [...templates];
+      const selectedTemplateCheckboxes = Array.from(linkedTemplatesContainer.querySelectorAll('input[type="checkbox"]:checked'));
+      const linkedTemplateIds = selectedTemplateCheckboxes.map(cb => cb.dataset.id);
+
+      linkedTemplateIds.forEach(id => {
+        const t = currentTemplates.find(t => t.id === id);
+        if (t) {
+          const updatedTriggers = [...(t.triggers || [])];
+          triggers.forEach(trg => {
+            if (!updatedTriggers.includes(trg)) {
+              updatedTriggers.push(trg);
+            }
+          });
+          t.triggers = updatedTriggers;
+        }
+      });
+
+      const newTemplateIds = newTemplates.map(t => t.id);
+      let updatedAllTemplates = currentTemplates.filter(t => !newTemplateIds.includes(t.id));
+      updatedAllTemplates = updatedAllTemplates.concat(newTemplates);
+
+      try {
+        storage.set(STORAGE_KEYS.TEMPLATES, updatedAllTemplates);
+        setTemplates(updatedAllTemplates);
+        showToast(`Successfully generated templates for ${diagName}!`, 'success', 3500);
+        updatePreview();
+
+        const wizardPanel = $('sc-wizard');
+        if (wizardPanel) wizardPanel.classList.add('hidden');
+
+        $('sc-wiz-name').value = '';
+        $('sc-wiz-triggers').value = '';
+        renderCategories();
+      } catch (err) {
+        showToast('Error saving templates - LocalStorage limit exceeded', 'error', 4000);
+        console.error(err);
+      }
+    });
+
+    function loadDiagnosis(diagName) {
+      const templates = getTemplates();
+      const diagSlug = slugify(diagName);
+      const mainId = `wiz-${diagSlug}-main`;
+      const mainTpl = templates.find(t => t.id === mainId);
+
+      $('sc-wiz-name').value = diagName;
+      $('sc-wiz-triggers').value = mainTpl ? (mainTpl.triggers || []).join(', ') : '';
+      customCategoryCounter = 0;
+
+      const layoutSelect = $('sc-wiz-layout');
+      if (layoutSelect && mainTpl && mainTpl.content) {
+        layoutSelect.value = mainTpl.content.includes('<div>') ? 'divs' : 'spaces';
+      }
+
+      const dropdownIds = [];
+      if (mainTpl && mainTpl.content) {
+        const re = /\{dropdown:([^}]+)\}/g;
+        let m;
+        while ((m = re.exec(mainTpl.content)) !== null) {
+          dropdownIds.push(m[1].trim());
+        }
+      }
+
+      const subMap = {};
+      templates.forEach(t => {
+        if (t.category === diagName && t.id !== mainId) subMap[t.id] = t;
+      });
+
+      listContainer.innerHTML = '';
+      DEFAULT_CATEGORIES.forEach(cat => {
+        const expectedId = `wiz-${diagSlug}-${slugify(cat.name)}`;
+        const subTpl = subMap[expectedId];
+
+        const actualId = dropdownIds.find(id => id === expectedId)
+          || dropdownIds.find(id => {
+            const t = subMap[id];
+            return t && slugify(t.label || '') === slugify(cat.name);
+          });
+        const resolvedTpl = actualId ? (subMap[actualId] || subTpl) : subTpl;
+
+        const displayName = (resolvedTpl && resolvedTpl.label && resolvedTpl.label !== cat.name)
+          ? resolvedTpl.label
+          : cat.name;
+
+        addCategoryRow(displayName, cat.desc, cat.placeholder, cat.defaultMode, cat.id, false);
+
+        if (resolvedTpl) {
+          const row = listContainer.lastElementChild;
+          const textarea = row.querySelector('textarea');
+          const select = row.querySelector('select');
+          const checkbox = row.querySelector('.sc-wiz-checkbox');
+          const prefixInput = row.querySelector('.sc-wiz-prefix');
+          
+          if (textarea) textarea.value = (resolvedTpl.options || []).join('\n');
+          if (select) {
+            const mode = resolvedTpl.singleSelect ? 'singleSelect' : (resolvedTpl.join || 'lines');
+            select.value = mode;
+          }
+          if (prefixInput) prefixInput.value = resolvedTpl.prefix || '';
+          if (checkbox) checkbox.checked = true;
+        }
+      });
+
+      const defaultExpectedIds = DEFAULT_CATEGORIES.map(cat => `wiz-${diagSlug}-${slugify(cat.name)}`);
+      const handledIds = new Set(defaultExpectedIds);
+      handledIds.add(mainId);
+
+      dropdownIds.forEach(id => {
+        if (handledIds.has(id)) return;
+        const t = subMap[id];
+        if (!t) return;
+        customCategoryCounter++;
+        addCategoryRow(t.label || t.name, '', 'Enter custom variations, one per line...', t.join || 'lines', `custom-${customCategoryCounter}`, true);
+        const row = listContainer.lastElementChild;
+        const textarea = row.querySelector('textarea');
+        const select = row.querySelector('select');
+        const prefixInput = row.querySelector('.sc-wiz-prefix');
+        if (textarea) textarea.value = (t.options || []).join('\n');
+        if (select) select.value = t.singleSelect ? 'singleSelect' : (t.join || 'lines');
+        if (prefixInput) prefixInput.value = t.prefix || '';
+        handledIds.add(id);
+      });
+
+      if (dropdownIds.length > 0) {
+        const rowsInOrder = [];
+        const unorderedRows = [];
+        const allRows = Array.from(listContainer.querySelectorAll('tr'));
+
+        const rowIdMap = new Map();
+        allRows.forEach(row => {
+          const isCustom = row.dataset.custom === 'true';
+          if (isCustom) {
+            const nameInput = row.querySelector('.sc-wiz-custom-name');
+            const label = nameInput ? nameInput.value.trim() : '';
+            const matchId = dropdownIds.find(id => {
+              const t = subMap[id];
+              return t && (t.label === label || t.name === label);
+            });
+            rowIdMap.set(row, matchId || null);
+          } else {
+            const catId = row.dataset.id;
+            const cat = DEFAULT_CATEGORIES.find(c => c.id === catId);
+            if (cat) {
+              const expectedId = `wiz-${diagSlug}-${slugify(cat.name)}`;
+              const altId = dropdownIds.find(id => {
+                const t = subMap[id];
+                return t && slugify(t.label || '') === slugify(cat.name);
+              });
+              rowIdMap.set(row, dropdownIds.includes(expectedId) ? expectedId : (altId || null));
+            } else {
+              rowIdMap.set(row, null);
+            }
+          }
+        });
+
+        const inDropdown = [];
+        const notInDropdown = [];
+        allRows.forEach(row => {
+          const id = rowIdMap.get(row);
+          if (id && dropdownIds.includes(id)) {
+            inDropdown.push({ row, idx: dropdownIds.indexOf(id) });
+          } else {
+            notInDropdown.push(row);
+          }
+        });
+        inDropdown.sort((a, b) => a.idx - b.idx);
+
+        inDropdown.forEach(({ row }) => listContainer.appendChild(row));
+        notInDropdown.forEach(row => listContainer.appendChild(row));
+      }
+
+      renderLinkedTemplates();
+      $('sc-wiz-name').focus();
+    }
+
+    window.SmartChartWizard = {
+      open() {
+        $('sc-wiz-name').value = '';
+        $('sc-wiz-triggers').value = '';
+        const layoutSelect = $('sc-wiz-layout');
+        if (layoutSelect) layoutSelect.value = 'divs';
+        renderCategories();
+        renderLinkedTemplates();
+        customCategoryCounter = 0;
+        $('sc-wiz-name').focus();
+      },
+      loadDiagnosis
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 50));
+  } else {
+    setTimeout(init, 50);
+  }
+
+})();
+
 </script>
 </body>
 </html>

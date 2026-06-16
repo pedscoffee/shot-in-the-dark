@@ -1,0 +1,4297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SmartChart — EMR note assistant with auto-template insertion">
+  <meta name="theme-color" content="#0b0e14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'sha256-pV1s4y0SJo7/RqDg9YB1pwqDoCifxOIJ9OxTbVvksS0=' 'sha256-OE1p7cGI7LuzW30JB4s7YTyVRG4tiXInbo77ZtG7qGo=' 'sha256-FdmrtSsGPoN72J0z2J+nsXiP+qIxqrjFZXWDcPWBdHs=' 'sha256-BQIKIMbFBPzi+2VxXt1wnUQCL7eR0UCRD0XB7+2P7qE=' https://cdnjs.cloudflare.com; style-src 'sha256-+WYMkR9BhTZdp8LpeyPX4HlFNf5jTw96vU/B/XqbeZ4=' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; worker-src 'self'; object-src 'none'; base-uri 'self';">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <title>SmartChart</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+/* ════════════════════════════════════════════════
+   SmartChart — styles.css
+   Clinical Dark Theme: Deep Charcoal + Medical Green
+   Fonts: Sora (UI) · IBM Plex Mono (content)
+════════════════════════════════════════════════ */
+
+:root {
+  --bg-base:      #0b0e14;
+  --bg-pane:      #141820;
+  --bg-header:    #1a1f2c;
+  --bg-hover:     #1f2535;
+  --bg-input:     #0e111a;
+  --bg-code:      #1a1f2c;
+
+  --border:       #272d3d;
+  --border-focus: #22c55e;
+
+  --accent:       #22c55e;
+  --accent-dim:   rgba(34, 197, 94, 0.12);
+  --accent-glow:  rgba(34, 197, 94, 0.25);
+
+  --text-1:       #e8edf5;
+  --text-2:       #8a95aa;
+  --text-3:       #44505f;
+
+  --danger:       #f26b5e;
+  --warning:      #e5a840;
+  --info:         #5b9cf6;
+
+  --font-ui:      'Sora', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+  --radius:       8px;
+  --radius-sm:    5px;
+  --header-h:     46px;
+
+  --shadow-pane:  0 2px 12px rgba(0,0,0,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg-base);
+  font-family: var(--font-ui);
+  color: var(--text-1);
+  overflow: hidden;
+}
+
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+.sc-pane {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  background: var(--bg-pane);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sc-pane.sc-focus-mode,
+.sc-pane.sc-minimized {
+  bottom: auto;
+  height: auto !important;
+  min-height: 0 !important;
+}
+.sc-pane.sc-focus-mode .sc-body,
+.sc-pane.sc-minimized .sc-body {
+  display: flex;
+  flex: 0 0 auto;
+}
+.sc-pane.sc-focus-mode .sc-status-bar,
+.sc-pane.sc-focus-mode .sc-preview-section,
+.sc-pane.sc-focus-mode .sc-settings,
+.sc-pane.sc-minimized .sc-status-bar,
+.sc-pane.sc-minimized .sc-preview-section,
+.sc-pane.sc-minimized .sc-settings {
+  display: none !important;
+}
+
+.sc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-h);
+  padding: 0 10px 0 14px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.sc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sc-logo {
+  color: var(--accent);
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.sc-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-1);
+}
+
+.sc-match-badge {
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 7px;
+  min-width: 22px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.sc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: default;
+}
+
+.sc-btn {
+  font-family: var(--font-ui);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.sc-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sc-btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+}
+.sc-btn-icon svg { width: 16px; height: 16px; }
+.sc-btn-icon:hover { background: var(--bg-hover); color: var(--text-1); }
+
+.sc-btn-primary {
+  background: var(--accent);
+  color: #051208;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+}
+.sc-btn-primary:hover { filter: brightness(1.1); }
+
+.sc-btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.sc-btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); border-color: var(--text-3); }
+
+.sc-btn-text {
+  background: transparent;
+  color: var(--text-3);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.sc-btn-text:hover { color: var(--danger); background: rgba(242, 107, 94, 0.08); }
+
+.sc-btn-danger {
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border: 1px solid rgba(242, 107, 94, 0.35);
+  border-radius: var(--radius-sm);
+}
+.sc-btn-danger:hover { background: rgba(242, 107, 94, 0.08); }
+
+.sc-btn-full { width: 100%; justify-content: flex-start; }
+
+.sc-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sc-input-section {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sc-input-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.sc-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  padding: 8px 12px 10px;
+  min-height: 74px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.sc-input::placeholder { color: var(--text-3); font-style: italic; }
+
+.sc-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 26px;
+}
+
+.sc-status-text {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+.sc-status-text.sc-matched { color: var(--accent); }
+.sc-status-text.sc-error-text { color: var(--danger); }
+
+.sc-status-right { display: flex; align-items: center; gap: 6px; }
+
+.sc-autocopy-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: sc-pulse 1.2s ease-in-out infinite;
+}
+@keyframes sc-pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.35; transform:scale(0.75); }
+}
+
+.sc-preview-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.sc-preview-tabs { 
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-header);
+  padding: 0 10px;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.sc-tab {
+  background: transparent;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.sc-tab:hover { color: var(--text-2); }
+.sc-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.sc-preview-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  min-height: 0;
+}
+
+.sc-md-content {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--text-1);
+}
+.sc-md-content p            { margin: 0 0 8px; }
+.sc-md-content p:last-child { margin-bottom: 0; }
+.sc-md-content strong       { color: #fff; font-weight: 600; }
+.sc-md-content em           { color: var(--text-2); font-style: italic; }
+.sc-md-content h1,.sc-md-content h2,.sc-md-content h3 {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--text-1);
+  margin: 12px 0 4px;
+  line-height: 1.3;
+}
+.sc-md-content h1 { font-size: 15px; }
+.sc-md-content h2 { font-size: 13px; }
+.sc-md-content h3 { font-size: 12px; }
+.sc-md-content ul,.sc-md-content ol { padding-left: 1.4em; margin: 4px 0 8px; }
+.sc-md-content li { margin: 2px 0; }
+.sc-md-content code {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11.5px;
+}
+.sc-md-content hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+.sc-md-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 10px;
+  color: var(--text-2);
+}
+
+.sc-dropdown-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sc-dropdown-template {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  padding: 10px;
+}
+
+.sc-dropdown-template-header {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: 7px;
+}
+
+.sc-dropdown-template-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(120px, 160px);
+  gap: 8px;
+}
+
+.sc-dropdown-template-select,
+.sc-dropdown-template-join {
+  width: 100%;
+  background: var(--bg-pane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  outline: none;
+}
+
+.sc-dropdown-template-select {
+  padding: 5px 7px;
+}
+
+.sc-dropdown-template-select option {
+  padding: 4px 3px;
+}
+
+.sc-dropdown-template-join {
+  height: 30px;
+  padding: 0 8px;
+}
+
+.sc-template-sep {
+  border: none;
+  border-top: 1px dashed var(--border);
+  margin: 8px 0;
+}
+
+.sc-source-pre {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sc-empty-state {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sc-empty-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: 12px;
+  font-style: italic;
+  font-family: var(--font-mono);
+  text-align: center;
+}
+.sc-empty-icon {
+  width: 32px;
+  height: 32px;
+  opacity: 0.3;
+}
+
+.sc-settings {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-pane);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sc-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--header-h);
+  padding: 0 10px 0 14px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sc-settings-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.sc-settings-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+
+.sc-settings-tab {
+  background: transparent;
+  border: none;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 8px 11px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.sc-settings-tab:hover { color: var(--text-2); }
+.sc-settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.sc-settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  min-height: 0;
+}
+
+.sc-stab-content { display: none; }
+.sc-stab-content.active { display: block; }
+
+.sc-field-group { margin-bottom: 16px; }
+
+.sc-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: 6px;
+}
+
+.sc-muted {
+  color: var(--text-3);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 10px;
+}
+
+.sc-help-text {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+.sc-help-text code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 4px;
+  color: var(--accent);
+}
+
+.sc-input-settings {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sc-input-settings:focus { border-color: var(--border-focus); }
+.sc-input-narrow { max-width: 90px; }
+
+.sc-textarea-settings {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px 10px;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+  transition: border-color 0.15s;
+}
+.sc-textarea-settings:focus { border-color: var(--border-focus); }
+
+.sc-rich-editor {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s;
+  margin-bottom: 8px;
+}
+.sc-rich-editor:focus-within {
+  border-color: var(--border-focus);
+}
+.sc-rich-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-pane);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.sc-rich-toolbar button {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  transition: background 0.1s, color 0.1s;
+}
+.sc-rich-toolbar button:hover {
+  background: var(--bg-hover);
+  color: var(--text-1);
+}
+.sc-rich-toolbar button.sc-template-tool {
+  font-size: 11px;
+}
+.sc-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 4px;
+}
+.sc-editor-content {
+  padding: 10px 12px;
+  min-height: 140px;
+  max-height: 300px;
+  overflow-y: auto;
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.sc-editor-content b, .sc-editor-content strong { font-weight: bold; }
+.sc-editor-content i, .sc-editor-content em { font-style: italic; }
+.sc-editor-content u { text-decoration: underline; }
+.sc-editor-content ul { padding-left: 20px; list-style: disc; margin: 0; }
+.sc-editor-content li { margin-bottom: 2px; }
+
+.sc-template-tools {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+
+.sc-template-tool {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.sc-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sc-btn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sc-error {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--danger);
+  margin-top: 5px;
+  padding: 5px 8px;
+  background: rgba(242, 107, 94, 0.06);
+  border: 1px solid rgba(242, 107, 94, 0.25);
+  border-radius: 4px;
+}
+
+.sc-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+}
+
+.sc-example-block {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.sc-example-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+.sc-example-pre {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--text-2);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.sc-range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sc-range-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+}
+.sc-range-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  min-width: 34px;
+  text-align: right;
+}
+
+.sc-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  width: fit-content;
+}
+.sc-toggle-wrap input[type="checkbox"] { display: none; }
+.sc-toggle-track {
+  width: 38px;
+  height: 22px;
+  background: var(--border);
+  border-radius: 11px;
+  position: relative;
+  transition: background 0.2s, border 0.2s;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sc-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: all 0.2s;
+}
+.sc-toggle-wrap input:checked + .sc-toggle-track {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.sc-toggle-wrap input:checked + .sc-toggle-track::after {
+  left: 20px;
+  background: var(--accent);
+}
+.sc-toggle-label {
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+.sc-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sc-template-item {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: default;
+  transition: border-color 0.15s;
+}
+.sc-template-item:hover { border-color: var(--text-3); }
+
+.sc-template-info { flex: 1; min-width: 0; }
+.sc-template-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-template-triggers {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-template-priority {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-3);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.sc-template-actions {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+  align-self: center;
+}
+.sc-template-actions .sc-btn-icon { width: 28px; height: 28px; }
+
+.sc-template-form {
+  margin-top: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+.sc-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.sc-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.sc-toast {
+  background: var(--bg-header);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  pointer-events: auto;
+  animation: sc-toast-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  border-left-width: 3px;
+}
+.sc-toast.success { border-left-color: var(--accent); }
+.sc-toast.error   { border-left-color: var(--danger); }
+.sc-toast.warning { border-left-color: var(--warning); }
+.sc-toast.sc-fade-out { animation: sc-toast-out 0.25s ease-in forwards; }
+
+@keyframes sc-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes sc-toast-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(8px); }
+}
+
+.hidden { display: none !important; }
+
+.sc-resize-handle { display: none !important; }
+
+@media (max-width: 560px) {
+  .sc-dropdown-template-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+#sc-new-patient-btn {
+  color: var(--accent);
+  opacity: 0.85;
+}
+#sc-new-patient-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.sc-input-label-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.sc-undo-btn {
+  color: var(--accent) !important;
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+  border: 1px solid var(--accent) !important;
+  border-radius: 4px !important;
+  animation: sc-fade-in 0.2s ease;
+}
+.sc-undo-btn.hidden { display: none; }
+
+.sc-kbd-hint {
+  font-size: 11px;
+  opacity: 0.45;
+  cursor: help;
+  margin-left: 3px;
+}
+
+.sc-tab-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.sc-tab-action-btn {
+  font-size: 11px !important;
+  padding: 2px 7px !important;
+  border-radius: 4px !important;
+  opacity: 0.6;
+  border: 1px solid var(--border) !important;
+  line-height: 1.4;
+}
+.sc-tab-action-btn:hover { opacity: 1; background: var(--surface-3) !important; }
+.sc-tab-action-btn.active {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+.sc-empty-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+
+.sc-no-match-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  gap: 6px;
+  text-align: center;
+  color: var(--text-2);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+.sc-no-match-icon { font-size: 22px; margin-bottom: 2px; }
+.sc-no-match-hint { font-size: 12px; color: var(--text-3); font-style: italic; }
+
+.sc-cat-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.sc-cat-btn {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.sc-cat-btn:hover { background: var(--surface-3); color: var(--text-1); }
+.sc-cat-btn.active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sc-template-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sc-template-cat-badge {
+  font-size: 10px;
+  font-family: var(--font-ui);
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  white-space: nowrap;
+}
+
+.sc-template-preview-expand {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-2);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  animation: sc-fade-in 0.18s ease;
+}
+
+@keyframes sc-fade-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.sc-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.sc-toggle-info { flex: 1; }
+.sc-toggle-label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-1);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 2px;
+}
+.sc-toggle-desc {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+
+.sc-rich-toolbar button.sc-toolbar-active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.sc-editor-content {
+  min-height: 160px;
+  max-height: 340px;
+}
+
+.sc-editor-content h1 { font-size: 15px; font-weight: 700; margin: 6px 0 3px; }
+.sc-editor-content h2 { font-size: 13px; font-weight: 700; margin: 6px 0 3px; }
+.sc-editor-content h3 { font-size: 12px; font-weight: 600; margin: 5px 0 2px; }
+.sc-editor-content ul,
+.sc-editor-content ol { padding-left: 22px; margin: 4px 0; }
+.sc-editor-content ol { list-style: decimal; }
+.sc-editor-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 10px;
+  color: var(--text-2);
+  margin: 4px 0;
+}
+.sc-editor-content a { color: var(--info); text-decoration: underline; }
+.sc-editor-content s { opacity: 0.55; }
+.sc-editor-content p { margin: 0 0 4px; }
+.sc-editor-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  font-style: italic;
+  pointer-events: none;
+}
+
+.sc-rich-toolbar {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+}
+.sc-rich-toolbar::-webkit-scrollbar { display: none; }
+
+.sc-label-heading {
+  display: block;
+}
+
+.sc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sc-behavior-checkbox {
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+.sc-btn-row--mb { margin-bottom: 10px; }
+.sc-btn-row--mt { margin-top: 10px; }
+
+.sc-help-text--mt { margin-top: 4px; }
+
+.sc-list-empty {
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+  padding: 18px 0;
+}
+
+.sc-btn-delete {
+  color: var(--danger);
+}
+
+.sc-wiz-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.sc-wiz-table th {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-2);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  padding: 10px;
+}
+.sc-wiz-table td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.sc-wiz-table tr:last-child td {
+  border-bottom: none;
+}
+.sc-wiz-table textarea {
+  width: 100%;
+  min-height: 48px;
+  max-height: 120px;
+  resize: vertical;
+  background: var(--bg-pane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 8px;
+  outline: none;
+}
+.sc-wiz-table textarea:focus {
+  border-color: var(--border-focus);
+}
+.sc-wiz-table select {
+  width: 100%;
+  background: var(--bg-pane);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  padding: 5px 6px;
+  outline: none;
+}
+.sc-wiz-table select:focus {
+  border-color: var(--border-focus);
+}
+.sc-wiz-table input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.sc-wiz-category-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sc-wiz-category-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+.sc-wiz-category-desc {
+  font-size: 10px;
+  color: var(--text-3);
+  line-height: 1.35;
+}
+.sc-wiz-linked-template-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+.sc-wiz-linked-template-item:hover {
+  background: var(--bg-hover);
+}
+.sc-wiz-linked-template-item span {
+  font-size: 11.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-wiz-linked-template-item input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sc-wiz-custom-row {
+  margin-top: 10px;
+}
+.sc-wiz-delete-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: auto;
+}
+.sc-wiz-delete-row-btn:hover {
+  background: rgba(242, 107, 94, 0.08);
+}
+.sc-wiz-category-title-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.sc-wiz-move-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-3);
+  cursor: pointer;
+  margin: 2px auto;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.sc-wiz-move-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-1);
+  border-color: var(--text-3);
+}
+.sc-wiz-move-btn:first-child:disabled,
+.sc-wiz-move-btn:last-child:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.sc-wiz-edit-btn {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 10px;
+  color: var(--accent);
+  border-color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sc-wiz-edit-btn:hover {
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.sc-wiz-meta-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sc-help-text--wiz {
+  margin-bottom: 12px;
+}
+.sc-wiz-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  margin-bottom: 16px;
+}
+.sc-wiz-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+.sc-wiz-thead-row {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-header, var(--surface-2));
+}
+.sc-wiz-th {
+  padding: 10px;
+}
+.sc-wiz-th--use {
+  width: 40px;
+  text-align: center;
+}
+.sc-wiz-th--cat {
+  width: 220px;
+}
+.sc-wiz-th--prefix {
+  width: 150px;
+}
+.sc-wiz-th--mode {
+  width: 150px;
+}
+.sc-wiz-th--order {
+  width: 44px;
+  text-align: center;
+}
+.sc-wiz-custom-row {
+  margin-bottom: 16px;
+}
+.sc-wiz-linked-templates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+}
+
+.sc-wiz-td {
+  padding: 10px;
+  vertical-align: top;
+}
+.sc-wiz-td--checkbox {
+  text-align: center;
+  vertical-align: middle;
+}
+.sc-wiz-reorder-td {
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  padding: 6px 4px;
+}
+
+.sc-wiz-custom-name-input {
+  padding: 4px 6px !important;
+  font-size: 12px !important;
+}
+
+.sc-wiz-category-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+  transition: background 0.12s;
+}
+.sc-wiz-category-name-row:hover {
+  background: var(--bg-hover, var(--surface-3));
+}
+.sc-wiz-category-name-row:hover .sc-wiz-category-edit-icon {
+  opacity: 1;
+}
+.sc-wiz-category-edit-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+.sc-wiz-category-name-input {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-1);
+  background: var(--bg-input);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 1px 5px;
+  width: 100%;
+  max-width: 200px;
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+
+/* Wizard layout helpers */
+.sc-wiz-fullspan { grid-column: 1 / -1; }
+.sc-wiz-no-templates { grid-column: 1 / -1; padding: 10px; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<div id="smartchart-pane" class="sc-pane" role="complementary" aria-label="SmartChart Note Assistant">
+
+  <header id="sc-header" class="sc-header" title="Drag to move">
+    <div class="sc-header-left">
+      <span class="sc-logo" aria-hidden="true">✚</span>
+      <span class="sc-title">SmartChart</span>
+      <span id="sc-match-badge" class="sc-match-badge hidden" aria-live="polite" title="Matched templates">0</span>
+    </div>
+    <div class="sc-header-right">
+      <button id="sc-new-patient-btn" class="sc-btn sc-btn-icon" title="New Patient — clear input (Ctrl+Shift+N)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+          <line x1="12" y1="14" x2="12" y2="20"/>
+          <line x1="9" y1="17" x2="15" y2="17"/>
+        </svg>
+      </button>
+      <button id="sc-copy-btn" class="sc-btn sc-btn-icon" title="Copy note to clipboard (Ctrl+Shift+C)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+      </button>
+      <button id="sc-wizard-btn" class="sc-btn sc-btn-icon" title="Template Wizard (Ctrl+Shift+W)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 4V2"/>
+          <path d="M15 16v-2"/>
+          <path d="M8 9h2"/>
+          <path d="M20 9h-2"/>
+          <path d="M17.8 11.8l-1.4-1.4"/>
+          <path d="M12.2 6.2L10.8 4.8"/>
+          <path d="M17.8 6.2l-1.4 1.4"/>
+          <path d="M12.2 11.8l-1.4-1.4"/>
+          <path d="M3 21l9-9"/>
+          <path d="M12.2 6.2l5.6 5.6"/>
+        </svg>
+      </button>
+      <button id="sc-settings-btn" class="sc-btn sc-btn-icon" title="Settings (Ctrl+Shift+S)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <button id="sc-minimize-btn" class="sc-btn sc-btn-icon" title="Focus mode" aria-label="Focus mode">
+        <svg id="sc-min-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+          <path d="M16 3h3a2 2 0 0 1 2 2v3"/>
+          <path d="M8 21H5a2 2 0 0 1-2-2v-3"/>
+          <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="sc-body" class="sc-body">
+
+    <section class="sc-input-section">
+      <div class="sc-input-label">
+        <span>Clinical One-Liner <span class="sc-kbd-hint" title="Keyboard shortcuts: Ctrl+Shift+C to copy, Ctrl+Shift+N for new patient, Esc to close settings">⌨</span></span>
+        <div class="sc-input-label-actions">
+          <button id="sc-undo-clear-btn" class="sc-btn sc-btn-text sc-undo-btn hidden" title="Undo last auto-clear">Undo</button>
+        </div>
+      </div>
+      <textarea
+        id="sc-input"
+        class="sc-input"
+        placeholder="e.g. 2yo with fever and vomiting x1 day…"
+        spellcheck="true"
+        autocomplete="off"
+        autocorrect="on"
+        rows="3"
+        aria-label="Clinical note input"
+      ></textarea>
+    </section>
+
+    <div id="sc-status-bar" class="sc-status-bar" aria-live="polite" aria-atomic="true">
+      <span id="sc-status-text" class="sc-status-text">Ready</span>
+      <div class="sc-status-right">
+        <span id="sc-autocopy-indicator" class="sc-autocopy-dot hidden" title="Auto-copy pending…"></span>
+      </div>
+    </div>
+
+    <section class="sc-preview-section" aria-label="Note preview">
+      <div class="sc-preview-tabs" role="tablist">
+        <button class="sc-tab active" data-tab="preview" role="tab" aria-selected="true">Preview</button>
+        <button class="sc-tab" data-tab="source" role="tab" aria-selected="false">HTML Source</button>
+        <div class="sc-tab-actions">
+          <button id="sc-source-labels-btn" class="sc-btn sc-btn-text sc-tab-action-btn" title="Toggle source labels showing which template each block came from">Labels</button>
+          <button id="sc-plaintext-btn" class="sc-btn sc-btn-text sc-tab-action-btn" title="Copy as plain text — useful for plain-text EMR fields">Plain</button>
+        </div>
+      </div>
+
+      <div id="sc-preview" class="sc-preview-content sc-preview-rendered" role="tabpanel">
+        <div id="sc-preview-empty" class="sc-empty-state">
+          <div class="sc-empty-inner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="sc-empty-icon">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            <span>Type a clinical one-liner to begin</span>
+            <span class="sc-empty-hint">Try: "fever", "vomiting", "rash", "cough", "ear pain"</span>
+          </div>
+        </div>
+        <div id="sc-preview-rendered" class="sc-md-content hidden"></div>
+      </div>
+
+      <div id="sc-source" class="sc-preview-content sc-preview-source hidden" role="tabpanel">
+        <pre id="sc-source-text" class="sc-source-pre"></pre>
+      </div>
+    </section>
+
+  </div><div id="sc-settings" class="sc-settings hidden" role="dialog" aria-label="SmartChart Settings">
+
+    <header class="sc-settings-header">
+      <span class="sc-settings-title">Settings</span>
+      <button id="sc-settings-close" class="sc-btn sc-btn-icon" title="Close settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </header>
+
+    <nav class="sc-settings-tabs" role="tablist">
+      <button class="sc-settings-tab active" data-stab="note-template" role="tab">Note Template</button>
+      <button class="sc-settings-tab" data-stab="templates" role="tab">Templates</button>
+      <button class="sc-settings-tab" data-stab="behavior" role="tab">Behavior</button>
+    </nav>
+
+    <div id="sc-settings-body" class="sc-settings-body">
+
+      <div id="stab-note-template" class="sc-stab-content active">
+        <div class="sc-field-group">
+          <span class="sc-label sc-label-heading">Note Structure</span>
+          <p class="sc-help-text">
+            Use <code>{input}</code> for your one-liner, <code>{templates}</code> for matched content,
+            <code>{dropdown:template-id}</code> to nest dropdown templates, and <code>{static:TEXT}</code> for fixed text.
+            Format freely — bold, italic, headings, lists are all supported.
+          </p>
+          <div class="sc-rich-editor">
+            <div id="sc-note-template-tools" class="sc-rich-toolbar" aria-label="Note template formatting"></div>
+            <div id="sc-note-template-input" class="sc-editor-content" contenteditable="true"
+                 aria-label="Note template editor" spellcheck="false"></div>
+          </div>
+          <div id="sc-note-template-error" class="sc-error hidden"></div>
+        </div>
+        <div class="sc-example-block">
+          <div class="sc-example-label">Example:</div>
+          <pre class="sc-example-pre"><b>HPI:</b> {input}
+
+<b>Educated On:</b>
+{templates}</pre>
+        </div>
+        <div class="sc-btn-row">
+          <button id="sc-save-note-template" class="sc-btn sc-btn-primary">Save</button>
+          <button id="sc-reset-note-template" class="sc-btn sc-btn-ghost">Reset to Default</button>
+        </div>
+      </div>
+
+      <div id="stab-templates" class="sc-stab-content hidden">
+        <div class="sc-btn-row sc-btn-row--mb">
+          <button id="sc-add-template-btn" class="sc-btn sc-btn-primary">+ New Template</button>
+        </div>
+
+        <div id="sc-template-list" class="sc-template-list"></div>
+
+        <div id="sc-template-form" class="sc-template-form hidden">
+          <div class="sc-form-header">
+            <span id="sc-form-title-label">New Template</span>
+            <button id="sc-form-close" class="sc-btn sc-btn-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-name">Name</label>
+            <input type="text" id="sc-form-name" class="sc-input-settings" placeholder="e.g. Dehydration Precautions">
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-triggers">Trigger Keywords <span class="sc-muted">(comma-separated, optional for nested dropdowns)</span></label>
+            <input type="text" id="sc-form-triggers" class="sc-input-settings"
+              placeholder="e.g. dehydration, vomiting, diarrhea">
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-type">Template Type</label>
+            <select id="sc-form-type" class="sc-input-settings">
+              <option value="text">Text</option>
+              <option value="dropdown">Dropdown</option>
+            </select>
+          </div>
+
+          <div class="sc-field-group">
+            <span class="sc-label sc-label-heading">Content</span>
+            <div class="sc-rich-editor">
+              <div id="sc-form-content-toolbar" class="sc-rich-toolbar" aria-label="Content formatting"></div>
+              <div id="sc-form-content-editor" class="sc-editor-content" contenteditable="true"
+                   aria-label="Template content editor" spellcheck="true"></div>
+            </div>
+          </div>
+
+          <div id="sc-form-dropdown-fields" class="hidden">
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-dropdown-label">Dropdown Label</label>
+              <input type="text" id="sc-form-dropdown-label" class="sc-input-settings" placeholder="e.g. Follow-Up">
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-dropdown-prefix">Prefix Text <span class="sc-muted">(Optional)</span></label>
+              <input type="text" id="sc-form-dropdown-prefix" class="sc-input-settings" placeholder="e.g. - Pain Location: ">
+              <p class="sc-help-text sc-help-text--mt">Text inserted immediately before the selected options.</p>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-dropdown-suffix">Suffix Text <span class="sc-muted">(Optional)</span></label>
+              <input type="text" id="sc-form-dropdown-suffix" class="sc-input-settings" placeholder="e.g. .">
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-options">Dropdown Options <span class="sc-muted">(one per line)</span></label>
+              <textarea id="sc-form-options" class="sc-textarea-settings" rows="5"
+                placeholder="Follow up as needed&#10;Return sooner for worsening symptoms"></textarea>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label" for="sc-form-join">Default Join</label>
+              <select id="sc-form-join" class="sc-input-settings">
+                <option value="lines">Bullets</option>
+                <option value="comma">Comma list</option>
+                <option value="and">Comma + and</option>
+                <option value="or">Comma + or</option>
+                <option value="nor">Comma + nor</option>
+                <option value="sentence">Sentence</option>
+                <option value="paragraphs">Paragraphs</option>
+              </select>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-toggle-wrap">
+                <input type="checkbox" id="sc-form-single-select">
+                <span class="sc-toggle-track"></span>
+                <span class="sc-toggle-label">Single-select only (one option at a time)</span>
+              </label>
+              <p class="sc-help-text sc-help-text--mt">When enabled, users can only pick one option from this dropdown at a time — ideal for mutually exclusive choices like follow-up timing.</p>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-toggle-wrap">
+                <input type="checkbox" id="sc-form-wrap-bullet">
+                <span class="sc-toggle-track"></span>
+                <span class="sc-toggle-label">Wrap entire line in a bullet point</span>
+              </label>
+              <p class="sc-help-text sc-help-text--mt">Forces the prefix, selected options, and suffix to appear together as a single bulleted item.</p>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-toggle-wrap">
+                <input type="checkbox" id="sc-form-show-label">
+                <span class="sc-toggle-track"></span>
+                <span class="sc-toggle-label">Show label heading in note output</span>
+              </label>
+              <p class="sc-help-text sc-help-text--mt">When enabled, a bold label (e.g. <strong>Follow-Up:</strong>) appears above the selected options. Disable for inline wizard-generated dropdowns where the surrounding text provides context.</p>
+            </div>
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-priority">Priority <span class="sc-muted">(1 = first)</span></label>
+            <input type="number" id="sc-form-priority" class="sc-input-settings sc-input-narrow" value="10" min="1" max="999">
+          </div>
+          <div class="sc-field-group">
+            <label class="sc-label" for="sc-form-category">Category <span class="sc-muted">(optional, e.g. GI, Resp, Derm)</span></label>
+            <input type="text" id="sc-form-category" class="sc-input-settings" placeholder="e.g. Respiratory, GI, Infectious">
+          </div>
+          <input type="hidden" id="sc-form-id">
+          <div class="sc-btn-row">
+            <button id="sc-form-save" class="sc-btn sc-btn-primary">Save Template</button>
+            <button id="sc-form-cancel" class="sc-btn sc-btn-ghost">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="stab-behavior" class="sc-stab-content hidden">
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-autocopy-enabled">Auto-Copy</label>
+          <label class="sc-toggle-wrap">
+            <input type="checkbox" id="sc-autocopy-enabled" checked>
+            <span class="sc-toggle-track"></span>
+            <span class="sc-toggle-label">Automatically copy after inactivity</span>
+          </label>
+        </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-autocopy-delay">Auto-Copy Delay</label>
+          <p class="sc-help-text">Seconds of typing pause before auto-copying to clipboard.</p>
+          <div class="sc-range-row">
+            <input type="range" id="sc-autocopy-delay" min="0.5" max="10" step="0.5" value="1.5">
+            <span id="sc-autocopy-delay-val" class="sc-range-val">1.5s</span>
+          </div>
+        </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-autoclear-delay">Auto-Clear Delay</label>
+          <p class="sc-help-text">Seconds of inactivity before clearing the input field.</p>
+          <div class="sc-range-row">
+            <input type="range" id="sc-autoclear-delay" min="10" max="300" step="10" value="30">
+            <span id="sc-autoclear-delay-val" class="sc-range-val">30s</span>
+          </div>
+        </div>
+        <div class="sc-toggle-row">
+          <div class="sc-toggle-info">
+            <span class="sc-toggle-label">Copy as Plain Text</span>
+            <span class="sc-toggle-desc">Strips HTML formatting before copying. Use if your EMR paste field doesn't support rich text.</span>
+          </div>
+          <label for="sc-plaintext-setting" class="sc-sr-only">Copy as Plain Text</label>
+          <input type="checkbox" id="sc-plaintext-setting" class="sc-behavior-checkbox">
+        </div>
+        <div class="sc-toggle-row">
+          <div class="sc-toggle-info">
+            <span class="sc-toggle-label">Show Source Labels in Preview</span>
+            <span class="sc-toggle-desc">Prepends [Template Name] before each matched block so you can verify which template contributed each section.</span>
+          </div>
+          <label for="sc-sourcelabels-setting" class="sc-sr-only">Show Source Labels in Preview</label>
+          <input type="checkbox" id="sc-sourcelabels-setting" class="sc-behavior-checkbox">
+        </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-bullet-style-setting">Bullet Style</label>
+          <p class="sc-help-text">Character used for bullet points in the rendered note and plain-text copy.</p>
+          <select id="sc-bullet-style-setting" class="sc-input-settings">
+            <option value="disc">• Disc (default browser bullet)</option>
+            <option value="-" selected>- Hyphen</option>
+            <option value="*">* Asterisk</option>
+            <option value="–">– En dash</option>
+          </select>
+        </div>
+        <div class="sc-btn-row sc-btn-row--mt">
+          <button id="sc-save-behavior" class="sc-btn sc-btn-primary">Save</button>
+        </div>
+
+        <hr class="sc-divider">
+
+        <div class="sc-field-group">
+          <span class="sc-label sc-label-heading">Data Management</span>
+          <div class="sc-btn-col">
+            <button id="sc-export-btn" class="sc-btn sc-btn-ghost sc-btn-full">Export All Data (JSON)</button>
+            <button id="sc-import-btn" class="sc-btn sc-btn-ghost sc-btn-full">Import Data (JSON)</button>
+            <button id="sc-reset-all-btn" class="sc-btn sc-btn-danger sc-btn-full">Reset All to Defaults</button>
+          </div>
+        </div>
+      </div>
+
+    </div></div><div id="sc-wizard" class="sc-settings hidden" role="dialog" aria-label="SmartChart Template Wizard">
+
+    <header class="sc-settings-header">
+      <span class="sc-settings-title">Diagnosis Template Wizard</span>
+      <button id="sc-wizard-close" class="sc-btn sc-btn-icon" title="Close wizard (Escape)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </header>
+
+    <div class="sc-settings-body">
+      <div class="sc-help-text">
+        Create a custom diagnosis-specific template layout. Answer questions by adding common permutations/options below, and SmartChart will automatically generate nested dropdowns for you.
+      </div>
+
+      <div class="sc-wiz-meta-row">
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-wiz-name">Diagnosis or Problem Name</label>
+          <input type="text" id="sc-wiz-name" class="sc-input-settings" placeholder="e.g. Acute Otitis Media, Ear Pain">
+        </div>
+        <div class="sc-field-group">
+          <label class="sc-label" for="sc-wiz-triggers">Trigger Keywords <span class="sc-muted">(comma-separated)</span></label>
+          <input type="text" id="sc-wiz-triggers" class="sc-input-settings" placeholder="e.g. ear pain, earache, otitis, aom">
+        </div>
+        <div class="sc-field-group sc-wiz-fullspan">
+          <label class="sc-label" for="sc-wiz-layout">Main Template Layout</label>
+          <select id="sc-wiz-layout" class="sc-input-settings">
+            <option value="divs">Separate Lines (List format)</option>
+            <option value="spaces">Inline (Paragraph format)</option>
+          </select>
+        </div>
+      </div>
+
+      <hr class="sc-divider">
+
+      <div class="sc-field-group">
+        <span class="sc-label sc-label-heading">Questions & Variations</span>
+        <p class="sc-help-text sc-help-text--wiz">
+          Type in the variations (one per line) for each category. Categories with variations will be automatically enabled and included in the note layout.
+        </p>
+
+        <div class="sc-wiz-table-container">
+          <table class="sc-wiz-table">
+            <thead>
+              <tr class="sc-wiz-thead-row">
+                <th class="sc-wiz-th sc-wiz-th--use">Use</th>
+                <th class="sc-wiz-th sc-wiz-th--cat">Category</th>
+                <th class="sc-wiz-th sc-wiz-th--prefix">Prefix <span class="sc-muted">(Optional text)</span></th>
+                <th class="sc-wiz-th">Common Variations / Permutations <span class="sc-muted">(one per line)</span></th>
+                <th class="sc-wiz-th sc-wiz-th--mode">Select Mode</th>
+                <th class="sc-wiz-th sc-wiz-th--order">Order</th>
+              </tr>
+            </thead>
+            <tbody id="sc-wiz-categories-body">
+              </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="sc-wiz-custom-row">
+        <button id="sc-wiz-add-category-btn" class="sc-btn sc-btn-ghost">
+          + Add Custom Category
+        </button>
+      </div>
+
+      <hr class="sc-divider">
+
+      <div class="sc-field-group">
+        <label class="sc-label">Include Predefined Templates</label>
+        <p class="sc-help-text">
+          Select existing templates that you want to trigger when typing this diagnosis (e.g. generic sick visit, supportive care templates).
+        </p>
+        <div id="sc-wiz-linked-templates" class="sc-wiz-linked-templates">
+          </div>
+      </div>
+
+      <hr class="sc-divider">
+
+      <div class="sc-btn-row sc-btn-row--mt">
+        <button id="sc-wiz-generate-btn" class="sc-btn sc-btn-primary">Generate Templates</button>
+        <button id="sc-wiz-cancel-btn" class="sc-btn sc-btn-ghost">Cancel</button>
+      </div>
+    </div>
+  </div><div id="sc-resize-handle" class="sc-resize-handle" title="Drag to resize" aria-hidden="true"></div>
+
+</div><div id="sc-toast-container" class="sc-toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+<script>
+/* ── register-sw.js ── */
+/**
+ * SmartChart — register-sw.js
+ * Service worker registration. Kept as a separate file so no inline
+ * scripts are needed, satisfying the Content-Security-Policy.
+ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+</script>
+<script>
+/* ── app.js ── */
+/**
+ * SmartChart — app.js
+ * Core logic: template matching, note rendering, clipboard,
+ * focus mode, auto-copy, auto-clear, state persistence.
+ */
+
+'use strict';
+
+/* ════════════════════════════════════════════════
+   CONSTANTS & DEFAULTS
+════════════════════════════════════════════════ */
+
+const STORAGE_KEYS = {
+  PANE_STATE:    'sc_pane_state',
+  NOTE_TEMPLATE: 'sc_note_template',
+  TEMPLATES:     'sc_templates',
+  BEHAVIOR:      'sc_behavior',
+};
+
+// Stored as HTML from here on
+const DEFAULT_NOTE_TEMPLATE = `{input}<br>{templates}`;
+
+/** Default templates — content stored as HTML strings. */
+const DEFAULT_TEMPLATES = [
+  {
+    id: 'well-child-health-maintenance',
+    name: 'Well Child / Health Maintenance',
+    triggers: ['well child', 'well-child', 'well visit', 'health maintenance', 'checkup', 'check-up', 'annual exam', 'physical', 'preventive', 'WCC'],
+    content: '<em>All forms, labs, immunizations, and patient concerns reviewed and addressed appropriately. Screening questions, past medical history, past social history, medications, and growth chart reviewed. Age-appropriate anticipatory guidance reviewed and printed in AVS. Parent questions addressed.</em>',
+    priority: 1,
+  },
+  {
+    id: 'illness-supportive-care',
+    name: 'Illness Supportive Care',
+    triggers: ['illness', 'sick', 'fever', 'cough', 'congestion', 'runny nose', 'uri', 'cold', 'rash', 'sore throat', 'strep', 'ear pain', 'earache', 'otitis', 'vomiting', 'diarrhea', 'dehydration', 'trouble breathing', 'shortness of breath', 'wheezing'],
+    content: '<em>Recommended supportive care with OTC medications as needed. Return precautions given including increasing pain, worsening fever, dehydration, new symptoms, prolonged symptoms, worsening symptoms, and other concerns. Caregiver expressed understanding and agreement with treatment plan.</em>',
+    priority: 2,
+  },
+  {
+    id: 'injury-supportive-care',
+    name: 'Injury Supportive Care',
+    triggers: ['injury', 'laceration', 'cut', 'wound', 'trauma', 'bruise', 'contusion', 'sprain', 'strain', 'abrasion', 'scrape', 'fracture'],
+    content: '<em>Recommended supportive care with Tylenol, Motrin, rest, ice, compression, elevation, and gradual return to activity as appropriate. Return precautions given including increasing pain, swelling, or failure to improve.</em>',
+    priority: 3,
+  },
+  {
+    id: 'ear-infection-risk',
+    name: 'Ear Infection Risk',
+    triggers: ['ear infection', 'otitis', 'otitis media', 'ear pain', 'earache', 'ear ache'],
+    content: '<em>Risk of untreated otitis media includes persistent pain and fever, hearing loss, and mastoiditis.</em>',
+    priority: 4,
+  },
+  {
+    id: 'strep-test-risk',
+    name: 'Strep Test Risk',
+    triggers: ['strep test', 'rapid strep', 'throat culture', 'strep throat', 'strep'],
+    content: '<em>Risk of untreated strep throat includes rheumatic fever and peritonsillar abscess. This problem is moderate risk due to pending lab results which may necessitate further pharmacologic management.</em>',
+    priority: 5,
+  },
+  {
+    id: 'dehydration-risk',
+    name: 'Dehydration Risk',
+    triggers: ['dehydration', 'vomiting', 'diarrhea', 'decreased urination', 'not drinking', 'poor intake', 'poor po'],
+    content: '<em>Patient is at risk for dehydration, which would warrant emergency room care or admission for IV fluids.</em>',
+    priority: 6,
+  },
+  {
+    id: 'respiratory-distress-risk',
+    name: 'Respiratory Distress Risk',
+    triggers: ['trouble breathing', 'difficulty breathing', 'shortness of breath', 'respiratory distress', 'wheezing', 'labored breathing'],
+    content: '<em>Patient is at risk for worsening respiratory distress and clinical deterioration, which would need emergency room care or hospital admission.</em>',
+    priority: 7,
+  },
+  {
+    id: 'eczema',
+    name: 'Eczema',
+    triggers: ['eczema', 'atopic dermatitis'],
+    content: '<em>Discussed supportive care with emphasis on frequent moisturization, appropriate use of topical steroids, and return precautions.</em>',
+    priority: 8,
+  },
+  {
+    id: 'pcmh-reminder',
+    name: 'PCMH Reminder',
+    triggers: ['adhd', 'weight', 'obesity', 'strep throat'],
+    content: '<em>PCMH Reminder</em>',
+    priority: 9,
+  },
+  {
+    id: 'follow-up',
+    name: 'Follow-Up Dropdown',
+    type: 'dropdown',
+    triggers: ['follow up', 'follow-up', 'followup'],
+    label: 'Follow-Up',
+    join: 'lines',
+    singleSelect: true,
+    showLabel: true,
+    options: [
+      'Follow up as needed.',
+      'Follow up in 2-3 days.',
+      'Follow up in 2-4 weeks.',
+      'Follow up in a month.',
+      'Follow up in 3 months.',
+      'Follow up in 3-6 months.',
+      'Follow up in 1 year.',
+      'Follow up at next regularly scheduled check up or as needed.',
+      '',
+    ],
+    priority: 20,
+    category: 'Dropdown',
+  },
+];
+
+const DEFAULT_BEHAVIOR = {
+  autoCopyDelay:   1500,
+  autoClearDelay:  30000,
+  autoCopyEnabled: true,
+  plainTextCopy:   false,
+  sourceLabels:    false,
+  bulletStyle:     '-',
+};
+
+const state = {
+  noteTemplate:       DEFAULT_NOTE_TEMPLATE,
+  templates:          typeof structuredClone === 'function' ? structuredClone(DEFAULT_TEMPLATES) : JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
+  behavior:           Object.assign({}, DEFAULT_BEHAVIOR),
+  currentInput:       '',
+  currentNoteHtml:    '',
+  matchedTemplates:   [],
+  activeDropdowns:    [],
+  dropdownSelections: {},
+  autoCopyTimer:      null,
+  autoClearTimer:     null,
+  previewDebounce:    null,
+  lastClearedInput:   '',
+  isDragging:         false,
+  isResizing:         false,
+};
+
+const $ = id => document.getElementById(id);
+const dom = {};
+
+const storage = {
+  get(key, fallback = null) {
+    try {
+      const v = localStorage.getItem(key);
+      return v !== null ? JSON.parse(v) : fallback;
+    } catch { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  },
+};
+
+function debounce(fn, ms) {
+  let t = null;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+function sanitizeHtml(html) {
+  if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) {
+    return DOMPurify.sanitize(String(html || ''), {
+      ALLOWED_TAGS: ['b','i','em','strong','u','s','p','br','hr','ul','ol','li',
+                     'h1','h2','h3','span','div','table','thead','tbody','tr','td','th'],
+      ALLOWED_ATTR: ['class','style'],
+    });
+  }
+  console.warn('[SmartChart] DOMPurify not loaded — stripping all HTML as safety fallback.');
+  return String(html || '').replace(/<[^>]*>/g, '');
+}
+
+function escapeRegExp(str) {
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function triggerMatches(input, trigger) {
+  const normalized = String(trigger || '').trim().toLowerCase();
+  if (!normalized) return false;
+  const escaped = escapeRegExp(normalized).replace(/\s+/g, '\\s+');
+  return new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`, 'i').test(input);
+}
+
+function matchTemplates(input) {
+  if (!input || !input.trim()) return [];
+  const lower = input.toLowerCase();
+  return state.templates
+    .filter(t => Array.isArray(t.triggers) &&
+      t.triggers.some(trigger => triggerMatches(lower, trigger))
+    )
+    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+}
+
+function isDropdownTemplate(t) {
+  return t && t.type === 'dropdown';
+}
+
+function getTemplateById(id) {
+  return state.templates.find(t => t.id === id);
+}
+
+function getDropdownSelection(id) {
+  if (!state.dropdownSelections[id]) {
+    state.dropdownSelections[id] = { values: [], join: null };
+  }
+  return state.dropdownSelections[id];
+}
+
+function collectDropdownIdsFromHtml(html, ids = new Set(), seen = new Set()) {
+  String(html || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
+    if (seen.has(id)) return '';
+    seen.add(id);
+    const tpl = getTemplateById(id);
+    if (isDropdownTemplate(tpl)) ids.add(id);
+    if (tpl && tpl.content) collectDropdownIdsFromHtml(tpl.content, ids, seen);
+    return '';
+  });
+  return ids;
+}
+
+function joinTemplateOptions(options, mode) {
+  if (mode === 'lines')      return '<ul>' + options.map(o => `<li>${o}</li>`).join('') + '</ul>';
+  if (mode === 'paragraphs') return options.map(o => `<p>${o}</p>`).join('');
+  if (mode === 'sentence')   return options.join(' ');
+  if (mode === 'and') {
+    if (options.length < 3) return options.join(' and ');
+    return `${options.slice(0, -1).join(', ')}, and ${options[options.length - 1]}`;
+  }
+  if (mode === 'or') {
+    if (options.length < 3) return options.join(' or ');
+    return `${options.slice(0, -1).join(', ')}, or ${options[options.length - 1]}`;
+  }
+  if (mode === 'nor') {
+    if (options.length < 3) return options.join(' nor ');
+    return `${options.slice(0, -1).join(', ')}, nor ${options[options.length - 1]}`;
+  }
+  return options.join(', ');
+}
+
+function renderDropdownValueHtml(t) {
+  const selection = getDropdownSelection(t.id);
+  const selected = Array.isArray(selection.values) ? selection.values : [];
+  if (selected.length === 0) return '';
+  const join = selection.join || t.join || 'lines';
+
+  let prefix = t.prefix || '';
+  let suffix = t.suffix || '';
+  let wrapBullet = !!t.wrapBullet;
+
+  // Auto-detect bullet preference if the user typed a hyphen/bullet in the prefix box
+  const hasBulletPrefix = /^[-*•]\s*/.test(prefix);
+  const cleanPrefix = hasBulletPrefix ? prefix.replace(/^[-*•]\s*/, '') : prefix;
+  const shouldBullet = wrapBullet || hasBulletPrefix;
+
+  let out = joinTemplateOptions(selected, join);
+
+  if (join === 'lines') {
+    // Put prefix inside the first bullet, and suffix inside the last bullet
+    if (cleanPrefix) {
+      out = out.replace('<ul><li>', `<ul><li>${cleanPrefix}`);
+    }
+    if (suffix) {
+      out = out.replace(/<\/li><\/ul>$/, `${suffix}</li></ul>`);
+    }
+  } else {
+    // For commas, sentences, etc.
+    out = cleanPrefix + out + suffix;
+    if (shouldBullet) {
+      out = `<ul><li>${out}</li></ul>`;
+    }
+  }
+
+  // showLabel defaults to false — only show if explicitly set to true.
+  if (t.showLabel === true) {
+    return `<p><strong>${t.label || t.name}:</strong></p>${out}`;
+  }
+  return out;
+}
+
+function renderTemplateContentHtml(t, seen = new Set()) {
+  if (!t) return '';
+  if (isDropdownTemplate(t)) return renderDropdownValueHtml(t);
+  if (seen.has(t.id)) return '';
+  seen.add(t.id);
+  return String(t.content || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
+    const dropdown = getTemplateById(id);
+    return isDropdownTemplate(dropdown) ? renderDropdownValueHtml(dropdown) : '';
+  });
+}
+
+function renderNote(input, matched, noteTemplate, opts = {}) {
+  const showLabels = opts.sourceLabels || false;
+
+  const templatesHtml = matched.map(t => {
+    const content = renderTemplateContentHtml(t);
+    if (!content.trim()) return '';
+    const label = showLabels ? `<p><strong>[${t.name}]</strong></p>` : '';
+    return label + content;
+  }).filter(Boolean).join('<hr class="sc-template-sep">');
+
+  const escapedInput = input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
+
+  let out = noteTemplate
+    .replace(/\{input\}/g, escapedInput)
+    .replace(/\{templates\}/g, templatesHtml)
+    .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContentHtml(getTemplateById(id)));
+
+  out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
+
+  const bulletChar = opts.bulletStyle;
+  if (bulletChar && bulletChar !== 'disc') {
+    out = out.replace(/<ul[^>]*>/gi, '<div class="sc-list-hyphen">')
+             .replace(/<\/ul>/gi, '</div>')
+             .replace(/<li[^>]*>/gi, `<div class="sc-hyphen-item">${bulletChar} `)
+             .replace(/<\/li>/gi, '</div>');
+  }
+
+  // Clean up empty wrapping blocks left behind by unselected dropdowns
+  out = out.replace(/<div>\s*<\/div>/gi, '').replace(/<p>\s*<\/p>/gi, '');
+
+  return out;
+}
+
+function htmlToPlainText(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  div.querySelectorAll('br').forEach(el => el.replaceWith('\n'));
+  div.querySelectorAll('p, div, li, hr').forEach(el => {
+    el.insertAdjacentText('afterend', '\n');
+  });
+  return (div.innerText || div.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+async function copyToClipboard(html, forcePlain = false) {
+  if (!html || !html.trim()) return false;
+
+  const plainText = htmlToPlainText(html);
+  const usePlain  = forcePlain || (state.behavior && state.behavior.plainTextCopy);
+
+  if (!usePlain && navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html':  new Blob([`<div>${html}</div>`], { type: 'text/html' }),
+          'text/plain': new Blob([plainText],            { type: 'text/plain' }),
+        }),
+      ]);
+      return true;
+    } catch {}
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(plainText);
+      if (!usePlain) showToast('Copied as plain text (rich text not supported in this browser)', 'warning', 3500);
+      return true;
+    } catch {}
+  }
+
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = plainText;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (!ok) throw new Error('execCommand returned false');
+    showToast('Copied (legacy fallback)', 'warning');
+    return true;
+  } catch {
+    showToast('Copy failed — please select and copy manually', 'error', 4000);
+    return false;
+  }
+}
+
+function showToast(message, type = 'success', duration = 2200) {
+  const container = dom.toastContainer;
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = `sc-toast ${type}`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('sc-fade-out');
+    setTimeout(() => el.remove(), 280);
+  }, duration);
+}
+
+function renderDropdownControls(dropdowns) {
+  if (!dom.previewRendered || dropdowns.length === 0) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'sc-dropdown-template-list';
+
+  dropdowns.forEach(t => {
+    const selection = getDropdownSelection(t.id);
+    const isSingleSelect = !!(t.singleSelect);
+    const card = document.createElement('div');
+    card.className = 'sc-dropdown-template';
+    card.dataset.dropdownId = t.id;
+
+    const header = document.createElement('div');
+    header.className = 'sc-dropdown-template-header';
+    header.textContent = t.label || t.name;
+
+    const controls = document.createElement('div');
+    controls.className = 'sc-dropdown-template-controls';
+
+    const select = document.createElement('select');
+    select.className = 'sc-dropdown-template-select';
+    if (isSingleSelect) {
+      select.multiple = false;
+      select.size = 1;
+      const blankOpt = document.createElement('option');
+      blankOpt.value = '';
+      blankOpt.textContent = '— select one —';
+      blankOpt.selected = (selection.values || []).length === 0;
+      select.appendChild(blankOpt);
+    } else {
+      select.multiple = true;
+      select.size = Math.min(Math.max((t.options || []).length, 3), 6);
+    }
+    (t.options || []).forEach(optionText => {
+      const option = document.createElement('option');
+      option.value = optionText;
+      option.textContent = optionText;
+      option.selected = (selection.values || []).includes(optionText);
+      select.appendChild(option);
+    });
+
+    const join = document.createElement('select');
+    join.className = 'sc-dropdown-template-join';
+    if (isSingleSelect) join.style.display = 'none';
+    [
+      ['lines', 'Bullets'],
+      ['comma', 'Comma list'],
+      ['and', 'Comma + and'],
+      ['or', 'Comma + or'],
+      ['nor', 'Comma + nor'],
+      ['sentence', 'Sentence'],
+      ['paragraphs', 'Paragraphs'],
+    ].forEach(([value, label]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = label;
+      option.selected = value === (selection.join || t.join || 'lines');
+      join.appendChild(option);
+    });
+
+    const onChange = () => {
+      const selectedValues = isSingleSelect
+        ? (select.value ? [select.value] : [])
+        : Array.from(select.selectedOptions).map(o => o.value);
+      state.dropdownSelections[t.id] = {
+        values: selectedValues,
+        join: join.value,
+      };
+      updatePreview();
+    };
+    select.addEventListener('change', onChange);
+    join.addEventListener('change', onChange);
+
+    controls.append(select, join);
+    card.append(header, controls);
+    wrap.appendChild(card);
+  });
+
+  dom.previewRendered.appendChild(wrap);
+}
+
+function updatePreview() {
+  const input    = state.currentInput;
+  const hasInput = input.trim();
+  const nt       = state.noteTemplate;
+
+  if (!nt.includes('{input}') || !nt.includes('{templates}')) {
+    setStatus('Error: Note template missing {input} or {templates}', 'error');
+    return;
+  }
+
+  if (!hasInput) {
+    state.matchedTemplates = [];
+    state.activeDropdowns  = [];
+    state.currentNoteHtml  = '';
+    dom.matchBadge.classList.add('hidden');
+    dom.previewEmpty.classList.remove('hidden');
+    dom.previewRendered.classList.add('hidden');
+    dom.sourceText.textContent = '';
+    setStatus('Ready', 'idle');
+    cancelAutoCopy();
+    return;
+  }
+
+  const matched = matchTemplates(input);
+  state.matchedTemplates = matched;
+
+  let modifiedInput = input;
+  const bottomTemplates = [];
+
+  matched.forEach(t => {
+    let replaced = false;
+    if (t.type === 'dropdown') {
+      for (const trigger of t.triggers) {
+        if (!trigger) continue;
+        const normalized = String(trigger).trim();
+        if (!normalized) continue;
+        const escaped = escapeRegExp(normalized).replace(/\s+/g, '\\s+');
+        const regex = new RegExp(`(^|[^a-z0-9])(${escaped})($|[^a-z0-9])`, 'gi');
+        if (regex.test(modifiedInput)) {
+          modifiedInput = modifiedInput.replace(regex, `$1{dropdown:${t.id}}$3`);
+          replaced = true;
+        }
+      }
+    }
+    if (!replaced) bottomTemplates.push(t);
+  });
+
+  const idsToSearch = new Set();
+  collectDropdownIdsFromHtml(nt, idsToSearch, new Set());
+  collectDropdownIdsFromHtml(modifiedInput, idsToSearch, new Set());
+  bottomTemplates.forEach(t => collectDropdownIdsFromHtml(t.content, idsToSearch, new Set()));
+
+  state.activeDropdowns = [...idsToSearch]
+    .map(id => getTemplateById(id))
+    .filter(Boolean)
+    .filter(isDropdownTemplate)
+    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+
+  const htmlSource = renderNote(modifiedInput, bottomTemplates, nt, {
+    sourceLabels: state.behavior.sourceLabels,
+    bulletStyle: state.behavior.bulletStyle,
+  });
+
+  if (matched.length > 0) {
+    dom.matchBadge.textContent = matched.length;
+    dom.matchBadge.classList.remove('hidden');
+  } else {
+    dom.matchBadge.classList.add('hidden');
+  }
+
+  state.currentNoteHtml = htmlSource;
+  dom.sourceText.textContent = htmlSource;
+
+  dom.previewRendered.innerHTML = sanitizeHtml(htmlSource);
+  renderDropdownControls(state.activeDropdowns);
+  dom.previewEmpty.classList.add('hidden');
+  dom.previewRendered.classList.remove('hidden');
+
+  if (matched.length === 0 && input.trim()) {
+    setStatus('No templates matched — try "illness", "injury", "otitis", "strep", or "follow up"', 'idle');
+    dom.previewRendered.innerHTML = sanitizeHtml('<div class="sc-no-match-msg"><span class="sc-no-match-icon">🔍</span><span>No templates matched your input.</span><span class="sc-no-match-hint">Try words like: <em>illness, injury, otitis, strep, dehydration, trouble breathing, follow up…</em></span></div>');
+    dom.previewEmpty.classList.add('hidden');
+    dom.previewRendered.classList.remove('hidden');
+  } else {
+    setStatus(
+      `${matched.length} template${matched.length !== 1 ? 's' : ''} matched: ${matched.map(t => t.name).join(', ')}`,
+      'matched'
+    );
+  }
+
+  scheduleAutoCopy();
+}
+
+const debouncedUpdate = debounce(updatePreview, 300);
+
+function setStatus(text, mode = 'idle') {
+  if (!dom.statusText) return;
+  dom.statusText.textContent = text;
+  dom.statusText.className = 'sc-status-text';
+  if (mode === 'matched') dom.statusText.classList.add('sc-matched');
+  if (mode === 'error')   dom.statusText.classList.add('sc-error-text');
+}
+
+function scheduleAutoCopy() {
+  cancelAutoCopy();
+  if (!state.behavior.autoCopyEnabled) return;
+  if (!state.currentNoteHtml.trim()) return;
+
+  dom.autoCopyIndicator.classList.remove('hidden');
+  state.autoCopyTimer = setTimeout(async () => {
+    dom.autoCopyIndicator.classList.add('hidden');
+    if (!state.currentNoteHtml.trim()) return;
+    const ok = await copyToClipboard(state.currentNoteHtml);
+    if (ok) {
+      showToast('✓ Copied to clipboard', 'success');
+      setStatus('Copied to clipboard ✓', 'matched');
+    }
+  }, state.behavior.autoCopyDelay);
+}
+
+function cancelAutoCopy() {
+  clearTimeout(state.autoCopyTimer);
+  if (dom.autoCopyIndicator) dom.autoCopyIndicator.classList.add('hidden');
+}
+
+function scheduleAutoClear() {
+  clearTimeout(state.autoClearTimer);
+  if (!dom.input.value.trim()) return;
+  state.autoClearTimer = setTimeout(() => {
+    clearInput(true);
+    showToast('Input cleared (inactivity) — tap Undo to restore', 'warning', 4000);
+  }, state.behavior.autoClearDelay);
+}
+
+function clearInput(saveForUndo = false) {
+  if (saveForUndo && dom.input.value.trim()) {
+    state.lastClearedInput = dom.input.value;
+    if (dom.undoClearBtn) {
+      dom.undoClearBtn.classList.remove('hidden');
+      clearTimeout(state.undoClearTimer);
+      state.undoClearTimer = setTimeout(() => {
+        dom.undoClearBtn.classList.add('hidden');
+        state.lastClearedInput = '';
+      }, 8000);
+    }
+  }
+  dom.input.value      = '';
+  state.currentInput   = '';
+  state.activeDropdowns   = [];
+  state.dropdownSelections = {};
+  clearTimeout(state.autoClearTimer);
+  cancelAutoCopy();
+  dom.input.style.height = 'auto';
+  debouncedUpdate();
+}
+
+function savePaneState() {
+  storage.set(STORAGE_KEYS.PANE_STATE, {
+    focusMode: dom.pane.classList.contains('sc-focus-mode'),
+  });
+}
+
+function restorePaneState() {
+  const s = storage.get(STORAGE_KEYS.PANE_STATE);
+  if (!s) return;
+  applyFocusMode(!!(s.focusMode || s.minimized));
+}
+
+function clampPaneToViewport() {}
+function initDrag() { dom.header.removeAttribute('title'); }
+function initResize() {
+  const handle = dom.resizeHandle;
+  if (!handle) return;
+  handle.hidden = true;
+}
+
+function applyFocusMode(enabled) {
+  dom.pane.classList.toggle('sc-focus-mode', enabled);
+  const btn  = dom.minimizeBtn;
+  const icon = dom.minIcon;
+  if (enabled) {
+    icon.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+    btn.title = 'Exit focus mode';
+    btn.setAttribute('aria-label', 'Exit focus mode');
+  } else {
+    icon.innerHTML = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+    btn.title = 'Focus mode';
+    btn.setAttribute('aria-label', 'Focus mode');
+  }
+}
+function toggleFocusMode() {
+  applyFocusMode(!dom.pane.classList.contains('sc-focus-mode'));
+  savePaneState();
+}
+function applyMinimize(minimized) { applyFocusMode(minimized); }
+function toggleMinimize() { toggleFocusMode(); }
+
+function formatDateOffset(days = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toLocaleDateString(undefined, { month: '2-digit', day: '2-digit', year: 'numeric' });
+}
+function formatTimeNow() {
+  return new Date().toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+function applyDotExpansions(el) {
+  const cursor = el.selectionStart ?? el.value.length;
+  const before = el.value.slice(0, cursor);
+  const after  = el.value.slice(cursor);
+  const replacements = {
+    '.today':    formatDateOffset(0),
+    '.now':      formatTimeNow(),
+    '.tomorrow': formatDateOffset(1),
+    '.2d':       formatDateOffset(2),
+    '.1w':       formatDateOffset(7),
+  };
+  const match = before.match(/(^|[\s(])(\.(?:today|now|tomorrow|2d|1w))$/i);
+  if (!match) return false;
+  const token = match[2].toLowerCase();
+  const replacement = replacements[token];
+  if (!replacement) return false;
+  const start = cursor - match[2].length;
+  el.value = el.value.slice(0, start) + replacement + after;
+  const nextCursor = start + replacement.length;
+  el.setSelectionRange(nextCursor, nextCursor);
+  return true;
+}
+function applyBulletExpansion(el) {
+  const cursor    = el.selectionStart ?? el.value.length;
+  const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
+  const lineBeforeCursor = el.value.slice(lineStart, cursor);
+  if (lineBeforeCursor !== '-') return false;
+  el.value = el.value.slice(0, cursor) + ' ' + el.value.slice(cursor);
+  el.setSelectionRange(cursor + 1, cursor + 1);
+  return true;
+}
+function attachSmartTextareaBehavior(el, onChange) {
+  el.addEventListener('input', () => {
+    applyDotExpansions(el);
+    applyBulletExpansion(el);
+    onChange();
+  });
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !e.metaKey && !e.ctrlKey) {
+      const cursor    = el.selectionStart ?? el.value.length;
+      const selEnd    = el.selectionEnd ?? cursor;
+      if (cursor === selEnd) {
+        const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
+        const lineBeforeCursor = el.value.slice(lineStart, cursor);
+        const bulletOnly = lineBeforeCursor.match(/^(\s*[-*] )$/);
+        if (bulletOnly) {
+          e.preventDefault();
+          const removeFrom = lineStart > 0 ? lineStart - 1 : lineStart;
+          const removeLength = lineStart > 0
+            ? 1 + bulletOnly[1].length
+            : bulletOnly[1].length;
+          el.value = el.value.slice(0, removeFrom) + el.value.slice(removeFrom + removeLength);
+          const newCursor = removeFrom;
+          el.setSelectionRange(newCursor, newCursor);
+          onChange();
+          return;
+        }
+      }
+    }
+
+    if (e.key !== 'Enter') return;
+    const cursor    = el.selectionStart ?? el.value.length;
+    const lineStart = el.value.lastIndexOf('\n', cursor - 1) + 1;
+    const line      = el.value.slice(lineStart, cursor);
+    const bulletMatch = line.match(/^(\s*[-*]\s+)/);
+    if (!bulletMatch) return;
+    e.preventDefault();
+    const insert = '\n' + bulletMatch[1];
+    el.value = el.value.slice(0, cursor) + insert + el.value.slice(el.selectionEnd ?? cursor);
+    const nextCursor = cursor + insert.length;
+    el.setSelectionRange(nextCursor, nextCursor);
+    onChange();
+  });
+}
+
+function initPreviewTabs() {
+  document.querySelectorAll('.sc-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sc-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      const which = tab.dataset.tab;
+      if (which === 'preview') {
+        dom.previewPanel.classList.remove('hidden');
+        dom.sourcePanel.classList.add('hidden');
+      } else {
+        dom.previewPanel.classList.add('hidden');
+        dom.sourcePanel.classList.remove('hidden');
+      }
+    });
+  });
+}
+
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 180) + 'px';
+}
+
+function loadState() {
+  const savedTemplates = storage.get(STORAGE_KEYS.TEMPLATES);
+  if (savedTemplates && Array.isArray(savedTemplates) && savedTemplates.length > 0) {
+    state.templates = savedTemplates;
+  }
+  const savedNoteTemplate = storage.get(STORAGE_KEYS.NOTE_TEMPLATE);
+  if (typeof savedNoteTemplate === 'string' && savedNoteTemplate.trim()) {
+    state.noteTemplate = savedNoteTemplate;
+  }
+  const savedBehavior = storage.get(STORAGE_KEYS.BEHAVIOR);
+  if (savedBehavior && typeof savedBehavior === 'object') {
+    state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, savedBehavior);
+  }
+}
+
+function init() {
+  dom.pane              = $('smartchart-pane');
+  dom.header            = $('sc-header');
+  dom.input             = $('sc-input');
+  dom.body              = $('sc-body');
+  dom.previewPanel      = $('sc-preview');
+  dom.previewEmpty      = $('sc-preview-empty');
+  dom.previewRendered   = $('sc-preview-rendered');
+  dom.sourcePanel       = $('sc-source');
+  dom.sourceText        = $('sc-source-text');
+  dom.statusText        = $('sc-status-text');
+  dom.autoCopyIndicator = $('sc-autocopy-indicator');
+  dom.matchBadge        = $('sc-match-badge');
+  dom.copyBtn           = $('sc-copy-btn');
+  dom.settingsBtn       = $('sc-settings-btn');
+  dom.minimizeBtn       = $('sc-minimize-btn');
+  dom.minIcon           = $('sc-min-icon');
+  dom.settingsPanel     = $('sc-settings');
+  dom.settingsClose     = $('sc-settings-close');
+  dom.wizardBtn         = $('sc-wizard-btn');
+  dom.wizardPanel       = $('sc-wizard');
+  dom.wizardClose       = $('sc-wizard-close');
+  dom.wizardCancel      = $('sc-wiz-cancel-btn');
+  dom.resizeHandle      = $('sc-resize-handle');
+  dom.toastContainer    = $('sc-toast-container');
+  dom.newPatientBtn     = $('sc-new-patient-btn');
+  dom.undoClearBtn      = $('sc-undo-clear-btn');
+  dom.sourceLabelsBtnEl = $('sc-source-labels-btn');
+  dom.plainTextBtn      = $('sc-plaintext-btn');
+
+  loadState();
+  restorePaneState();
+  initDrag();
+  initResize();
+  initPreviewTabs();
+
+  attachSmartTextareaBehavior(dom.input, () => {
+    state.currentInput = dom.input.value;
+    autoResizeTextarea(dom.input);
+    cancelAutoCopy();
+    clearTimeout(state.autoClearTimer);
+    debouncedUpdate();
+    scheduleAutoClear();
+  });
+
+  dom.copyBtn.addEventListener('click', async () => {
+    if (!state.currentNoteHtml.trim()) { showToast('Nothing to copy yet', 'warning'); return; }
+    cancelAutoCopy();
+    const ok = await copyToClipboard(state.currentNoteHtml);
+    if (ok) { showToast('✓ Copied to clipboard', 'success'); setStatus('Copied to clipboard ✓', 'matched'); }
+  });
+
+  dom.minimizeBtn.addEventListener('click', toggleMinimize);
+
+  dom.settingsBtn.addEventListener('click', () => {
+    if (dom.pane.classList.contains('sc-focus-mode')) {
+      applyFocusMode(false);
+      savePaneState();
+    }
+    dom.settingsPanel.classList.remove('hidden');
+    if (window.SmartChartSettings) window.SmartChartSettings.open();
+  });
+
+  dom.settingsClose.addEventListener('click', () => {
+    dom.settingsPanel.classList.add('hidden');
+  });
+
+  if (dom.wizardBtn) {
+    dom.wizardBtn.addEventListener('click', () => {
+      if (dom.pane.classList.contains('sc-focus-mode')) {
+        applyFocusMode(false);
+        savePaneState();
+      }
+      dom.wizardPanel.classList.remove('hidden');
+      if (window.SmartChartWizard) window.SmartChartWizard.open();
+    });
+  }
+
+  const closeWizard = () => {
+    dom.wizardPanel.classList.add('hidden');
+  };
+
+  if (dom.wizardClose) dom.wizardClose.addEventListener('click', closeWizard);
+  if (dom.wizardCancel) dom.wizardCancel.addEventListener('click', closeWizard);
+
+  if (dom.newPatientBtn) {
+    dom.newPatientBtn.addEventListener('click', () => {
+      clearInput(true);
+      showToast('New patient — input cleared', 'success', 1800);
+      dom.input.focus();
+    });
+  }
+
+  if (dom.undoClearBtn) {
+    dom.undoClearBtn.addEventListener('click', () => {
+      if (state.lastClearedInput) {
+        dom.input.value    = state.lastClearedInput;
+        state.currentInput = state.lastClearedInput;
+        state.lastClearedInput = '';
+        autoResizeTextarea(dom.input);
+        debouncedUpdate();
+        dom.undoClearBtn.classList.add('hidden');
+        clearTimeout(state.undoClearTimer);
+        showToast('Input restored', 'success', 1800);
+      }
+    });
+  }
+
+  if (dom.sourceLabelsBtnEl) {
+    dom.sourceLabelsBtnEl.addEventListener('click', () => {
+      state.behavior.sourceLabels = !state.behavior.sourceLabels;
+      dom.sourceLabelsBtnEl.classList.toggle('active', state.behavior.sourceLabels);
+      dom.sourceLabelsBtnEl.title = state.behavior.sourceLabels
+        ? 'Source labels ON — click to hide'
+        : 'Source labels OFF — click to show which template each block came from';
+      storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
+      updatePreview();
+    });
+    if (state.behavior.sourceLabels) dom.sourceLabelsBtnEl.classList.add('active');
+  }
+
+  if (dom.plainTextBtn) {
+    dom.plainTextBtn.addEventListener('click', async () => {
+      if (!state.currentNoteHtml.trim()) { showToast('Nothing to copy yet', 'warning'); return; }
+      cancelAutoCopy();
+      const ok = await copyToClipboard(state.currentNoteHtml, true);
+      if (ok) { showToast('✓ Copied as plain text', 'success'); setStatus('Copied as plain text ✓', 'matched'); }
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      let handled = false;
+      if (!dom.settingsPanel.classList.contains('hidden')) {
+        dom.settingsPanel.classList.add('hidden');
+        handled = true;
+      }
+      if (dom.wizardPanel && !dom.wizardPanel.classList.contains('hidden')) {
+        dom.wizardPanel.classList.add('hidden');
+        handled = true;
+      }
+      if (handled) return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'W') {
+      e.preventDefault();
+      const isOpen = !dom.wizardPanel.classList.contains('hidden');
+      if (!isOpen && dom.pane.classList.contains('sc-focus-mode')) {
+        applyFocusMode(false);
+        savePaneState();
+      }
+      dom.wizardPanel.classList.toggle('hidden', isOpen);
+      if (!isOpen && window.SmartChartWizard) window.SmartChartWizard.open();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+      e.preventDefault();
+      if (state.currentNoteHtml.trim()) {
+        cancelAutoCopy();
+        copyToClipboard(state.currentNoteHtml).then(ok => {
+          if (ok) { showToast('✓ Copied to clipboard', 'success'); setStatus('Copied to clipboard ✓', 'matched'); }
+        });
+      } else { showToast('Nothing to copy yet', 'warning'); }
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+      e.preventDefault();
+      clearInput(true);
+      showToast('New patient — input cleared', 'success', 1800);
+      dom.input.focus();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
+      e.preventDefault();
+      const isOpen = !dom.settingsPanel.classList.contains('hidden');
+      if (!isOpen && dom.pane.classList.contains('sc-focus-mode')) {
+        applyFocusMode(false);
+        savePaneState();
+      }
+      dom.settingsPanel.classList.toggle('hidden', isOpen);
+      if (!isOpen && window.SmartChartSettings) window.SmartChartSettings.open();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'F') {
+      e.preventDefault();
+      dom.input.focus();
+      return;
+    }
+  });
+
+  window.addEventListener('resize', debounce(clampPaneToViewport, 200));
+  updatePreview();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+
+window.SmartChart = {
+  getState()           { return { ...state, autoCopyTimer: undefined, autoClearTimer: undefined, previewDebounce: undefined }; },
+  getTemplates()       { return state.templates; },
+  getNoteTemplate()    { return state.noteTemplate; },
+  getBehavior()        { return { ...state.behavior }; },
+  STORAGE_KEYS,
+  DEFAULT_NOTE_TEMPLATE,
+  DEFAULT_TEMPLATES,
+  DEFAULT_BEHAVIOR,
+  setTemplates(tpls)   { state.templates    = tpls; },
+  setNoteTemplate(nt)  { state.noteTemplate = nt;   },
+  setBehavior(b)       { state.behavior     = b;    },
+  storage,
+  updatePreview,
+  showToast,
+  renderNote,
+  matchTemplates,
+  htmlToPlainText,
+  clearInput,
+  sanitizeHtml,
+  attachSmartTextareaBehavior,
+};
+</script>
+<script>
+/* ── settings.js ── */
+/**
+ * SmartChart — settings.js
+ * Settings panel: note template editor, templates CRUD,
+ * behavior controls, export/import/reset.
+ */
+
+'use strict';
+
+(function () {
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  const $ = id => document.getElementById(id);
+
+  function createRichEditor(editorEl, toolbarEl, toolbarDef) {
+    if (!editorEl || !toolbarEl) return null;
+
+    function updateToolbarState() {
+      toolbarEl.querySelectorAll('button[data-cmd]').forEach(btn => {
+        const cmd = btn.dataset.cmd;
+        try {
+          btn.classList.toggle('sc-toolbar-active', document.queryCommandState(cmd));
+        } catch {}
+      });
+    }
+
+    editorEl.addEventListener('keyup',   updateToolbarState);
+    editorEl.addEventListener('mouseup', updateToolbarState);
+    editorEl.addEventListener('selectionchange', updateToolbarState);
+
+    toolbarEl.innerHTML = '';
+    toolbarDef.forEach(item => {
+      if (item.type === 'divider') {
+        const d = document.createElement('div');
+        d.className = 'sc-toolbar-divider';
+        toolbarEl.appendChild(d);
+        return;
+      }
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+
+      if (item.type === 'snippet') {
+        btn.dataset.snippet = item.snippet;
+        btn.innerHTML = item.label;
+        btn.title = item.title || item.label;
+        btn.className = 'sc-template-tool';
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          editorEl.focus();
+          document.execCommand('insertHTML', false, item.snippet);
+        });
+
+      } else if (item.type === 'heading') {
+        btn.dataset.heading = item.level;
+        btn.innerHTML = item.label;
+        btn.title = item.title || `Heading ${item.level}`;
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          editorEl.focus();
+          document.execCommand('formatBlock', false, `h${item.level}`);
+        });
+
+      } else {
+        btn.dataset.cmd = item.cmd;
+        btn.innerHTML = item.label;
+        btn.title = item.title || item.label;
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          editorEl.focus();
+          document.execCommand(item.cmd, false, null);
+          updateToolbarState();
+        });
+      }
+
+      toolbarEl.appendChild(btn);
+    });
+
+    return {
+      getHtml() {
+        return editorEl.innerHTML
+          .replace(/(<br\s*\/?>\s*){3,}/gi, '<br><br>')
+          .trim();
+      },
+      setHtml(html) {
+        editorEl.innerHTML = html || '';
+      },
+      focus() { editorEl.focus(); },
+    };
+  }
+
+  const CONTENT_TOOLBAR = [
+    { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold (Ctrl+B)' },
+    { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic (Ctrl+I)' },
+    { cmd: 'underline',     label: '<u>U</u>',       title: 'Underline (Ctrl+U)' },
+    { cmd: 'strikeThrough', label: '<s>S</s>',       title: 'Strikethrough' },
+    { type: 'divider' },
+    { type: 'heading', level: 1, label: 'H1', title: 'Heading 1' },
+    { type: 'heading', level: 2, label: 'H2', title: 'Heading 2' },
+    { type: 'heading', level: 3, label: 'H3', title: 'Heading 3' },
+    { type: 'divider' },
+    { cmd: 'insertUnorderedList', label: '• List',   title: 'Bullet list' },
+    { cmd: 'insertOrderedList',   label: '1. List',  title: 'Numbered list' },
+    { cmd: 'indent',              label: '→',        title: 'Indent' },
+    { cmd: 'outdent',             label: '←',        title: 'Outdent' },
+    { type: 'divider' },
+    { cmd: 'justifyLeft',   label: '⬤‥',  title: 'Align left' },
+    { cmd: 'justifyCenter', label: '‥⬤‥', title: 'Center' },
+    { cmd: 'justifyRight',  label: '‥⬤',  title: 'Align right' },
+    { type: 'divider' },
+    { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
+  ];
+
+  const NOTE_TEMPLATE_TOOLBAR = [
+    { cmd: 'bold',          label: '<b>B</b>',       title: 'Bold' },
+    { cmd: 'italic',        label: '<i>I</i>',       title: 'Italic' },
+    { cmd: 'underline',     label: '<u>U</u>',       title: 'Underline' },
+    { type: 'divider' },
+    { cmd: 'insertUnorderedList', label: '• List',   title: 'Bullet list' },
+    { cmd: 'insertOrderedList',   label: '1. List',  title: 'Numbered list' },
+    { type: 'divider' },
+    { type: 'snippet', label: '{input}',            snippet: '{input}',            title: 'Insert {input} placeholder' },
+    { type: 'snippet', label: '{templates}',        snippet: '{templates}',        title: 'Insert {templates} placeholder' },
+    { type: 'snippet', label: 'Follow-Up ▾',        snippet: '{dropdown:follow-up}', title: 'Nest follow-up dropdown' },
+    { type: 'snippet', label: '{static:…}',         snippet: '{static:Text here}', title: 'Insert static text placeholder' },
+    { type: 'divider' },
+    { cmd: 'removeFormat',  label: '✕ fmt', title: 'Clear formatting' },
+  ];
+
+  function init() {
+    const App = window.SmartChart;
+    if (!App) { console.error('[SmartChart] app.js not loaded'); return; }
+
+    const {
+      getState, getTemplates, getNoteTemplate, getBehavior,
+      setTemplates, setNoteTemplate, setBehavior,
+      storage, STORAGE_KEYS,
+      DEFAULT_NOTE_TEMPLATE, DEFAULT_TEMPLATES, DEFAULT_BEHAVIOR,
+      showToast, updatePreview, sanitizeHtml,
+    } = App;
+
+    const state = {
+      get templates()    { return getTemplates(); },
+      set templates(v)   { setTemplates(v); },
+      get noteTemplate() { return getNoteTemplate(); },
+      set noteTemplate(v){ setNoteTemplate(v); },
+      get behavior()     { return getBehavior(); },
+      set behavior(v)    { setBehavior(v); },
+    };
+
+    function activateSettingsTab(tabId) {
+      document.querySelectorAll('.sc-settings-tab').forEach(btn => {
+        const active = btn.dataset.stab === tabId;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      document.querySelectorAll('.sc-stab-content').forEach(pane => {
+        const show = pane.id === `stab-${tabId}`;
+        pane.classList.toggle('active', show);
+        pane.classList.toggle('hidden', !show);
+      });
+    }
+    document.querySelectorAll('.sc-settings-tab').forEach(btn => {
+      btn.addEventListener('click', () => activateSettingsTab(btn.dataset.stab));
+    });
+
+    const noteTemplateEditorEl  = $('sc-note-template-input');
+    const noteTemplateToolbarEl = $('sc-note-template-tools');
+    const noteTemplateError     = $('sc-note-template-error');
+    const saveNoteBtn           = $('sc-save-note-template');
+    const resetNoteBtn          = $('sc-reset-note-template');
+
+    const noteTemplateEditor = createRichEditor(
+      noteTemplateEditorEl,
+      noteTemplateToolbarEl,
+      NOTE_TEMPLATE_TOOLBAR
+    );
+
+    function loadNoteTemplateTab() {
+      noteTemplateEditor.setHtml(state.noteTemplate);
+      noteTemplateError.classList.add('hidden');
+      noteTemplateError.textContent = '';
+    }
+
+    saveNoteBtn.addEventListener('click', () => {
+      const html = noteTemplateEditor.getHtml();
+      if (!html.includes('{input}') || !html.includes('{templates}')) {
+        noteTemplateError.textContent = 'Note template must include both {input} and {templates}.';
+        noteTemplateError.classList.remove('hidden');
+        noteTemplateEditor.focus();
+        return;
+      }
+      noteTemplateError.classList.add('hidden');
+      state.noteTemplate = html;
+      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, html);
+      showToast('Note template saved', 'success');
+      updatePreview();
+    });
+
+    resetNoteBtn.addEventListener('click', () => {
+      if (!confirm('Reset note template to the default?\n\n"{input}<br><br>{templates}"')) return;
+      state.noteTemplate = DEFAULT_NOTE_TEMPLATE;
+      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, DEFAULT_NOTE_TEMPLATE);
+      noteTemplateEditor.setHtml(DEFAULT_NOTE_TEMPLATE);
+      noteTemplateError.classList.add('hidden');
+      showToast('Note template reset to default', 'success');
+      updatePreview();
+    });
+
+    const templateListEl     = $('sc-template-list');
+    const addTemplateBtn     = $('sc-add-template-btn');
+    const templateFormEl     = $('sc-template-form');
+    const formTitleLabel     = $('sc-form-title-label');
+    const formId             = $('sc-form-id');
+    const formName           = $('sc-form-name');
+    const formTriggers       = $('sc-form-triggers');
+    const formType           = $('sc-form-type');
+    const formDropdownFields = $('sc-form-dropdown-fields');
+    const formDropdownLabel  = $('sc-form-dropdown-label');
+    const formDropdownPrefix = $('sc-form-dropdown-prefix');
+    const formDropdownSuffix = $('sc-form-dropdown-suffix');
+    const formOptions        = $('sc-form-options');
+    const formJoin           = $('sc-form-join');
+    const formPriority       = $('sc-form-priority');
+    const formSaveBtn        = $('sc-form-save');
+    const formCancelBtn      = $('sc-form-cancel');
+    const formCloseBtn       = $('sc-form-close');
+
+    const formContentEditorEl  = $('sc-form-content-editor');
+    const formContentToolbarEl = $('sc-form-content-toolbar');
+    const formContentEditor = createRichEditor(
+      formContentEditorEl,
+      formContentToolbarEl,
+      CONTENT_TOOLBAR
+    );
+
+    let activeCategory = '';
+
+    function renderTemplateList() {
+      const allSorted = [...state.templates].sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+      const categories = [...new Set(allSorted.map(t => t.category || '').filter(Boolean))];
+
+      const isWizardCategory = activeCategory
+        ? allSorted.some(t => t.category === activeCategory && t.id && t.id.endsWith('-main') && t.id.startsWith('wiz-'))
+        : false;
+
+      const filterHtml = categories.length > 0 ? `
+        <div class="sc-cat-filter">
+          <button class="sc-cat-btn${activeCategory === '' ? ' active' : ''}" data-cat="">All</button>
+          ${categories.map(c => `<button class="sc-cat-btn${activeCategory === c ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
+          ${isWizardCategory ? `<button class="sc-btn sc-btn-ghost sc-wiz-edit-btn" data-wizcat="${esc(activeCategory)}" title="Re-open this diagnosis in the Template Wizard to edit and regenerate it">✦ Edit in Wizard</button>` : ''}
+        </div>
+      ` : '';
+
+      const sorted = activeCategory ? allSorted.filter(t => (t.category || '') === activeCategory) : allSorted;
+
+      if (allSorted.length === 0) {
+        templateListEl.innerHTML = '<p class="sc-list-empty">No templates yet. Add one above.</p>';
+        return;
+      }
+
+      templateListEl.innerHTML = filterHtml + (sorted.length === 0
+        ? '<p class="sc-list-empty">No templates in this category.</p>'
+        : sorted.map(t => `
+        <div class="sc-template-item" data-id="${esc(t.id)}">
+          <div class="sc-template-info">
+            <div class="sc-template-name-row">
+              <span class="sc-template-name">${esc(t.name)}</span>
+              ${t.category ? `<span class="sc-template-cat-badge">${esc(t.category)}</span>` : ''}
+              ${t.type === 'dropdown' ? '<span class="sc-template-cat-badge">Dropdown</span>' : ''}
+            </div>
+            <div class="sc-template-triggers">
+              ${esc(t.triggers.slice(0, 5).join(', '))}${t.triggers.length > 5 ? ' …' : ''}
+            </div>
+          </div>
+          <span class="sc-template-priority">P${t.priority ?? '—'}</span>
+          <div class="sc-template-actions">
+            <button class="sc-btn sc-btn-icon" data-action="preview" data-id="${esc(t.id)}" title="Preview template content">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button class="sc-btn sc-btn-icon" data-action="edit" data-id="${esc(t.id)}" title="Edit template">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+            <button class="sc-btn sc-btn-icon sc-btn-delete" data-action="delete" data-id="${esc(t.id)}" title="Delete template">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      `).join(''));
+
+      templateListEl.querySelectorAll('.sc-cat-btn').forEach(btn => {
+        btn.addEventListener('click', () => { activeCategory = btn.dataset.cat; renderTemplateList(); });
+      });
+      const wizEditBtn = templateListEl.querySelector('.sc-wiz-edit-btn');
+      if (wizEditBtn) {
+        wizEditBtn.addEventListener('click', () => {
+          const diagName = wizEditBtn.dataset.wizcat;
+          $('sc-settings').classList.add('hidden');
+          const wizPanel = $('sc-wizard');
+          if (wizPanel) wizPanel.classList.remove('hidden');
+          if (window.SmartChartWizard) window.SmartChartWizard.loadDiagnosis(diagName);
+        });
+      }
+      templateListEl.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const { action, id } = btn.dataset;
+          if (action === 'edit')    openEditForm(id);
+          if (action === 'delete')  deleteTemplate(id);
+          if (action === 'preview') togglePreview(id, btn);
+        });
+      });
+    }
+
+    function togglePreview(id, btn) {
+      const item = btn.closest('.sc-template-item');
+      const existing = item.querySelector('.sc-template-preview-expand');
+      if (existing) { existing.remove(); return; }
+      const t = state.templates.find(t => t.id === id);
+      if (!t) return;
+      const div = document.createElement('div');
+      div.className = 'sc-template-preview-expand sc-md-content';
+      if (t.type === 'dropdown') {
+        div.innerHTML = `<p><strong>Dropdown options:</strong></p><ul>${(t.options || []).map(o => `<li>${esc(o)}</li>`).join('')}</ul>`;
+      } else {
+        div.innerHTML = sanitizeHtml(t.content || '');
+      }
+      item.appendChild(div);
+    }
+
+    function updateTemplateTypeFields() {
+      const isDropdown = formType.value === 'dropdown';
+      formDropdownFields.classList.toggle('hidden', !isDropdown);
+      const contentGroup = formContentEditorEl && formContentEditorEl.closest('.sc-field-group');
+      if (contentGroup) contentGroup.classList.toggle('hidden', isDropdown);
+    }
+
+    function openAddForm() {
+      formTitleLabel.textContent = 'New Template';
+      formId.value       = '';
+      formName.value     = '';
+      formTriggers.value = '';
+      formType.value     = 'text';
+      formContentEditor.setHtml('');
+      formDropdownLabel.value = '';
+      if (formDropdownPrefix) formDropdownPrefix.value = '';
+      if (formDropdownSuffix) formDropdownSuffix.value = '';
+      formOptions.value = '';
+      formJoin.value = 'lines';
+      const singleSelectEl = $('sc-form-single-select');
+      if (singleSelectEl) singleSelectEl.checked = false;
+      const showLabelEl = $('sc-form-show-label');
+      if (showLabelEl) showLabelEl.checked = false;
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      if (wrapBulletEl) wrapBulletEl.checked = false;
+      formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
+      const catEl = $('sc-form-category');
+      if (catEl) catEl.value = '';
+      updateTemplateTypeFields();
+      templateFormEl.classList.remove('hidden');
+      templateListEl.classList.add('hidden');
+      formName.focus();
+    }
+
+    function openEditForm(id) {
+      const t = state.templates.find(t => t.id === id);
+      if (!t) return;
+      formTitleLabel.textContent  = 'Edit Template';
+      formId.value       = t.id;
+      formName.value     = t.name;
+      formTriggers.value = t.triggers.join(', ');
+      formType.value     = t.type === 'dropdown' ? 'dropdown' : 'text';
+      formContentEditor.setHtml(t.content || '');
+      formDropdownLabel.value = t.label || t.name;
+      if (formDropdownPrefix) formDropdownPrefix.value = t.prefix || '';
+      if (formDropdownSuffix) formDropdownSuffix.value = t.suffix || '';
+      formOptions.value = (t.options || []).join('\n');
+      formJoin.value = t.join || 'lines';
+      const singleSelectEl = $('sc-form-single-select');
+      if (singleSelectEl) singleSelectEl.checked = !!(t.singleSelect);
+      const showLabelEl = $('sc-form-show-label');
+      if (showLabelEl) showLabelEl.checked = !!(t.showLabel);
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      if (wrapBulletEl) wrapBulletEl.checked = !!(t.wrapBullet);
+      formPriority.value = t.priority ?? 10;
+      const catEl = $('sc-form-category');
+      if (catEl) catEl.value = t.category || '';
+      updateTemplateTypeFields();
+      templateFormEl.classList.remove('hidden');
+      templateListEl.classList.add('hidden');
+      formName.focus();
+    }
+
+    function closeForm() {
+      templateFormEl.classList.add('hidden');
+      templateListEl.classList.remove('hidden');
+    }
+
+    addTemplateBtn.addEventListener('click', openAddForm);
+    formType.addEventListener('change', updateTemplateTypeFields);
+    formCancelBtn.addEventListener('click', closeForm);
+    formCloseBtn.addEventListener('click', closeForm);
+
+    formSaveBtn.addEventListener('click', () => {
+      const name        = (formName.value || '').trim();
+      const triggersRaw = (formTriggers.value || '').trim();
+      const type        = formType.value === 'dropdown' ? 'dropdown' : 'text';
+      const content     = formContentEditor.getHtml();
+      const options     = (formOptions.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+      const prefix      = formDropdownPrefix ? formDropdownPrefix.value : '';
+      const suffix      = formDropdownSuffix ? formDropdownSuffix.value : '';
+      const priority    = parseInt(formPriority.value, 10) || 10;
+      const id          = formId.value || `tpl-${Date.now()}`;
+      const catEl       = $('sc-form-category');
+      const category    = catEl ? (catEl.value || '').trim() : '';
+
+      if (!name) { alert('Template name is required.'); formName.focus(); return; }
+      if (type === 'text' && !content.trim()) { alert('Template content cannot be empty.'); formContentEditor.focus(); return; }
+      if (type === 'dropdown' && options.length === 0) { alert('Dropdown templates need at least one option.'); formOptions.focus(); return; }
+
+      const triggers = triggersRaw.split(',').map(s => s.trim()).filter(Boolean);
+      const singleSelectEl = $('sc-form-single-select');
+      const singleSelect = singleSelectEl ? singleSelectEl.checked : false;
+      const showLabelEl = $('sc-form-show-label');
+      const showLabel = showLabelEl ? showLabelEl.checked : false;
+      const wrapBulletEl = $('sc-form-wrap-bullet');
+      const wrapBullet = wrapBulletEl ? wrapBulletEl.checked : false;
+
+      const template = type === 'dropdown'
+        ? {
+            id, name, type, triggers,
+            label:    (formDropdownLabel.value || '').trim() || name,
+            prefix:   prefix || undefined,
+            suffix:   suffix || undefined,
+            options,
+            join:     formJoin.value || 'lines',
+            singleSelect,
+            showLabel,
+            wrapBullet,
+            priority,
+            ...(category ? { category } : {}),
+          }
+        : { id, name, triggers, content, priority, ...(category ? { category } : {}) };
+
+      const idx = state.templates.findIndex(t => t.id === id);
+      if (idx >= 0) {
+        state.templates[idx] = template;
+      } else {
+        state.templates.push(template);
+      }
+
+      try { storage.set(STORAGE_KEYS.TEMPLATES, state.templates); }
+      catch(e) { showToast('Storage full — export your data first', 'error', 4000); return; }
+      renderTemplateList();
+      closeForm();
+      showToast(`Template "${name}" saved`, 'success');
+      updatePreview();
+    });
+
+    function deleteTemplate(id) {
+      const t = state.templates.find(t => t.id === id);
+      if (!t) return;
+      if (!confirm(`Delete template "${t.name}"?\n\nThis cannot be undone.`)) return;
+      state.templates = state.templates.filter(t => t.id !== id);
+      storage.set(STORAGE_KEYS.TEMPLATES, state.templates);
+      renderTemplateList();
+      showToast(`"${t.name}" deleted`, 'warning');
+      updatePreview();
+    }
+
+    const autoCopyEnabledEl   = $('sc-autocopy-enabled');
+    const autoCopyDelayEl     = $('sc-autocopy-delay');
+    const autoCopyDelayValEl  = $('sc-autocopy-delay-val');
+    const autoClearDelayEl    = $('sc-autoclear-delay');
+    const autoClearDelayValEl = $('sc-autoclear-delay-val');
+    const saveBehaviorBtn     = $('sc-save-behavior');
+
+    function loadBehaviorTab() {
+      autoCopyEnabledEl.checked       = state.behavior.autoCopyEnabled;
+      autoCopyDelayEl.value           = (state.behavior.autoCopyDelay / 1000).toString();
+      autoCopyDelayValEl.textContent  = `${state.behavior.autoCopyDelay / 1000}s`;
+      autoClearDelayEl.value          = (state.behavior.autoClearDelay / 1000).toString();
+      autoClearDelayValEl.textContent = `${state.behavior.autoClearDelay / 1000}s`;
+      const ptEl = $('sc-plaintext-setting');
+      if (ptEl) ptEl.checked = !!state.behavior.plainTextCopy;
+      const slEl = $('sc-sourcelabels-setting');
+      if (slEl) slEl.checked = !!state.behavior.sourceLabels;
+      const bsEl = $('sc-bullet-style-setting');
+      if (bsEl) bsEl.value = state.behavior.bulletStyle || '-';
+    }
+
+    autoCopyDelayEl.addEventListener('input', () => {
+      autoCopyDelayValEl.textContent = `${autoCopyDelayEl.value}s`;
+    });
+    autoClearDelayEl.addEventListener('input', () => {
+      autoClearDelayValEl.textContent = `${autoClearDelayEl.value}s`;
+    });
+
+    saveBehaviorBtn.addEventListener('click', () => {
+      state.behavior.autoCopyEnabled = autoCopyEnabledEl.checked;
+      state.behavior.autoCopyDelay   = parseFloat(autoCopyDelayEl.value) * 1000;
+      state.behavior.autoClearDelay  = parseFloat(autoClearDelayEl.value) * 1000;
+      const ptEl2 = $('sc-plaintext-setting');
+      if (ptEl2) state.behavior.plainTextCopy = ptEl2.checked;
+      const slEl2 = $('sc-sourcelabels-setting');
+      if (slEl2) {
+        state.behavior.sourceLabels = slEl2.checked;
+        const labBtn = $('sc-source-labels-btn');
+        if (labBtn) labBtn.classList.toggle('active', slEl2.checked);
+      }
+      const bsEl2 = $('sc-bullet-style-setting');
+      if (bsEl2) state.behavior.bulletStyle = bsEl2.value;
+      try { storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior); } catch(e) {
+        showToast('Storage full — export your data first', 'error', 4000); return;
+      }
+      updatePreview();
+      showToast('Behavior settings saved', 'success');
+    });
+
+    $('sc-export-btn').addEventListener('click', () => {
+      const payload = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        noteTemplate: state.noteTemplate,
+        templates:    state.templates,
+        behavior:     state.behavior,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `smartchart-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Data exported', 'success');
+    });
+
+    $('sc-import-btn').addEventListener('click', () => {
+      const fileInput  = document.createElement('input');
+      fileInput.type   = 'file';
+      fileInput.accept = '.json,application/json';
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            let changes = 0;
+
+            if (Array.isArray(data.templates) && data.templates.length > 0) {
+              const sanitized = data.templates.map(t => {
+                if (!t || typeof t !== 'object') return null;
+                return {
+                  ...t,
+                  id:       String(t.id       || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || `tpl-${Date.now()}`,
+                  name:     String(t.name     || '').slice(0, 200),
+                  content:  typeof t.content === 'string' ? sanitizeHtml(t.content) : '',
+                  triggers: Array.isArray(t.triggers)
+                              ? t.triggers.map(tr => String(tr).slice(0, 100)).filter(Boolean)
+                              : [],
+                  options:  Array.isArray(t.options)
+                              ? t.options.map(o => String(o).slice(0, 500))
+                              : undefined,
+                  label:    t.label    ? String(t.label).slice(0, 200)    : undefined,
+                  category: t.category ? String(t.category).slice(0, 100) : undefined,
+                  priority: Number.isFinite(t.priority) ? t.priority : 10,
+                  wrapBullet: typeof t.wrapBullet === 'boolean' ? t.wrapBullet : undefined,
+                };
+              }).filter(Boolean);
+              state.templates = sanitized;
+              storage.set(STORAGE_KEYS.TEMPLATES, state.templates);
+              changes++;
+            }
+
+            if (typeof data.noteTemplate === 'string' && data.noteTemplate.trim()) {
+              state.noteTemplate = sanitizeHtml(data.noteTemplate);
+              storage.set(STORAGE_KEYS.NOTE_TEMPLATE, state.noteTemplate);
+              changes++;
+            }
+
+            if (data.behavior && typeof data.behavior === 'object') {
+              const b = data.behavior;
+              const safeBehavior = {
+                autoCopyDelay:   Number.isFinite(b.autoCopyDelay)   ? Math.min(Math.max(b.autoCopyDelay, 500), 30000)    : DEFAULT_BEHAVIOR.autoCopyDelay,
+                autoClearDelay:  Number.isFinite(b.autoClearDelay)  ? Math.min(Math.max(b.autoClearDelay, 5000), 600000) : DEFAULT_BEHAVIOR.autoClearDelay,
+                autoCopyEnabled: typeof b.autoCopyEnabled === 'boolean' ? b.autoCopyEnabled : DEFAULT_BEHAVIOR.autoCopyEnabled,
+                plainTextCopy:   typeof b.plainTextCopy   === 'boolean' ? b.plainTextCopy   : DEFAULT_BEHAVIOR.plainTextCopy,
+                sourceLabels:    typeof b.sourceLabels    === 'boolean' ? b.sourceLabels    : DEFAULT_BEHAVIOR.sourceLabels,
+                bulletStyle:     ['-','*','–','disc'].includes(b.bulletStyle) ? b.bulletStyle : DEFAULT_BEHAVIOR.bulletStyle,
+              };
+              state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, safeBehavior);
+              storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
+              changes++;
+            }
+
+            if (changes === 0) { showToast('Nothing to import in that file', 'warning'); return; }
+            loadNoteTemplateTab();
+            renderTemplateList();
+            loadBehaviorTab();
+            updatePreview();
+            showToast(`Import successful (${changes} section${changes !== 1 ? 's' : ''})`, 'success');
+          } catch {
+            showToast('Import failed: invalid or malformed JSON', 'error', 4000);
+          }
+        };
+        reader.readAsText(file);
+      });
+      fileInput.click();
+    });
+
+    $('sc-reset-all-btn').addEventListener('click', () => {
+      if (!confirm(
+        'Reset ALL SmartChart data to factory defaults?\n\n' +
+        'This will overwrite all templates, the note template, and behavior settings.\n\n' +
+        'This action CANNOT be undone.'
+      )) return;
+      state.templates    = JSON.parse(JSON.stringify(DEFAULT_TEMPLATES));
+      state.noteTemplate = DEFAULT_NOTE_TEMPLATE;
+      state.behavior     = Object.assign({}, DEFAULT_BEHAVIOR);
+      storage.set(STORAGE_KEYS.TEMPLATES,     state.templates);
+      storage.set(STORAGE_KEYS.NOTE_TEMPLATE, state.noteTemplate);
+      storage.set(STORAGE_KEYS.BEHAVIOR,      state.behavior);
+      loadNoteTemplateTab();
+      renderTemplateList();
+      loadBehaviorTab();
+      closeForm();
+      updatePreview();
+      showToast('All data reset to defaults', 'warning', 3000);
+    });
+
+    function open() {
+      loadNoteTemplateTab();
+      renderTemplateList();
+      loadBehaviorTab();
+      closeForm();
+      activateSettingsTab('note-template');
+    }
+
+    window.SmartChartSettings = { open };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 30));
+  } else {
+    setTimeout(init, 30);
+  }
+
+})();
+</script>
+<script>
+/* ── wizard.js ── */
+/**
+ * SmartChart — wizard.js
+ * Diagnosis Template Wizard: dynamic table generation, custom categories,
+ * pre-defined template linking, template generation logic.
+ */
+
+'use strict';
+
+(function () {
+
+  const $ = id => document.getElementById(id);
+
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function slugify(str) {
+    return String(str || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '')
+      .slice(0, 50);
+  }
+
+  const DEFAULT_CATEGORIES = [
+    {
+      id: 'history',
+      name: 'Key elements of history',
+      desc: 'Symptom details (e.g. onset, duration, quality, aggravating/alleviating factors)',
+      placeholder: 'Left ear pain for 2 days; positive congestion\nRight ear pain for 1 day; positive fever\nBilateral ear pain for 3 days; no drainage\nNo ear pain; positive tugging at ears',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'exam',
+      name: 'Key exam findings',
+      desc: 'Physical exam parameters (e.g. tympanic membrane, throat, lungs, abdomen findings)',
+      placeholder: 'Left TM red and bulging with middle ear effusion; right TM normal\nRight TM red and bulging with middle ear effusion; left TM normal\nBilateral TMs red and bulging with middle ear effusion\nNormal TMs bilaterally; no erythema or effusion',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'differential',
+      name: 'Key elements of differential',
+      desc: 'Alternative or contributing diagnoses considered and/or ruled out',
+      placeholder: 'Acute Otitis Media vs. Otitis Externa vs. Referred Otalgia\nAcute Otitis Media vs. Myringitis\nOtitis Media with Effusion vs. Acute Otitis Media',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'likely-diagnosis',
+      name: 'Likely diagnosis',
+      desc: 'The working diagnosis or assessment',
+      placeholder: 'Acute otitis media of left ear\nAcute otitis media of right ear\nBilateral acute otitis media\nOtitis media with effusion',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'labs',
+      name: 'Labs',
+      desc: 'Laboratory testing ordered or reviewed',
+      placeholder: 'Rapid strep test: negative; culture pending\nRapid strep test: positive\nUrinalysis and culture ordered\nNo labs indicated at this time',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'imaging',
+      name: 'Imaging',
+      desc: 'Radiology or bedside imaging ordered/performed',
+      placeholder: 'Chest X-ray ordered to rule out pneumonia\nBedside ultrasound performed showing no effusion\nNo imaging indicated at this time',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'medications',
+      name: 'Medications with exact doses if stated',
+      desc: 'Pharmacological treatment prescriptions with precise dosing guidance',
+      placeholder: 'Amoxicillin 90 mg/kg/day divided BID x10 days\nCefdinir 14 mg/kg/day QD x10 days\nAmoxicillin-Clavulanate 90 mg/kg/day (amoxicillin component) divided BID x10 days\nOTC pain relievers for comfort; no antibiotics indicated at this time',
+      defaultMode: 'singleSelect'
+    },
+    {
+      id: 'treatment-plan-actions',
+      name: 'Treatment / plan actions',
+      desc: 'Active counseling, procedures, or clinic-specific interventions',
+      placeholder: 'Counseled parents on diagnosis, treatment options, and watchful waiting.\nEar drop application instructions reviewed.\nReviewed importance of completing full antibiotic course.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'supportive-care',
+      name: 'Supportive care',
+      desc: 'Non-pharmacological measures, OTC medications, hydration, rest',
+      placeholder: 'Supportive care with OTC Tylenol/Motrin for pain and fever.\nEnsure adequate hydration with water, electrolyte solutions, or popsicles.\nRecommend rest and warm compresses over the ear for comfort.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'complications',
+      name: 'Complications patient is at risk for',
+      desc: 'Clinical risks caregiver should monitor for (e.g. dehydration, mastoiditis)',
+      placeholder: 'Untreated or worsening infection could lead to TM perforation or hearing loss.\nRisk of worsening respiratory distress or clinical deterioration.\nRisk of dehydration if PO intake remains poor.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'conditional-plans',
+      name: 'Conditional plans (if X, then Y)',
+      desc: 'Contingency plans if symptoms change or fail to resolve',
+      placeholder: 'If fever persists past 48 hours of antibiotics, contact clinic for reassessment.\nIf unable to keep fluids down or urinates <3 times a day, go to the nearest ER.\nIf watchful waiting fails after 48-72 hours, fill the standby antibiotic prescription.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'return-precautions',
+      name: 'Return precautions',
+      desc: 'Red flag symptoms indicating the need for prompt re-evaluation',
+      placeholder: 'Return immediately for high fever, lethargy, stiff neck, persistent vomiting, or drainage from the ear.\nReturn immediately for fast breathing, retractions, grunting, or blue lips.\nReturn immediately for inability to tolerate oral fluids, extreme listlessness, or no wet diapers for 8+ hours.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'discharge-planning',
+      name: 'Discharge planning',
+      desc: 'Parameters for discharge or clinic wrap-up',
+      placeholder: 'Discharged home in stable condition; parent agreeable to plan.\nDischarged home with AVS and educational handouts printed.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'nursing-orders',
+      name: 'Nursing orders',
+      desc: 'Instructions for clinic or nursing staff (e.g., vital signs, administering dose)',
+      placeholder: 'Administer one dose of Acetaminophen in clinic before discharge.\nNursing to check vital signs and check out patient.\nNursing to provide educational handout on ear infections.',
+      defaultMode: 'lines'
+    },
+    {
+      id: 'follow-up',
+      name: 'Follow-Up',
+      desc: 'Schedule or criteria for follow-up evaluation',
+      placeholder: 'Follow up in 2 to 3 days if not improving or worsening.\nFollow up in 10 to 14 days for ear recheck.\nFollow up as needed for recurring symptoms.',
+      defaultMode: 'singleSelect'
+    }
+  ];
+
+  let customCategoryCounter = 0;
+
+  function init() {
+    const App = window.SmartChart;
+    if (!App) { console.error('[SmartChart] app.js not loaded'); return; }
+
+    const {
+      getTemplates, setTemplates, storage, STORAGE_KEYS,
+      showToast, updatePreview
+    } = App;
+
+    const listContainer = $('sc-wiz-categories-body');
+    const linkedTemplatesContainer = $('sc-wiz-linked-templates');
+    const addCustomBtn = $('sc-wiz-add-category-btn');
+    const generateBtn = $('sc-wiz-generate-btn');
+    const cancelBtn = $('sc-wiz-cancel-btn');
+    const closeBtn = $('sc-wiz-close');
+
+    function renderCategories() {
+      listContainer.innerHTML = '';
+      DEFAULT_CATEGORIES.forEach(cat => {
+        addCategoryRow(cat.name, cat.desc, cat.placeholder, cat.defaultMode, cat.id, false);
+      });
+    }
+
+    function addCategoryRow(name, desc, placeholder, defaultMode, id, isCustom = false) {
+      const row = document.createElement('tr');
+      row.dataset.id = id;
+      row.dataset.custom = isCustom;
+
+      const checkboxTd = document.createElement('td');
+      checkboxTd.className = 'sc-wiz-td sc-wiz-td--checkbox';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'sc-wiz-checkbox';
+      checkboxTd.appendChild(checkbox);
+
+      const nameTd = document.createElement('td');
+      nameTd.className = 'sc-wiz-td';
+      if (isCustom) {
+        const titleCell = document.createElement('div');
+        titleCell.className = 'sc-wiz-category-title-cell';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'sc-input-settings sc-wiz-custom-name sc-wiz-custom-name-input';
+        input.value = name;
+        input.placeholder = 'e.g. School Excuse';
+        titleCell.appendChild(input);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'sc-wiz-delete-row-btn';
+        delBtn.title = 'Remove custom category';
+        delBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+          </svg>
+        `;
+        delBtn.addEventListener('click', () => {
+          row.remove();
+        });
+        titleCell.appendChild(delBtn);
+        nameTd.appendChild(titleCell);
+      } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'sc-wiz-category-label-wrap';
+
+        const nameRow = document.createElement('div');
+        nameRow.className = 'sc-wiz-category-name-row';
+
+        const title = document.createElement('span');
+        title.className = 'sc-wiz-category-name';
+        title.textContent = name;
+
+        const editIcon = document.createElement('span');
+        editIcon.className = 'sc-wiz-category-edit-icon';
+        editIcon.title = 'Rename category';
+        editIcon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'sc-wiz-category-name-input';
+        nameInput.value = name;
+        nameInput.style.display = 'none';
+
+        function startEditing() {
+          title.style.display = 'none';
+          editIcon.style.display = 'none';
+          nameInput.style.display = '';
+          nameInput.focus();
+          nameInput.select();
+        }
+        function stopEditing() {
+          const val = nameInput.value.trim() || title.textContent;
+          nameInput.value = val;
+          title.textContent = val;
+          nameInput.style.display = 'none';
+          title.style.display = '';
+          editIcon.style.display = '';
+        }
+
+        nameRow.addEventListener('click', startEditing);
+        nameInput.addEventListener('blur', stopEditing);
+        nameInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter')  { e.preventDefault(); stopEditing(); }
+          if (e.key === 'Escape') { nameInput.value = title.textContent; stopEditing(); }
+        });
+
+        nameRow.appendChild(title);
+        nameRow.appendChild(editIcon);
+        wrap.appendChild(nameRow);
+        wrap.appendChild(nameInput);
+
+        const descSpan = document.createElement('span');
+        descSpan.className = 'sc-wiz-category-desc';
+        descSpan.textContent = desc;
+        wrap.appendChild(descSpan);
+        nameTd.appendChild(wrap);
+      }
+
+      const prefixTd = document.createElement('td');
+      prefixTd.className = 'sc-wiz-td';
+      const prefixInput = document.createElement('input');
+      prefixInput.type = 'text';
+      prefixInput.className = 'sc-input-settings sc-wiz-prefix';
+      prefixInput.placeholder = 'e.g. - Pain Location: ';
+      prefixTd.appendChild(prefixInput);
+
+      const textareaTd = document.createElement('td');
+      textareaTd.className = 'sc-wiz-td';
+      const textarea = document.createElement('textarea');
+      textarea.placeholder = placeholder || 'Enter variations, one per line...';
+      textarea.addEventListener('input', () => {
+        if (textarea.value.trim().length > 0) {
+          checkbox.checked = true;
+        } else {
+          checkbox.checked = false;
+        }
+      });
+      textareaTd.appendChild(textarea);
+
+      const modeTd = document.createElement('td');
+      modeTd.className = 'sc-wiz-td';
+      const select = document.createElement('select');
+      [
+        ['singleSelect', 'Single-select'],
+        ['lines', 'Bullets'],
+        ['comma', 'Comma list'],
+        ['and', 'Comma + and'],
+        ['or', 'Comma + or'],
+        ['sentence', 'Sentence'],
+        ['paragraphs', 'Paragraphs']
+      ].forEach(([val, text]) => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = text;
+        opt.selected = val === defaultMode;
+        select.appendChild(opt);
+      });
+      modeTd.appendChild(select);
+
+      const reorderTd = document.createElement('td');
+      reorderTd.className = 'sc-wiz-td sc-wiz-reorder-td';
+
+      const moveUp = document.createElement('button');
+      moveUp.type = 'button';
+      moveUp.className = 'sc-wiz-move-btn';
+      moveUp.title = 'Move up';
+      moveUp.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="18 15 12 9 6 15"/></svg>';
+      moveUp.addEventListener('click', () => {
+        const prev = row.previousElementSibling;
+        if (prev) listContainer.insertBefore(row, prev);
+      });
+
+      const moveDown = document.createElement('button');
+      moveDown.type = 'button';
+      moveDown.className = 'sc-wiz-move-btn';
+      moveDown.title = 'Move down';
+      moveDown.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>';
+      moveDown.addEventListener('click', () => {
+        const next = row.nextElementSibling;
+        if (next) listContainer.insertBefore(next, row);
+      });
+
+      reorderTd.append(moveUp, moveDown);
+      row.append(checkboxTd, nameTd, prefixTd, textareaTd, modeTd, reorderTd);
+      listContainer.appendChild(row);
+
+      if (isCustom) {
+        checkbox.checked = true;
+      }
+    }
+
+    function renderLinkedTemplates() {
+      linkedTemplatesContainer.innerHTML = '';
+      const templates = getTemplates();
+      const filterable = templates.filter(t => t.type !== 'dropdown');
+      if (filterable.length === 0) {
+        linkedTemplatesContainer.innerHTML = '<span class="sc-muted sc-wiz-no-templates">No existing templates available.</span>';
+        return;
+      }
+      filterable.forEach(t => {
+        const item = document.createElement('label');
+        item.className = 'sc-wiz-linked-template-item';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.dataset.id = t.id;
+        const name = document.createElement('span');
+        name.textContent = t.name;
+        name.title = t.name;
+        item.append(checkbox, name);
+        linkedTemplatesContainer.appendChild(item);
+      });
+    }
+
+    addCustomBtn.addEventListener('click', () => {
+      customCategoryCounter++;
+      addCategoryRow('', '', 'Enter custom variations, one per line...', 'lines', `custom-${customCategoryCounter}`, true);
+      const container = listContainer.closest('.sc-wiz-table-container');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    });
+
+    generateBtn.addEventListener('click', () => {
+      const diagName = ($('sc-wiz-name').value || '').trim();
+      const triggersRaw = ($('sc-wiz-triggers').value || '').trim();
+
+      if (!diagName) {
+        alert('Diagnosis or Problem Name is required.');
+        $('sc-wiz-name').focus();
+        return;
+      }
+      if (!triggersRaw) {
+        alert('At least one trigger keyword is required.');
+        $('sc-wiz-triggers').focus();
+        return;
+      }
+
+      const triggers = triggersRaw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
+      const rows = Array.from(listContainer.querySelectorAll('tr'));
+      const enabledCategories = [];
+
+      let hasInvalidCategory = false;
+
+      rows.forEach(row => {
+        const checkbox = row.querySelector('.sc-wiz-checkbox');
+        if (!checkbox || !checkbox.checked) return;
+
+        let name = '';
+        const isCustom = row.dataset.custom === 'true';
+        if (isCustom) {
+          const input = row.querySelector('.sc-wiz-custom-name');
+          name = input ? input.value.trim() : '';
+        } else {
+          const nameInput = row.querySelector('.sc-wiz-category-name-input');
+          const nameSpan  = row.querySelector('.sc-wiz-category-name');
+          name = (nameInput && nameInput.value.trim())
+               || (nameSpan  && nameSpan.textContent.trim())
+               || '';
+        }
+
+        if (!name) {
+          hasInvalidCategory = true;
+          return;
+        }
+
+        const prefixInput = row.querySelector('.sc-wiz-prefix');
+        const prefixText = prefixInput ? prefixInput.value : '';
+
+        const textarea = row.querySelector('textarea');
+        const options = (textarea ? textarea.value : '')
+          .split('\n')
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        if (options.length === 0) {
+          hasInvalidCategory = true;
+          alert(`Please fill in some variations for the checked category "${name}".`);
+          textarea.focus();
+          return;
+        }
+
+        const select = row.querySelector('select');
+        const selectMode = select ? select.value : 'lines';
+
+        enabledCategories.push({
+          id: row.dataset.id,
+          name,
+          prefix: prefixText,
+          options,
+          selectMode,
+          isCustom
+        });
+      });
+
+      if (hasInvalidCategory) return;
+
+      if (enabledCategories.length === 0) {
+        alert('Please enable at least one category and enter variations to generate the template.');
+        return;
+      }
+
+      const templates = getTemplates();
+      let subPriority = Math.max(...templates.map(t => t.priority ?? 0), 900) + 1;
+      const diagSlug = slugify(diagName);
+
+      const newTemplates = [];
+      const dropdownReferences = [];
+
+      enabledCategories.forEach(cat => {
+        const catSlug = slugify(cat.name);
+        const dropdownId = `wiz-${diagSlug}-${catSlug}`;
+        const isSingle = cat.selectMode === 'singleSelect';
+
+        const dropdownTemplate = {
+          id: dropdownId,
+          name: `${diagName} — ${cat.name}`,
+          type: 'dropdown',
+          triggers: [],
+          label: cat.name,
+          prefix: cat.prefix || undefined,
+          join: isSingle ? 'lines' : cat.selectMode,
+          singleSelect: isSingle,
+          showLabel: false,
+          options: cat.options,
+          priority: subPriority++,
+          category: diagName
+        };
+
+        newTemplates.push(dropdownTemplate);
+        dropdownReferences.push({
+          name: cat.name,
+          id: dropdownId
+        });
+      });
+
+      const mainTemplateId = `wiz-${diagSlug}-main`;
+      const layoutSelect = $('sc-wiz-layout');
+      const useDivs = layoutSelect ? layoutSelect.value === 'divs' : true;
+      let contentHtml = '';
+      
+      if (useDivs) {
+        dropdownReferences.forEach(ref => {
+          contentHtml += `<div>{dropdown:${ref.id}}</div>`;
+        });
+      } else {
+        dropdownReferences.forEach(ref => {
+          contentHtml += `{dropdown:${ref.id}} `;
+        });
+        contentHtml = contentHtml.replace(/ $/, '');
+      }
+
+      const mainTemplate = {
+        id: mainTemplateId,
+        name: diagName,
+        triggers: triggers,
+        content: contentHtml,
+        priority: 1,
+        category: diagName
+      };
+
+      newTemplates.push(mainTemplate);
+
+      const currentTemplates = [...templates];
+      const selectedTemplateCheckboxes = Array.from(linkedTemplatesContainer.querySelectorAll('input[type="checkbox"]:checked'));
+      const linkedTemplateIds = selectedTemplateCheckboxes.map(cb => cb.dataset.id);
+
+      linkedTemplateIds.forEach(id => {
+        const t = currentTemplates.find(t => t.id === id);
+        if (t) {
+          const updatedTriggers = [...(t.triggers || [])];
+          triggers.forEach(trg => {
+            if (!updatedTriggers.includes(trg)) {
+              updatedTriggers.push(trg);
+            }
+          });
+          t.triggers = updatedTriggers;
+        }
+      });
+
+      const newTemplateIds = newTemplates.map(t => t.id);
+      let updatedAllTemplates = currentTemplates.filter(t => !newTemplateIds.includes(t.id));
+      updatedAllTemplates = updatedAllTemplates.concat(newTemplates);
+
+      try {
+        storage.set(STORAGE_KEYS.TEMPLATES, updatedAllTemplates);
+        setTemplates(updatedAllTemplates);
+        showToast(`Successfully generated templates for ${diagName}!`, 'success', 3500);
+        updatePreview();
+
+        const wizardPanel = $('sc-wizard');
+        if (wizardPanel) wizardPanel.classList.add('hidden');
+
+        $('sc-wiz-name').value = '';
+        $('sc-wiz-triggers').value = '';
+        renderCategories();
+      } catch (err) {
+        showToast('Error saving templates - LocalStorage limit exceeded', 'error', 4000);
+        console.error(err);
+      }
+    });
+
+    function loadDiagnosis(diagName) {
+      const templates = getTemplates();
+      const diagSlug = slugify(diagName);
+      const mainId = `wiz-${diagSlug}-main`;
+      const mainTpl = templates.find(t => t.id === mainId);
+
+      $('sc-wiz-name').value = diagName;
+      $('sc-wiz-triggers').value = mainTpl ? (mainTpl.triggers || []).join(', ') : '';
+      customCategoryCounter = 0;
+
+      const layoutSelect = $('sc-wiz-layout');
+      if (layoutSelect && mainTpl && mainTpl.content) {
+        layoutSelect.value = mainTpl.content.includes('<div>') ? 'divs' : 'spaces';
+      }
+
+      const dropdownIds = [];
+      if (mainTpl && mainTpl.content) {
+        const re = /\{dropdown:([^}]+)\}/g;
+        let m;
+        while ((m = re.exec(mainTpl.content)) !== null) {
+          dropdownIds.push(m[1].trim());
+        }
+      }
+
+      const subMap = {};
+      templates.forEach(t => {
+        if (t.category === diagName && t.id !== mainId) subMap[t.id] = t;
+      });
+
+      listContainer.innerHTML = '';
+      DEFAULT_CATEGORIES.forEach(cat => {
+        const expectedId = `wiz-${diagSlug}-${slugify(cat.name)}`;
+        const subTpl = subMap[expectedId];
+
+        const actualId = dropdownIds.find(id => id === expectedId)
+          || dropdownIds.find(id => {
+            const t = subMap[id];
+            return t && slugify(t.label || '') === slugify(cat.name);
+          });
+        const resolvedTpl = actualId ? (subMap[actualId] || subTpl) : subTpl;
+
+        const displayName = (resolvedTpl && resolvedTpl.label && resolvedTpl.label !== cat.name)
+          ? resolvedTpl.label
+          : cat.name;
+
+        addCategoryRow(displayName, cat.desc, cat.placeholder, cat.defaultMode, cat.id, false);
+
+        if (resolvedTpl) {
+          const row = listContainer.lastElementChild;
+          const textarea = row.querySelector('textarea');
+          const select = row.querySelector('select');
+          const checkbox = row.querySelector('.sc-wiz-checkbox');
+          const prefixInput = row.querySelector('.sc-wiz-prefix');
+          
+          if (textarea) textarea.value = (resolvedTpl.options || []).join('\n');
+          if (select) {
+            const mode = resolvedTpl.singleSelect ? 'singleSelect' : (resolvedTpl.join || 'lines');
+            select.value = mode;
+          }
+          if (prefixInput) prefixInput.value = resolvedTpl.prefix || '';
+          if (checkbox) checkbox.checked = true;
+        }
+      });
+
+      const defaultExpectedIds = DEFAULT_CATEGORIES.map(cat => `wiz-${diagSlug}-${slugify(cat.name)}`);
+      const handledIds = new Set(defaultExpectedIds);
+      handledIds.add(mainId);
+
+      dropdownIds.forEach(id => {
+        if (handledIds.has(id)) return;
+        const t = subMap[id];
+        if (!t) return;
+        customCategoryCounter++;
+        addCategoryRow(t.label || t.name, '', 'Enter custom variations, one per line...', t.join || 'lines', `custom-${customCategoryCounter}`, true);
+        const row = listContainer.lastElementChild;
+        const textarea = row.querySelector('textarea');
+        const select = row.querySelector('select');
+        const prefixInput = row.querySelector('.sc-wiz-prefix');
+        if (textarea) textarea.value = (t.options || []).join('\n');
+        if (select) select.value = t.singleSelect ? 'singleSelect' : (t.join || 'lines');
+        if (prefixInput) prefixInput.value = t.prefix || '';
+        handledIds.add(id);
+      });
+
+      if (dropdownIds.length > 0) {
+        const rowsInOrder = [];
+        const unorderedRows = [];
+        const allRows = Array.from(listContainer.querySelectorAll('tr'));
+
+        const rowIdMap = new Map();
+        allRows.forEach(row => {
+          const isCustom = row.dataset.custom === 'true';
+          if (isCustom) {
+            const nameInput = row.querySelector('.sc-wiz-custom-name');
+            const label = nameInput ? nameInput.value.trim() : '';
+            const matchId = dropdownIds.find(id => {
+              const t = subMap[id];
+              return t && (t.label === label || t.name === label);
+            });
+            rowIdMap.set(row, matchId || null);
+          } else {
+            const catId = row.dataset.id;
+            const cat = DEFAULT_CATEGORIES.find(c => c.id === catId);
+            if (cat) {
+              const expectedId = `wiz-${diagSlug}-${slugify(cat.name)}`;
+              const altId = dropdownIds.find(id => {
+                const t = subMap[id];
+                return t && slugify(t.label || '') === slugify(cat.name);
+              });
+              rowIdMap.set(row, dropdownIds.includes(expectedId) ? expectedId : (altId || null));
+            } else {
+              rowIdMap.set(row, null);
+            }
+          }
+        });
+
+        const inDropdown = [];
+        const notInDropdown = [];
+        allRows.forEach(row => {
+          const id = rowIdMap.get(row);
+          if (id && dropdownIds.includes(id)) {
+            inDropdown.push({ row, idx: dropdownIds.indexOf(id) });
+          } else {
+            notInDropdown.push(row);
+          }
+        });
+        inDropdown.sort((a, b) => a.idx - b.idx);
+
+        inDropdown.forEach(({ row }) => listContainer.appendChild(row));
+        notInDropdown.forEach(row => listContainer.appendChild(row));
+      }
+
+      renderLinkedTemplates();
+      $('sc-wiz-name').focus();
+    }
+
+    window.SmartChartWizard = {
+      open() {
+        $('sc-wiz-name').value = '';
+        $('sc-wiz-triggers').value = '';
+        const layoutSelect = $('sc-wiz-layout');
+        if (layoutSelect) layoutSelect.value = 'divs';
+        renderCategories();
+        renderLinkedTemplates();
+        customCategoryCounter = 0;
+        $('sc-wiz-name').focus();
+      },
+      loadDiagnosis
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 50));
+  } else {
+    setTimeout(init, 50);
+  }
+
+})();
+
+</script>
+</body>
+</html>
