@@ -2107,12 +2107,7 @@ const DEFAULT_TEMPLATES = [
     "name": "Acute bronchospasm, severe",
     "triggers": [
       "acute bronchospasm, severe",
-      "acute bronchospasm",
-      "bronchospasm, severe",
-      "bronchospasm,",
-      "bronchospasm",
-      "wheezing",
-      "growing pains"
+      "bronchospasm, severe"
     ],
     "type": "text",
     "content": "<ul><li>{dropdown:acute-bronchospasm-severe-dd-0}</li><li>{dropdown:acute-bronchospasm-severe-dd-1}</li><li>{dropdown:acute-bronchospasm-severe-dd-2}</li><li><em>Patient is at risk for worsening respiratory distress and clinical deterioration.</em></li></ul>",
@@ -2211,10 +2206,7 @@ const DEFAULT_TEMPLATES = [
     "id": "adhd-chronic",
     "name": "ADHD, (chronic)",
     "triggers": [
-      "adhd, (chronic)",
-      "adhd",
-      "attention deficit",
-      "adhd,"
+      "adhd, (chronic)"
     ],
     "type": "text",
     "content": "<ul><li>{dropdown:adhd-chronic-dd-0}</li><li>{dropdown:adhd-chronic-dd-1}</li><li>{dropdown:adhd-chronic-dd-2}</li><li>{dropdown:adhd-chronic-dd-3}</li><li>{dropdown:adhd-chronic-dd-4}</li><li>{dropdown:adhd-chronic-dd-5}</li></ul>",
@@ -2526,9 +2518,7 @@ const DEFAULT_TEMPLATES = [
     "id": "croup-moderate",
     "name": "Croup, moderate",
     "triggers": [
-      "croup, moderate",
-      "croup",
-      "barking cough"
+      "croup, moderate"
     ],
     "type": "text",
     "content": "<ul><li>{dropdown:croup-moderate-dd-0}</li><li>{dropdown:croup-moderate-dd-1}</li><li>{dropdown:croup-moderate-dd-2}</li><li>{dropdown:croup-moderate-dd-3}</li><li><em>Patient is at risk for worsening respiratory distress and clinical deterioration, which would need emergency room care or hospital admission.</em></li></ul>",
@@ -2539,10 +2529,7 @@ const DEFAULT_TEMPLATES = [
     "id": "croup-severe",
     "name": "Croup, severe",
     "triggers": [
-      "croup, severe",
-      "croup",
-      "barking cough",
-      "growing pains"
+      "croup, severe"
     ],
     "type": "text",
     "content": "<ul><li>{dropdown:croup-severe-dd-0}</li><li>{dropdown:croup-severe-dd-1}</li><li>{dropdown:croup-severe-dd-2}</li><li><em>Patient is at risk for worsening respiratory distress and clinical deterioration, which would need emergency room care or hospital admission.</em></li></ul>",
@@ -2575,8 +2562,7 @@ const DEFAULT_TEMPLATES = [
     "id": "depression-chronic",
     "name": "Depression (chronic)",
     "triggers": [
-      "depression (chronic)",
-      "depression"
+      "depression (chronic)"
     ],
     "type": "text",
     "content": "<ul><li>{dropdown:depression-chronic-dd-0}</li><li>{dropdown:depression-chronic-dd-1}</li><li>{dropdown:depression-chronic-dd-2}</li><li>{dropdown:depression-chronic-dd-3}</li><li>{dropdown:depression-chronic-dd-4}</li><li>{dropdown:depression-chronic-dd-5}</li><li>{dropdown:depression-chronic-dd-6}</li><li>{dropdown:depression-chronic-dd-7}</li></ul>",
@@ -11373,14 +11359,29 @@ function triggerMatches(input, trigger) {
   return new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`, 'i').test(input);
 }
 
+function findTriggerPos(input, triggers) {
+  let best = Infinity;
+  (triggers || []).forEach(t => {
+    const idx = input.indexOf(t.toLowerCase());
+    if (idx >= 0 && idx < best) best = idx;
+  });
+  return best;
+}
+
 function matchTemplates(input) {
   if (!input || !input.trim()) return [];
   const lower = input.toLowerCase();
-  return state.templates
+  const matched = state.templates
     .filter(t => Array.isArray(t.triggers) &&
       t.triggers.some(trigger => triggerMatches(lower, trigger))
-    )
-    .sort((a, b) => (a.priority ?? 99) - (b.priority ?? 99));
+    );
+  // Sort by position in input so templates appear in the order the user typed them
+  matched.sort((a, b) => {
+    const aPos = findTriggerPos(lower, a.triggers);
+    const bPos = findTriggerPos(lower, b.triggers);
+    return aPos - bPos;
+  });
+  return matched;
 }
 
 function isDropdownTemplate(t) {
@@ -11481,10 +11482,14 @@ function renderTemplateContentHtml(t, seen = new Set()) {
   if (isDropdownTemplate(t)) return renderDropdownValueHtml(t, true);
   if (seen.has(t.id)) return '';
   seen.add(t.id);
-  return String(t.content || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
+  let result = String(t.content || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
     const dropdown = getTemplateById(id);
     return isDropdownTemplate(dropdown) ? renderDropdownValueHtml(dropdown, false) : '';
   });
+  // Remove empty list items and empty list containers from deselected dropdowns
+  result = result.replace(/<li>\s*<\/li>/gi, '');
+  result = result.replace(/<ul>\s*<\/ul>/gi, '');
+  return result;
 }
 
 function renderNote(input, matched, noteTemplate, opts = {}) {
