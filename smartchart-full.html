@@ -11429,7 +11429,8 @@ function joinTemplateOptions(options, mode) {
   return options.join(', ');
 }
 
-function renderDropdownValueHtml(t) {
+function renderDropdownValueHtml(t, standalone) {
+  standalone = standalone !== false;
   const selection = getDropdownSelection(t.id);
   const selected = Array.isArray(selection.values) ? selection.values : [];
   if (selected.length === 0) return '';
@@ -11462,6 +11463,12 @@ function renderDropdownValueHtml(t) {
     }
   }
 
+  // When embedded inside a text template's <li>, strip <ul><li> wrapping
+  // so we don't get nested lists.
+  if (!standalone) {
+    out = out.replace(/^<ul[^>]*><li>/, '').replace(/<\/li><\/ul>$/, '');
+  }
+
   // showLabel defaults to false — only show if explicitly set to true.
   if (t.showLabel === true) {
     return `<p><strong>${t.label || t.name}:</strong></p>${out}`;
@@ -11471,12 +11478,12 @@ function renderDropdownValueHtml(t) {
 
 function renderTemplateContentHtml(t, seen = new Set()) {
   if (!t) return '';
-  if (isDropdownTemplate(t)) return renderDropdownValueHtml(t);
+  if (isDropdownTemplate(t)) return renderDropdownValueHtml(t, true);
   if (seen.has(t.id)) return '';
   seen.add(t.id);
   return String(t.content || '').replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => {
     const dropdown = getTemplateById(id);
-    return isDropdownTemplate(dropdown) ? renderDropdownValueHtml(dropdown) : '';
+    return isDropdownTemplate(dropdown) ? renderDropdownValueHtml(dropdown, false) : '';
   });
 }
 
@@ -11630,7 +11637,7 @@ function renderDropdownControls(dropdowns) {
       const isDefault = Array.isArray(t.defaults) && t.defaults.includes(idx);
 
       if (isSelected) btn.classList.add('sc-btn-selected');
-      else if (isDefault && selectedValues.length === 0) btn.classList.add('sc-btn-default');
+      else if (isDefault && selectedValues.length === 0 && !selection.touched) btn.classList.add('sc-btn-default');
 
       btn.addEventListener('click', () => {
         const currentSelection = getDropdownSelection(t.id);
@@ -11647,6 +11654,7 @@ function renderDropdownControls(dropdowns) {
         state.dropdownSelections[t.id] = {
           values: current,
           join: selection.join || t.join || 'comma',
+          touched: true,
         };
         updatePreview();
       });
@@ -11699,6 +11707,7 @@ function applyDropdownDefaults(dropdowns) {
   if (!Array.isArray(dropdowns)) return;
   dropdowns.forEach(t => {
     const sel = state.dropdownSelections[t.id];
+    if (sel && sel.touched) return;
     const hasSelection = sel && Array.isArray(sel.values) && sel.values.length > 0;
     if (!hasSelection) {
       const defaults = Array.isArray(t.defaults) ? t.defaults : [];
