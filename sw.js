@@ -4,16 +4,12 @@
  * Cache name is versioned; update CACHE_NAME to invalidate on deploy.
  */
 
-const CACHE_NAME = 'smartchart-v2.4';
+const CACHE_NAME = 'smartchart-v3.0';
 
 /* Assets to pre-cache on install */
 const PRECACHE_ASSETS = [
   './',
-  './index.html',
-  './styles.css',
-  './register-sw.js',
-  './app.js',
-  './settings.js',
+  './smartchart.html',
   './manifest.json',
   './icon.svg',
   // DOMPurify: sanitizes HTML before innerHTML insertion (XSS prevention)
@@ -74,7 +70,7 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Offline and not cached
         if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./index.html');
+          return caches.match('./smartchart.html');
         }
         return new Response('Offline', {
           status: 503,

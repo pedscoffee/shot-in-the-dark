@@ -2,7 +2,7 @@
   "name": "SmartChart",
   "short_name": "SmartChart",
   "description": "EMR note assistant — auto-insert templated text from clinical one-liners",
-  "start_url": "./index.html",
+  "start_url": "./smartchart.html",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0b0e14",
