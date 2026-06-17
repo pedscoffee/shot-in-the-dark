@@ -1,0 +1,1710 @@
+{
+  "total_entries": 125,
+  "entry_count_by_sections": {
+    "with_supportive_care": 62,
+    "with_risk_statement": 12,
+    "with_special_sections": 7,
+    "with_neither_supportive_nor_risk": 50
+  },
+  "supportive_care_variants": {
+    "illness_supportive": "Recommended supportive care with OTC medications as needed with an emphasis on hydration. Return precautions given including increasing pain, worsening fever, dehydration, new symptoms, prolonged symptoms, worsening symptoms, and other concerns. Caregiver expressed understanding and agreement with treatment plan.",
+    "illness_supportive_no_hydration": "Recommended supportive care with OTC medications as needed. Return precautions given including increasing pain, worsening fever, dehydration, new symptoms, prolonged symptoms, worsening symptoms, and other concerns. Caregiver expressed understanding and agreement with treatment plan.",
+    "injury_supportive": "Recommended supportive care with Tylenol, Motrin, rest, ice, compression, elevation, and gradual return to activity as appropriate. Return precautions given including increasing pain, swelling, or failure to improve."
+  },
+  "risk_statement_variants": [
+    "Risk of untreated otitis media includes persistent pain and fever, hearing loss, and mastoiditis.",
+    "Risk of untreated strep throat includes rheumatic fever and peritonsillar abscess. This problem is moderate risk due to pending lab results which may necessitate further pharmacologic management.",
+    "Patient is at risk for worsening respiratory distress and clinical deterioration, which would need emergency room care or hospital admission.",
+    "Patient is at risk for dehydration, which would warrant emergency room care or admission for IV fluids.",
+    "Patient is at risk for worsening respiratory distress and clinical deterioration."
+  ],
+  "special_sections": [
+    "STREP A&P",
+    "Self Care Plan (strep)",
+    "Obesity Assessment",
+    "Self Care Plan (obesity)",
+    "Patient Goals (obesity)",
+    "ADHD A&P",
+    "Self Care Plan (ADHD)"
+  ],
+  "bullet_pattern_families": [
+    {
+      "pattern": "medication_list",
+      "description": "Comma-separated list of medication options for treatment selection",
+      "examples": ["Amoxicillin, Augmentin, Cefprozil, Azithromycin, Rocephin", "Augmentin, Clindamycin", "Zoloft, Prozac", "Keflex, Clindamycin"],
+      "diagnoses_using": ["Acute Otitis Media", "Dental abscess", "Community Acquired Pneumonia", "Acute bacterial sinusitis", "Cellulitis", "Impetigo", "Depression", "Anxiety", "ADHD", "UTI", "Poison ivy dermatitis", "Lymphadenitis", "Strep pharyngitis", "Constipation", "Acute bronchospasm", "Acute asthma exacerbation", "Influenza", "Gonorrhea", "Chlamydia", "Acne vulgaris", "Tinea corporis", "Eczema"]
+    },
+    {
+      "pattern": "follow_up_timing",
+      "description": "Comma-separated follow-up interval options (often with 'Follow-up:' prefix)",
+      "examples": ["PRN, in 2-4 weeks for ear recheck, in 4-8 weeks for ear recheck", "Follow-up: Tomorrow, 2-3 days, 1 week, 2 weeks, 2-4 weeks, 4 weeks, 4-8 weeks, next well child check", "Follow-up in one month, Follow-up in three months, Follow-up next well child check"],
+      "diagnoses_using": ["Acute Otitis Media", "Poor Weight Gain (infant)", "Poor Weight Gain (child)", "Weight loss (adolescent)", "Depression (initial)", "Depression (chronic)", "Anxiety (initial)", "Anxiety (chronic)", "ADHD (initial)", "ADHD, (chronic)", "Nocturnal enuresis"]
+    },
+    {
+      "pattern": "referral_list",
+      "description": "Comma-separated list of referral options",
+      "examples": ["Referred to Audiology, Referred to ENT for further evaluation", "Nutrition referral, Cardiology referral for EKG, Psychology referral, Psychiatry referral, GI referral", "Physical therapy referral, Orthopedics referral", "Speech Therapy/Audiology, Physical Therapy, Occupational Therapy, Developmental Pediatrics, Psychology, ABA"],
+      "diagnoses_using": ["Hearing problem", "Weight loss (adolescent)", "Obesity", "Well Child Check", "Ankle pain", "Knee pain", "Hip pain", "Back pain", "Shoulder pain", "Neck pain", "Elbow pain", "Hand pain", "Nursemaid's Elbow", "Plagiocephaly", "Concussion", "Sleep difficulty", "Aggressive Behavior"]
+    },
+    {
+      "pattern": "lab_test_list",
+      "description": "Comma-separated list of laboratory tests or studies to order",
+      "examples": ["CBC, CMP, ESR, CRP, Uric Acid, LDH, IGRA, and chest x-ray", "CBC, CMP, ESR, CRP, Fecal Calprotectin, Celiac Disease Panel, Vitamin D, TSH/Free-T4", "CBC, peripheral smear, PT, PTT/INR, vWB panel"],
+      "diagnoses_using": ["Lymphadenopathy, initial", "Epistaxis", "Abdominal Pain", "Poor Weight Gain (child)", "Weight loss (adolescent)", "Short stature", "Obesity", "Low Vitamin D", "Abdominal Pain", "Menorrhagia"]
+    },
+    {
+      "pattern": "exam_finding_list",
+      "description": "Comma-separated list of exam finding locations or possibilities",
+      "examples": ["Crackles, wheeze in LLL, LUL, RUL, RML, RLL, throughout", "Primarily RLQ, RUQ, LLQ, LUQ, epigastric, periumbilical, generalized", "LLL, LUL, RUL, RML, RLL"],
+      "diagnoses_using": ["Community Acquired Pneumonia", "Abdominal Pain"]
+    },
+    {
+      "pattern": "exam_scenario_pairs",
+      "description": "Positive/negative exam finding pairs or two-scenario choices separated by commas",
+      "examples": ["Exam reassuring will defer XR given ottawa ankle rules, Given exam findings will obtain XR", "Exam reassuring will defer XR after shared decision making, Given exam findings will obtain XR", "Good weight gain and reassuring exam, poor weight gain, weight loss"],
+      "diagnoses_using": ["Ankle pain", "Knee pain", "Hip pain", "Back pain", "Shoulder pain", "Neck pain", "Elbow pain", "Hand pain", "Nursemaid's Elbow", "Spitting up, reflux", "Concussion"]
+    },
+    {
+      "pattern": "self_harm_risk",
+      "description": "Comma-separated self-harm scenarios for mental health entries",
+      "examples": ["No thoughts of self harm, has thoughts of self harm but without plan", "Patient reports thoughts of self harm with plan of X, will send to ED for initial stabilization and further evaluation and treatment"],
+      "diagnoses_using": ["Depression (initial)", "Depression (chronic)", "Anxiety (initial)", "Anxiety (chronic)"]
+    },
+    {
+      "pattern": "adhd_medication_plan",
+      "description": "Comma-separated ADHD medication adjustment options",
+      "examples": ["After shared decision making plan to increase dose of medication with goal of improving effect, decrease dose of medication with goal of decreasing side effects, change medication"],
+      "diagnoses_using": ["ADHD, (chronic)"]
+    },
+    {
+      "pattern": "shared_decision_making_two_options",
+      "description": "Two options after shared decision making, separated by comma",
+      "examples": ["after shared decision making will send Orapred 1mg/kg once daily for 3 days, after shared decision making will defer oral steroids", "Discussed possible benefits and side effects of Tamiflu and after shared decision making will defer, Tamiflu prescribed", "after shared decision making plan to start medication, defer medication for now"],
+      "diagnoses_using": ["Croup, mild", "Influenza", "ADHD (initial)", "ADHD, (chronic)", "Dysmenorrhea", "Menorrhagia"]
+    },
+    {
+      "pattern": "simple_management_statement",
+      "description": "Single simple statement bullet (no comma-separated options)",
+      "examples": ["Stable for outpatient management but strict return precautions emphasized", "Emphasized close return precautions", "Discussed with family; answered all questions", "Follow-up PRN"],
+      "diagnoses_using": "Nearly all entries"
+    },
+    {
+      "pattern": "return_precaution_emphasis",
+      "description": "Bullets about emphasizing return precautions",
+      "examples": ["Emphasized close return precautions if rash fails to improve, keeps spreading, or changes in characteristics", "Emphasized close return precautions", "Strict return precautions emphasized"],
+      "diagnoses_using": ["Cellulitis", "Impetigo", "Tinea corporis", "Tinea cruris", "Tinea capitis", "Intertrigo", "Croup, moderate", "Acute bronchospasm", "Acute asthma exacerbation"]
+    },
+    {
+      "pattern": "imaging_options",
+      "description": "Comma-separated imaging study options",
+      "examples": ["KUB, Abdominal ultrasound, CT Abdomen WO, CT Abdomen W, CT Abdomen/Pelvis WO, CT Abdomen/Pelvis W", "CXR shows ***, CXR deferred due to exam findings"],
+      "diagnoses_using": ["Abdominal Pain", "Community Acquired Pneumonia"]
+    },
+    {
+      "pattern": "diagnosis_certainty_options",
+      "description": "Comma-separated test result or diagnostic certainty options",
+      "examples": ["Rapid strep positive, Strep PCR positive, Throat culture positive", "Strep negative, monospot positive", "Negative Chlamydia Urine PCR, no current concern for PID", "Negative Gonorrhea Urine PCR, no current concern for PID"],
+      "diagnoses_using": ["Strep pharyngitis", "EBV pharyngitis", "Gonorrhea", "Chlamydia"]
+    },
+    {
+      "pattern": "ed_referral_statement",
+      "description": "Bullet about sending to ED for further evaluation",
+      "examples": ["Given concern for mastoiditis plan to send patient to ED for further evaluation and treatment", "Recommended going to ED for further evaluation", "ED for immediate evaluation"],
+      "diagnoses_using": ["Mastoiditis", "Abdominal Pain", "Testicular torsion", "Croup, severe", "Acute bronchospasm, severe"]
+    }
+  ],
+  "entries": [
+    {
+      "name": "Acute Otitis Media",
+      "category": "ENT/Infectious",
+      "bullets": [
+        {"text": "Amoxicillin, Augmentin, Cefprozil, Azithromycin, Rocephin", "has_comma_values": true, "comma_values": ["Amoxicillin", "Augmentin", "Cefprozil", "Azithromycin", "Rocephin"]},
+        {"text": "PRN, in 2-4 weeks for ear recheck, in 4-8 weeks for ear recheck", "has_comma_values": true, "comma_values": ["PRN", "in 2-4 weeks for ear recheck", "in 4-8 weeks for ear recheck"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": true,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive",
+      "notes": "Risk statement: otitis media-specific"
+    },
+    {
+      "name": "Acute Otitis Externa",
+      "category": "ENT/Infectious",
+      "bullets": [
+        {"text": "Ofloxacin", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Mastoiditis",
+      "category": "ENT/Infectious",
+      "bullets": [
+        {"text": "Concern for mastoiditis given tenderness over mastoid, erythema, ear pain, protrusion of the auricle", "has_comma_values": false, "comma_values": []},
+        {"text": "Given concern for mastoiditis plan to send patient to ED for further evaluation and treatment", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed with family; answered all questions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Excessive cerumen",
+      "category": "ENT",
+      "bullets": [
+        {"text": "Removed with curette; tolerated without complication", "has_comma_values": false, "comma_values": []},
+        {"text": "Removed with irrigation; tolerated without complication", "has_comma_values": false, "comma_values": []},
+        {"text": "Recommended debrox drops PRN and discussed supportive care with appropriate hygiene practices cleaning outer ear but avoiding q-tips or cleaning inner ear canal due to risk of impaction", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Hearing problem",
+      "category": "ENT",
+      "bullets": [
+        {"text": "Referred to Audiology, Referred to ENT for further evaluation", "has_comma_values": true, "comma_values": ["Referred to Audiology", "Referred to ENT for further evaluation"]},
+        {"text": "Discussed with family; answered all questions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Lymphadenitis",
+      "category": "Infectious",
+      "bullets": [
+        {"text": "To provide coverage for S. aureus and GAS will treat with Augmentin, Keflex due to mild penicillin allergy, Clindamycin due to severe penicillin allergy", "has_comma_values": true, "comma_values": ["Augmentin (no allergy)", "Keflex due to mild penicillin allergy", "Clindamycin due to severe penicillin allergy"]},
+        {"text": "Given concern for periodontal involvement also covering with Augmentin (or clindamycin); will also refer to dentist", "has_comma_values": false, "comma_values": []},
+        {"text": "Given concern for possible cat scratch disease so will also cover with azithromycin, rifampin, trimethoprim-sulfamethoxazole, doxycycline", "has_comma_values": true, "comma_values": ["azithromycin", "rifampin", "trimethoprim-sulfamethoxazole", "doxycycline"]},
+        {"text": "Follow up in 48-72 hours", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Lymphadenopathy, initial",
+      "category": "Infectious/Hematology",
+      "bullets": [
+        {"text": "Given chronicity will obtain CBC, CMP, ESR, CRP, Uric Acid, LDH, IGRA, and chest x-ray", "has_comma_values": true, "comma_values": ["CBC", "CMP", "ESR", "CRP", "Uric Acid", "LDH", "IGRA", "chest x-ray"]},
+        {"text": "Considered further evaluation for EBV, CMV, Bartonella henselae, HIV, human herpesvirus-6, histoplasmosis, coccidioidomycosis, tularemia, toxoplasmosis, plague (Y. pestis), nontuberculous mycobacterial adenitis, and brucella but deferred for now", "has_comma_values": true, "comma_values": ["EBV", "CMV", "Bartonella henselae", "HIV", "human herpesvirus-6", "histoplasmosis", "coccidioidomycosis", "tularemia", "toxoplasmosis", "plague (Y. pestis)", "nontuberculous mycobacterial adenitis", "brucella"]},
+        {"text": "Pending results of work up or if fails to improve will consider referral to pediatric surgery for consideration of biopsy", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Epistaxis",
+      "category": "ENT",
+      "bullets": [
+        {"text": "Less than 15 minutes per episode and no easy bruising/bleeding or family history of bleeding disorders and so will defer further hematology work up for now", "has_comma_values": false, "comma_values": []},
+        {"text": "Due to concern for increased bleeding will obtain CBC, peripheral smear, PT, PTT/INR, vWB panel", "has_comma_values": true, "comma_values": ["CBC", "peripheral smear", "PT", "PTT/INR", "vWB panel"]},
+        {"text": "Hematology referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care including proper packing, use of vaseline or saline gels for prevention, appropriate use of PRN oxymetazoline, and ED precautions", "has_comma_values": false, "comma_values": []},
+        {"text": "Given primarily one side of nares will refer to ENT for further evaluation, Given worsening frequency despite appropriate supportive care will refer to ENT for further evaluation", "has_comma_values": true, "comma_values": ["Given primarily one side of nares will refer to ENT for further evaluation", "Given worsening frequency despite appropriate supportive care will refer to ENT for further evaluation"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Dental abscess",
+      "category": "Dental/Infectious",
+      "bullets": [
+        {"text": "Augmentin, Clindamycin", "has_comma_values": true, "comma_values": ["Augmentin", "Clindamycin"]},
+        {"text": "Dentistry referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Community Acquired Pneumonia",
+      "category": "Respiratory/Infectious",
+      "bullets": [
+        {"text": "Crackles, wheeze in LLL, LUL, RUL, RML, RLL, throughout", "has_comma_values": true, "comma_values": ["Crackles", "wheeze in LLL", "LUL", "RUL", "RML", "RLL", "throughout"]},
+        {"text": "Increased work of breathing with nasal flaring, intercostal retractions, subcostal retractions, supracostal retractions, grunting, head bobbing, hypoxia", "has_comma_values": true, "comma_values": ["nasal flaring", "intercostal retractions", "subcostal retractions", "supracostal retractions", "grunting", "head bobbing", "hypoxia"]},
+        {"text": "CXR shows ***, CXR deferred due to exam findings", "has_comma_values": true, "comma_values": ["CXR shows ***", "CXR deferred due to exam findings"]},
+        {"text": "Amoxicillin, Augmentin, Azithromycin, Rocephin, Clindamycin", "has_comma_values": true, "comma_values": ["Amoxicillin", "Augmentin", "Azithromycin", "Rocephin", "Clindamycin"]},
+        {"text": "Stable for outpatient management but strict return precautions emphasized", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": true,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive",
+      "notes": "Risk statement: respiratory distress"
+    },
+    {
+      "name": "Strep pharyngitis",
+      "category": "Infectious",
+      "bullets": [
+        {"text": "Rapid strep positive, Strep PCR positive, Throat culture positive", "has_comma_values": true, "comma_values": ["Rapid strep positive", "Strep PCR positive", "Throat culture positive"]},
+        {"text": "Amoxicillin, Azithromycin due to penicillin allergy", "has_comma_values": true, "comma_values": ["Amoxicillin", "Azithromycin due to penicillin allergy"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": true,
+      "has_special_sections": true,
+      "supportive_care_type": "illness_supportive",
+      "special_sections": ["STREP A&P", "Self Care Plan"],
+      "notes": "Risk statement: strep-specific"
+    },
+    {
+      "name": "Viral pharyngitis",
+      "category": "Infectious",
+      "bullets": [],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "EBV pharyngitis",
+      "category": "Infectious",
+      "bullets": [
+        {"text": "Strep negative, monospot positive", "has_comma_values": true, "comma_values": ["Strep negative", "monospot positive"]},
+        {"text": "Emphasized strict avoidance of contact sports and heavy lifting for at least 3-4 weeks (and until cleared by physician) due to risk of splenic rupture, no splenomegaly on exam today", "has_comma_values": false, "comma_values": []},
+        {"text": "Planned follow-up in 3-4 weeks for reexamination", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Viral URI",
+      "category": "Respiratory",
+      "bullets": [],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Influenza",
+      "category": "Infectious",
+      "bullets": [
+        {"text": "Discussed possible benefits and side effects of Tamiflu and after shared decision making will defer, Tamiflu prescribed after discussion of possible benefits and side effects", "has_comma_values": true, "comma_values": ["after shared decision making will defer", "Tamiflu prescribed after discussion of possible benefits and side effects"]},
+        {"text": "Zofran", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "COVID-19",
+      "category": "Infectious/Respiratory",
+      "bullets": [],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "RSV",
+      "category": "Infectious/Respiratory",
+      "bullets": [],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Acute bacterial sinusitis",
+      "category": "ENT/Infectious",
+      "bullets": [
+        {"text": "Given persistence of symptoms and exam findings we will plan to treat after shared decision making", "has_comma_values": false, "comma_values": []},
+        {"text": "Augmentin, rocephin, levofloxacin, cefpodoxime, cefdinir", "has_comma_values": true, "comma_values": ["Augmentin", "rocephin", "levofloxacin", "cefpodoxime", "cefdinir"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Hand foot and mouth disease",
+      "category": "Infectious/Dermatology",
+      "bullets": [
+        {"text": "Discussed focus on hydration", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed skin may peel, nail changes may be visible in a few months", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Acute Herpangina",
+      "category": "Infectious",
+      "bullets": [
+        {"text": "Discussed focus on hydration", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive",
+      "notes": "Line 'Hand foot and mouth disease' appears under name as a note/alias, not a bullet"
+    },
+    {
+      "name": "Acute gastroenteritis",
+      "category": "GI",
+      "bullets": [
+        {"text": "Zofran", "has_comma_values": false, "comma_values": []},
+        {"text": "Oral rehydration therapy with Pedialyte", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Acute enteritis",
+      "category": "GI",
+      "bullets": [
+        {"text": "Oral rehydration therapy with Pedialyte", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Bronchiolitis",
+      "category": "Respiratory",
+      "bullets": [
+        {"text": "Today\u2019s date is Day of illness # X", "has_comma_values": false, "comma_values": []},
+        {"text": "Frequent suctioning", "has_comma_values": false, "comma_values": []},
+        {"text": "Monitor work of breathing", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasis on hydration", "has_comma_values": false, "comma_values": []},
+        {"text": "COVID/Flu/RSV swab ordered, deferred", "has_comma_values": true, "comma_values": ["COVID/Flu/RSV swab ordered", "deferred"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Croup, mild",
+      "category": "Respiratory",
+      "bullets": [
+        {"text": "No stridor at rest", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed risks, benefits, and alternatives of limited course of oral steroids in mild croup; after shared decision making will send Orapred 1mg/kg once daily for 3 days, after shared decision making will defer oral steroids", "has_comma_values": true, "comma_values": ["after shared decision making will send Orapred 1mg/kg once daily for 3 days", "after shared decision making will defer oral steroids"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": true,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive",
+      "notes": "Risk statement: respiratory distress"
+    },
+    {
+      "name": "Croup, moderate",
+      "category": "Respiratory",
+      "bullets": [
+        {"text": "Mild stridor", "has_comma_values": false, "comma_values": []},
+        {"text": "Racemic epinephrine given in office with good effect", "has_comma_values": false, "comma_values": []},
+        {"text": "Orapred 1mg/kg once daily for 3 days", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasized close return precautions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": true,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive",
+      "notes": "Risk statement: respiratory distress"
+    },
+    {
+      "name": "Croup, severe",
+      "category": "Respiratory",
+      "bullets": [
+        {"text": "Stridor on exam, increased work of breathing", "has_comma_values": false, "comma_values": []},
+        {"text": "Racemic epinephrine given in office but with increased work of breathing recommend going to ED for further evaluation and treatment by ambulance", "has_comma_values": false, "comma_values": []},
+        {"text": "Family expressed agreement and understanding with plan", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": true,
+      "has_special_sections": false,
+      "notes": "Risk statement: respiratory distress"
+    },
+    {
+      "name": "Acute bronchospasm",
+      "category": "Respiratory",
+      "bullets": [
+        {"text": "Albuterol, Duoneb given in office with good effect", "has_comma_values": true, "comma_values": ["Albuterol", "Duoneb given in office with good effect"]},
+        {"text": "Orapred 1mg/kg BID for 5 days", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasized close return precautions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": true,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive",
+      "notes": "Risk statement: respiratory distress"
+    },
+    {
+      "name": "Acute bronchospasm, severe",
+      "category": "Respiratory",
+      "bullets": [
+        {"text": "Significant wheeze on exam, poor air movement", "has_comma_values": false, "comma_values": []},
+        {"text": "Albuterol given in office but with increased work of breathing recommend going to ED for further evaluation and treatment by ambulance", "has_comma_values": false, "comma_values": []},
+        {"text": "Family expressed agreement and understanding with plan", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": true,
+      "has_special_sections": false,
+      "notes": "Risk statement: shorter variant - 'Patient is at risk for worsening respiratory distress and clinical deterioration.'"
+    },
+    {
+      "name": "Acute asthma exacerbation",
+      "category": "Respiratory",
+      "bullets": [
+        {"text": "Albuterol, Duoneb given in office with good effect", "has_comma_values": true, "comma_values": ["Albuterol", "Duoneb given in office with good effect"]},
+        {"text": "Orapred 1mg/kg BID for 5 days", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasized close return precautions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": true,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive",
+      "notes": "Risk statement: respiratory distress"
+    },
+    {
+      "name": "Abdominal Pain",
+      "category": "GI",
+      "bullets": [
+        {"text": "Red flag symptoms include weight loss, fever, night sweats, blood in stool, arthralgia, rash", "has_comma_values": false, "comma_values": []},
+        {"text": "Primarily RLQ, RUQ, LLQ, LUQ, epigastric, periumbilical, generalized", "has_comma_values": true, "comma_values": ["RLQ", "RUQ", "LLQ", "LUQ", "epigastric", "periumbilical", "generalized"]},
+        {"text": "Exam notable for positive/negative roving sign, positive/negative obturator sign, positive/negative psoas sign, positive/negative murphy sign, no guarding or rebound tenderness, guarding and rebound tenderness, hepatomegaly, no hepatomegaly, splenomegaly, no splenomegaly, abdominal mass palpable, no abdominal mass palpable, abdominal distention, no abdominal distention", "has_comma_values": true, "comma_values": ["positive/negative roving sign", "positive/negative obturator sign", "positive/negative psoas sign", "positive/negative murphy sign", "no guarding or rebound tenderness", "guarding and rebound tenderness", "hepatomegaly", "no hepatomegaly", "splenomegaly", "no splenomegaly", "abdominal mass palpable", "no abdominal mass palpable", "abdominal distention", "no abdominal distention"]},
+        {"text": "Differential diagnosis includes appendicitis, acute cholecystitis, acute gastroenteritis, parasitic infection, constipation, inflammatory bowel disease, pancreatitis, cystitis, nephrolithiasis", "has_comma_values": true, "comma_values": ["appendicitis", "acute cholecystitis", "acute gastroenteritis", "parasitic infection", "constipation", "inflammatory bowel disease", "pancreatitis", "cystitis", "nephrolithiasis"]},
+        {"text": "CBC, CMP, ESR, CRP, Lipase, Celiac panel, TSH/Free T4, Vitamin D, Ova and parasite, Fecal occult blood, Fecal calprotectin, Urinalysis, Urine pregnancy test", "has_comma_values": true, "comma_values": ["CBC", "CMP", "ESR", "CRP", "Lipase", "Celiac panel", "TSH/Free T4", "Vitamin D", "Ova and parasite", "Fecal occult blood", "Fecal calprotectin", "Urinalysis", "Urine pregnancy test"]},
+        {"text": "KUB, Abdominal ultrasound, CT Abdomen WO, CT Abdomen W, CT Abdomen/Pelvis WO, CT Abdomen/Pelvis W", "has_comma_values": true, "comma_values": ["KUB", "Abdominal ultrasound", "CT Abdomen WO", "CT Abdomen W", "CT Abdomen/Pelvis WO", "CT Abdomen/Pelvis W"]},
+        {"text": "Recommended going to ED for further evaluation", "has_comma_values": false, "comma_values": []},
+        {"text": "Zofran, famotidine, omeprazole", "has_comma_values": true, "comma_values": ["Zofran", "famotidine", "omeprazole"]},
+        {"text": "Oral rehydration therapy with Pedialyte", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Constipation",
+      "category": "GI",
+      "bullets": [
+        {"text": "Discussed importance of hydration and fiber intake long-term for managing constipation", "has_comma_values": false, "comma_values": []},
+        {"text": "KUB", "has_comma_values": false, "comma_values": []},
+        {"text": "MiraLAX, senna", "has_comma_values": true, "comma_values": ["MiraLAX", "senna"]},
+        {"text": "Discussed clean out regimen; answered all questions", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed how to titrate dose to effect for maintenance phase moving forward with emphasis on importance of good symptom control for several months in order to avoid recurrence", "has_comma_values": false, "comma_values": []},
+        {"text": "Peds GI referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Well Child Check",
+      "category": "Preventive",
+      "bullets": [
+        {"text": "Growing and developing well", "has_comma_values": false, "comma_values": []},
+        {"text": "Month Year: Doing great! Follow-up at next well child check or as needed.", "has_comma_values": false, "comma_values": []},
+        {"text": "Poor weight gain, short stature", "has_comma_values": true, "comma_values": ["Poor weight gain", "short stature"]},
+        {"text": "speech delay, gross motor delay, fine motor delay, personal social delay, MCHAT low medium high risk", "has_comma_values": true, "comma_values": ["speech delay", "gross motor delay", "fine motor delay", "personal social delay", "MCHAT low risk", "MCHAT medium risk", "MCHAT high risk"]},
+        {"text": "Referral to Speech Therapy/Audiology, Referral to Physical Therapy, Referral to Occupational Therapy, Referral to Developmental Pediatrics, Referral to Psychology, Referral to ABA", "has_comma_values": true, "comma_values": ["Speech Therapy/Audiology", "Physical Therapy", "Occupational Therapy", "Developmental Pediatrics", "Psychology", "ABA"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": true,
+      "special_sections": ["Standard WC footer (all forms/labs/immunizations reviewed)"],
+      "notes": "Has its own standard footer 'All forms, labs, immunizations...' line 237"
+    },
+    {
+      "name": "Spitting up, reflux",
+      "category": "GI",
+      "bullets": [
+        {"text": "Good weight gain and reassuring exam, poor weight gain, weight loss", "has_comma_values": true, "comma_values": ["Good weight gain and reassuring exam", "poor weight gain", "weight loss"]},
+        {"text": "Discussed supportive care with positioning remaining upright for a time after feeds, trial of different nipple flows/brands", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed thickening feeds, possible role of switching types of milk", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed possible benefit and side effects of Pepcid; after shared decision making will start Pepcid and follow-up in 2-4 weeks", "has_comma_values": false, "comma_values": []},
+        {"text": "Peds GI referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Poor Weight Gain (infant)",
+      "category": "Nutrition/Growth",
+      "bullets": [
+        {"text": "After reviewing current feeding regimen will start by focusing on frequency with feeds every 2-3 hours day and night, focusing on calories by increasing from 20 to 22kcal/oz; mixing reference sheet given, treating reflux with Pepcid,", "has_comma_values": false, "comma_values": []},
+        {"text": "Given significant weight loss plan to admit patient to hospital in order to expedite further evaluation; discussed with hospitalist who accepted patient.", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed with family; answered all questions.", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up: Tomorrow, 2-3 days, 1 week, 2 weeks, 2-4 weeks, 4 weeks, 4-8 weeks, next well child check", "has_comma_values": true, "comma_values": ["Tomorrow", "2-3 days", "1 week", "2 weeks", "2-4 weeks", "4 weeks", "4-8 weeks", "next well child check"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Poor Weight Gain (child)",
+      "category": "Nutrition/Growth",
+      "bullets": [
+        {"text": "After reviewing current feeding regimen will start by focusing on high calorie high protein diet with nutrition referral and close follow-up. If not improving will consider further work up and supplementation.", "has_comma_values": false, "comma_values": []},
+        {"text": "Plan to start Pediasure 8oz once daily, BID", "has_comma_values": true, "comma_values": ["once daily", "BID"]},
+        {"text": "CBC, CMP, ESR, CRP, Fecal Calprotectin, Celiac Disease Panel, Vitamin D, TSH/Free-T4", "has_comma_values": true, "comma_values": ["CBC", "CMP", "ESR", "CRP", "Fecal Calprotectin", "Celiac Disease Panel", "Vitamin D", "TSH/Free-T4"]},
+        {"text": "GI referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Given significant weight loss plan to admit patient to hospital in order to expedite further evaluation; discussed with hospitalist who accepted patient.", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed with family; answered all questions.", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up: Tomorrow, 2-3 days, 1 week, 2 weeks, 2-4 weeks, 4 weeks, 4-8 weeks, next well child check", "has_comma_values": true, "comma_values": ["Tomorrow", "2-3 days", "1 week", "2 weeks", "2-4 weeks", "4 weeks", "4-8 weeks", "next well child check"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Short stature",
+      "category": "Endocrinology/Growth",
+      "bullets": [
+        {"text": "Mid-parental height calculated and current trajectory is consistent with familial short stature", "has_comma_values": false, "comma_values": []},
+        {"text": "Height velocity is ***cm/yr", "has_comma_values": false, "comma_values": []},
+        {"text": "Bone age", "has_comma_values": false, "comma_values": []},
+        {"text": "CBC, CMP, ESR, calcium, phosphorus, vitamin D, TSH/Free-T4, Celiac Disease Panel, Karyotype", "has_comma_values": true, "comma_values": ["CBC", "CMP", "ESR", "calcium", "phosphorus", "vitamin D", "TSH/Free-T4", "Celiac Disease Panel", "Karyotype"]},
+        {"text": "Endocrinology referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Weight loss (adolescent)",
+      "category": "Nutrition/Mental Health",
+      "bullets": [
+        {"text": "Nutrition referral, Cardiology referral for EKG, Psychology referral, Psychiatry referral, GI referral", "has_comma_values": true, "comma_values": ["Nutrition referral", "Cardiology referral for EKG", "Psychology referral", "Psychiatry referral", "GI referral"]},
+        {"text": "CBC, CMP, ESR, CRP, Fecal Calprotectin, Celiac Disease Panel, Vitamin D, TSH/Free-T4", "has_comma_values": true, "comma_values": ["CBC", "CMP", "ESR", "CRP", "Fecal Calprotectin", "Celiac Disease Panel", "Vitamin D", "TSH/Free-T4"]},
+        {"text": "Given significant weight loss with decreased HR plan to admit patient to hospital for initial stabilization in order to expedite further evaluation; discussed with hospitalist who accepted patient.", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed with family; answered all questions.", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up: Tomorrow, 2-3 days, 1 week, 2 weeks, 2-4 weeks, 4 weeks, 4-8 weeks, next well child check", "has_comma_values": true, "comma_values": ["Tomorrow", "2-3 days", "1 week", "2 weeks", "2-4 weeks", "4 weeks", "4-8 weeks", "next well child check"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Obesity",
+      "category": "Nutrition/Metabolic",
+      "bullets": [
+        {"text": "Discussed importance of diet, exercise", "has_comma_values": false, "comma_values": []},
+        {"text": "CBC, CMP, TSH/Free-T4, Lipid panel, Hemoglobin A1c", "has_comma_values": true, "comma_values": ["CBC", "CMP", "TSH/Free-T4", "Lipid panel", "Hemoglobin A1c"]},
+        {"text": "Answered all questions", "has_comma_values": false, "comma_values": []},
+        {"text": "Nutrition referral, Pediatric Obesity Medicine referral", "has_comma_values": true, "comma_values": ["Nutrition referral", "Pediatric Obesity Medicine referral"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": true,
+      "special_sections": ["Obesity Assessment", "Self Care Plan", "Patient Goals"]
+    },
+    {
+      "name": "Low hemoglobin",
+      "category": "Hematology",
+      "bullets": [
+        {"text": "Likely secondary to low iron", "has_comma_values": false, "comma_values": []},
+        {"text": "Plan to supplement iron once a day for three months and then recheck the iron level", "has_comma_values": false, "comma_values": []},
+        {"text": "Referral to hematology vs further work up if not improving at that time", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed with family that it is important also to limit milk intake to less than 16oz a day...", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Low Vitamin D",
+      "category": "Nutrition",
+      "bullets": [
+        {"text": "Plan to supplement daily for 3 months and recheck at that time", "has_comma_values": false, "comma_values": []},
+        {"text": "PTH, alkaline phosphatase, phosphorus, calcium, standing leg XR", "has_comma_values": true, "comma_values": ["PTH", "alkaline phosphatase", "phosphorus", "calcium", "standing leg XR"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Depression (initial)",
+      "category": "Mental Health",
+      "bullets": [
+        {"text": "PHQ-9 score of X", "has_comma_values": false, "comma_values": []},
+        {"text": "No thoughts of self harm, has thoughts of self harm but without plan", "has_comma_values": true, "comma_values": ["No thoughts of self harm", "has thoughts of self harm but without plan"]},
+        {"text": "Patient reports thoughts of self harm with plan of X, will send to ED for initial stabilization and further evaluation and treatment", "has_comma_values": false, "comma_values": []},
+        {"text": "Psychology referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care and role of counseling and medication; offered to start SSRI after discussion of possible benefits and possible side effects including black box warning; after shared decision making patient elected to start medication", "has_comma_values": false, "comma_values": []},
+        {"text": "Zoloft, Prozac", "has_comma_values": true, "comma_values": ["Zoloft", "Prozac"]},
+        {"text": "Follow-up virtually in 2 weeks to consider increasing dose if well tolerated, Follow-up in one month, Follow-up in three months", "has_comma_values": true, "comma_values": ["Follow-up virtually in 2 weeks to consider increasing dose if well tolerated", "Follow-up in one month", "Follow-up in three months"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Depression (chronic)",
+      "category": "Mental Health",
+      "bullets": [
+        {"text": "PHQ-9 score of X, improving from previous, worsening from previous", "has_comma_values": true, "comma_values": ["PHQ-9 score of X", "improving from previous", "worsening from previous"]},
+        {"text": "No thoughts of self harm, has thoughts of self harm but without plan", "has_comma_values": true, "comma_values": ["No thoughts of self harm", "has thoughts of self harm but without plan"]},
+        {"text": "Patient reports thoughts of self harm with plan of X, will send to ED for initial stabilization and further evaluation and treatment", "has_comma_values": false, "comma_values": []},
+        {"text": "Psychology referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care and role of counseling and medication; offered to start SSRI...", "has_comma_values": false, "comma_values": []},
+        {"text": "Zoloft, Prozac", "has_comma_values": true, "comma_values": ["Zoloft", "Prozac"]},
+        {"text": "After shared decision making conversation plan to increase dose of medication, decrease dose of medication, keep dose the same at this time", "has_comma_values": true, "comma_values": ["increase dose of medication", "decrease dose of medication", "keep dose the same at this time"]},
+        {"text": "Follow-up in one month, Follow-up in three months, Follow-up next well child check", "has_comma_values": true, "comma_values": ["Follow-up in one month", "Follow-up in three months", "Follow-up next well child check"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Anxiety (initial)",
+      "category": "Mental Health",
+      "bullets": [
+        {"text": "GAD-7 score of X", "has_comma_values": false, "comma_values": []},
+        {"text": "No thoughts of self harm, has thoughts of self harm but without plan", "has_comma_values": true, "comma_values": ["No thoughts of self harm", "has thoughts of self harm but without plan"]},
+        {"text": "Patient reports thoughts of self harm with plan of X, will send to ED for initial stabilization and further evaluation and treatment", "has_comma_values": false, "comma_values": []},
+        {"text": "Psychology referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care and role of counseling and medication; offered to start SSRI...", "has_comma_values": false, "comma_values": []},
+        {"text": "Zoloft, Prozac", "has_comma_values": true, "comma_values": ["Zoloft", "Prozac"]},
+        {"text": "Follow-up virtually in 2 weeks to consider increasing dose if well tolerated, Follow-up in one month, Follow-up in three months", "has_comma_values": true, "comma_values": ["Follow-up virtually in 2 weeks to consider increasing dose if well tolerated", "Follow-up in one month", "Follow-up in three months"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "notes": "Identical structure to Depression (initial) but uses GAD-7 instead of PHQ-9"
+    },
+    {
+      "name": "Anxiety (chronic)",
+      "category": "Mental Health",
+      "bullets": [
+        {"text": "GAD-7 score of X, improving from previous, worsening from previous", "has_comma_values": true, "comma_values": ["GAD-7 score of X", "improving from previous", "worsening from previous"]},
+        {"text": "No thoughts of self harm, has thoughts of self harm but without plan", "has_comma_values": true, "comma_values": ["No thoughts of self harm", "has thoughts of self harm but without plan"]},
+        {"text": "Patient reports thoughts of self harm with plan of X, will send to ED...", "has_comma_values": false, "comma_values": []},
+        {"text": "Psychology referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care and role of counseling and medication...", "has_comma_values": false, "comma_values": []},
+        {"text": "Zoloft, Prozac", "has_comma_values": true, "comma_values": ["Zoloft", "Prozac"]},
+        {"text": "After shared decision making conversation plan to increase dose of medication, decrease dose of medication, keep dose the same at this time", "has_comma_values": true, "comma_values": ["increase dose of medication", "decrease dose of medication", "keep dose the same at this time"]},
+        {"text": "Follow-up in one month, Follow-up in three months, Follow-up next well child check", "has_comma_values": true, "comma_values": ["Follow-up in one month", "Follow-up in three months", "Follow-up next well child check"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "notes": "Identical structure to Depression (chronic) but uses GAD-7 instead of PHQ-9"
+    },
+    {
+      "name": "Learning Difficulty",
+      "category": "Developmental",
+      "bullets": [
+        {"text": "Discussed difficulty at school with reading, math, writing", "has_comma_values": true, "comma_values": ["reading", "math", "writing"]},
+        {"text": "Plan to refer to psychology for further evaluation", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "ADHD (initial)",
+      "category": "Mental Health/Developmental",
+      "bullets": [
+        {"text": "Family concern for ADHD given symptoms present at school and present at home, present at school but not at home, present at home but not at school", "has_comma_values": true, "comma_values": ["present at school and present at home", "present at school but not at home", "present at home but not at school"]},
+        {"text": "Vanderbilts consistent with ADHD, combined subtype, hyperactive subtype, impulsive subtype, other comorbidities but not ADHD, as well as other comorbidities", "has_comma_values": true, "comma_values": ["ADHD", "combined subtype", "hyperactive subtype", "impulsive subtype", "other comorbidities but not ADHD", "as well as other comorbidities"]},
+        {"text": "Plan to refer to psychology for further evaluation", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed psychology behind ADHD at length as well as supportive care and coping strategies...", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed possible role of stimulant medications as first line treatment...", "has_comma_values": false, "comma_values": []},
+        {"text": "After shared decision making plan to start medication, defer medication for now", "has_comma_values": true, "comma_values": ["plan to start medication", "defer medication for now"]},
+        {"text": "Follow-up in one month, in 3 months, at next well child check", "has_comma_values": true, "comma_values": ["Follow-up in one month", "in 3 months", "at next well child check"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": true,
+      "special_sections": ["ADHD A&P", "Self Care Plan"]
+    },
+    {
+      "name": "ADHD, (chronic)",
+      "category": "Mental Health/Developmental",
+      "bullets": [
+        {"text": "Vanderbilts show overall improving from previous, worsening from previous, stable", "has_comma_values": true, "comma_values": ["improving from previous", "worsening from previous", "stable"]},
+        {"text": "No side effects at this time, side effects noted of poor appetite, difficulty sleeping, moodiness, personality change", "has_comma_values": true, "comma_values": ["No side effects at this time", "poor appetite", "difficulty sleeping", "moodiness", "personality change"]},
+        {"text": "After shared decision making plan to increase dose of medication with goal of improving effect, decrease dose of medication with goal of decreasing side effects, change medication with goal of better effect and decreased side effects, start medication, defer medication for now, add short acting in afternoon to improve symptoms later in the day, add non stimulant in the evening to improve symptoms later in the day", "has_comma_values": true, "comma_values": ["increase dose of medication with goal of improving effect", "decrease dose of medication with goal of decreasing side effects", "change medication with goal of better effect and decreased side effects", "start medication", "defer medication for now", "add short acting in afternoon to improve symptoms later in the day", "add non stimulant in the evening to improve symptoms later in the day"]},
+        {"text": "Concerta, Focalin XR, Adderall XR, Vyvanase, Azstarys, Jornay, Intuniv", "has_comma_values": true, "comma_values": ["Concerta", "Focalin XR", "Adderall XR", "Vyvanase", "Azstarys", "Jornay", "Intuniv"]},
+        {"text": "Psychiatry referral, psychology referral", "has_comma_values": true, "comma_values": ["Psychiatry referral", "psychology referral"]},
+        {"text": "Follow-up in one month, Follow-up in three months, Follow-up next well child check", "has_comma_values": true, "comma_values": ["Follow-up in one month", "Follow-up in three months", "Follow-up next well child check"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": true,
+      "special_sections": ["ADHD A&P", "Self Care Plan"]
+    },
+    {
+      "name": "Sleep difficulty",
+      "category": "Mental Health/Sleep",
+      "bullets": [
+        {"text": "Discussed sleep hygiene including bedtime routines, avoidance of screens and blue light, impact of caffeine, and importance of exercise, nutrition, and proper management of mental health concerns; resources provided", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed melatonin as reasonable option to try if desired; antihistamine limited role due to tolerance", "has_comma_values": false, "comma_values": []},
+        {"text": "Counseling referral, psychiatry referral", "has_comma_values": true, "comma_values": ["Counseling referral", "psychiatry referral"]},
+        {"text": "Answered all questions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "STD Screening",
+      "category": "Infectious/STD",
+      "bullets": [
+        {"text": "Gonorrhea/Chlamydia Urine PCR, HIV/RPR", "has_comma_values": true, "comma_values": ["Gonorrhea/Chlamydia Urine PCR", "HIV/RPR"]},
+        {"text": "Urine pregnancy test", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed safe sex practices and contraception; answered all questions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Gonorrhea",
+      "category": "Infectious/STD",
+      "bullets": [
+        {"text": "Negative Chlamydia Urine PCR, no current concern for PID", "has_comma_values": false, "comma_values": []},
+        {"text": "Rocephin, plan to retest in 3 months", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Chlamydia",
+      "category": "Infectious/STD",
+      "bullets": [
+        {"text": "Negative Gonorrhea Urine PCR, no current concern for PID", "has_comma_values": false, "comma_values": []},
+        {"text": "Azithromycin, plan to retest in 3 months", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Speech Delay",
+      "category": "Developmental",
+      "bullets": [
+        {"text": "Discussed supportive care and importance of reading daily", "has_comma_values": false, "comma_values": []},
+        {"text": "Speech Therapy/Audiology referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up next well check", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Gross Motor Delay",
+      "category": "Developmental",
+      "bullets": [
+        {"text": "Physical exam reassuring, Given abnormal exam findings will obtain Hip XR", "has_comma_values": true, "comma_values": ["Physical exam reassuring", "Given abnormal exam findings will obtain Hip XR"]},
+        {"text": "Physical therapy referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up next well check", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Fine Motor Delay",
+      "category": "Developmental",
+      "bullets": [
+        {"text": "Physical exam reassuring, Given abnormal exam findings will also refer to Neurology", "has_comma_values": true, "comma_values": ["Physical exam reassuring", "Given abnormal exam findings will also refer to Neurology"]},
+        {"text": "Occupational therapy referral", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up next well check", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Pervasive Developmental Disorder, unspecified",
+      "category": "Developmental",
+      "bullets": [
+        {"text": "Plan to refer to occupational therapy for sensory issues effecting quality of life", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed positive parenting strategies and supportive care", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Personal Social delay",
+      "category": "Developmental",
+      "bullets": [
+        {"text": "MCHAT low risk but concerns from family for possible autism, medium risk, high risk", "has_comma_values": true, "comma_values": ["MCHAT low risk but concerns from family for possible autism", "medium risk", "high risk"]},
+        {"text": "Referral to Developmental Pediatrics for further evaluation", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Autism Spectrum Disorder",
+      "category": "Developmental",
+      "bullets": [
+        {"text": "ABA therapy", "has_comma_values": false, "comma_values": []},
+        {"text": "Continues in PT, OT, ST", "has_comma_values": true, "comma_values": ["PT", "OT", "ST"]},
+        {"text": "Discussed supportive care; answered all questions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Aggressive Behavior",
+      "category": "Mental Health",
+      "bullets": [
+        {"text": "Psychiatry referral, Counseling referral", "has_comma_values": true, "comma_values": ["Psychiatry referral", "Counseling referral"]},
+        {"text": "Given active concern for aggressive behavior recommended starting respirdal while awaiting psychiatry referral after discussion of possible benefits, possible side effects including prolonged QT, dyslipidemia, and prolactinemia, and alternative of awaiting specialist appointment", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Elevated Blood Pressure without diagnosis of Hypertension",
+      "category": "Cardiovascular",
+      "bullets": [
+        {"text": "Plan to repeat blood pressure 3x over next two weeks; discussed options of nurse visits vs using BP machines at home or grocery store/pharmacies", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care including diet, exercise, and importance of close follow-up", "has_comma_values": false, "comma_values": []},
+        {"text": "If persistently elevated will refer to cardiology", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Murmur",
+      "category": "Cardiovascular",
+      "bullets": [
+        {"text": "New murmur auscultated on exam; will refer to Cardiology for further evaluation", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed flow murmur detected on exam; provided reassurance but will continue to monitor at next well child check", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Concussion",
+      "category": "Neurology/Trauma",
+      "bullets": [
+        {"text": "Neurologic exam is reassuring today", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care with emphasis on mental rest and gradual return to activities; letter given for school", "has_comma_values": false, "comma_values": []},
+        {"text": "Referral to sports medicine concussion clinic, Referral to pediatric neurology", "has_comma_values": true, "comma_values": ["sports medicine concussion clinic", "pediatric neurology"]},
+        {"text": "Plan to follow up in 1-3 days, plan to follow up in one week if not improved", "has_comma_values": true, "comma_values": ["Plan to follow up in 1-3 days", "plan to follow up in one week if not improved"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration",
+      "notes": "Supportive care is the variant without 'with emphasis on hydration'"
+    },
+    {
+      "name": "Headache",
+      "category": "Neurology",
+      "bullets": [
+        {"text": "Neurologic exam is reassuring today", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed headache hygiene with emphasis on sleep, hydration, limiting caffeine intake as well as appropriate headache regimen with Tylenol, Motrin, lots of fluids, Benadryl, and caffeine", "has_comma_values": false, "comma_values": []},
+        {"text": "Keep headache diary", "has_comma_values": false, "comma_values": []},
+        {"text": "Referral to pediatric neurology if not improving", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Migraine",
+      "category": "Neurology",
+      "bullets": [
+        {"text": "Neurologic exam is reassuring today, history consistent with likely migraine", "has_comma_values": false, "comma_values": []},
+        {"text": "Sumatriptan", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed headache hygiene with emphasis on sleep, hydration, limiting caffeine intake as well as appropriate headache regimen with Tylenol, Motrin, lots of fluids, Benadryl, and caffeine", "has_comma_values": false, "comma_values": []},
+        {"text": "Keep headache diary", "has_comma_values": false, "comma_values": []},
+        {"text": "Referral to pediatric neurology if not improving", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Molluscum contagiosum",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Discussed natural history and supportive care including options for hydrocortisone 2.5% if itching or Bactroban if signs of infection after scratching", "has_comma_values": false, "comma_values": []},
+        {"text": "Given concern for sensitive location will refer to Dermatology for further evaluation and treatment", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Cellulitis",
+      "category": "Dermatology/Infectious",
+      "bullets": [
+        {"text": "Keflex, Clindamycin to provide expanded MRSA coverage", "has_comma_values": true, "comma_values": ["Keflex", "Clindamycin to provide expanded MRSA coverage"]},
+        {"text": "Emphasized close return precautions if rash fails to improve, keeps spreading, or changes in characteristics", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Impetigo",
+      "category": "Dermatology/Infectious",
+      "bullets": [
+        {"text": "Keflex, Clindamycin to provide expanded MRSA coverage", "has_comma_values": true, "comma_values": ["Keflex", "Clindamycin to provide expanded MRSA coverage"]},
+        {"text": "Emphasized close return precautions if rash fails to improve, keeps spreading, or changes in characteristics", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration",
+      "notes": "Same bullet structure as Cellulitis"
+    },
+    {
+      "name": "Tinea corporis",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Ketoconazole", "has_comma_values": false, "comma_values": []},
+        {"text": "Since widespread will start terbinafine", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasized close return precautions if rash fails to improve, keeps spreading, or changes in characteristics", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Tinea cruris",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Ketoconazole", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasized close return precautions if rash fails to improve, keeps spreading, or changes in characteristics", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Tinea capitis",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Terbinafine 6 weeks", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed needed treatment course of at least 4-6 weeks and potential for need to continue even further", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasized close return precautions if rash fails to improve, keeps spreading, or changes in characteristics", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Intertrigo",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Ketoconazole", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care including daily gentle cleansing, aeration, and zinc oxide as appropriate", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasized close return precautions if rash fails to improve, keeps spreading, or changes in characteristics", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Viral Warts",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Discussed natural history and available treatment options including topical, liquid nitrogen, and dermatology referral", "has_comma_values": false, "comma_values": []},
+        {"text": "After shared decision making plan to start with topical treatments and follow up as needed for liquid nitrogen", "has_comma_values": false, "comma_values": []},
+        {"text": "After shared decision making liquid nitrogen applied using q-tips for several cycles. The patient tolerated the procedure well and there were no immediate complications.", "has_comma_values": false, "comma_values": []},
+        {"text": "Planned follow-up in 2 weeks if needed for repeat treatment vs dermatology referral if not improving", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Pediculosis capitis",
+      "category": "Infectious/Dermatology",
+      "bullets": [
+        {"text": "Permethrin 1% lotion once and again in 7-9 days", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed antihistamines as needed for itching as well as supportive measures including machine wash and dry clothes, bedding, and items with hot water and heat drying or setting aside in plastic bag for two weeks as well as vacuuming", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up PRN", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration",
+      "notes": "Supportive care variant: no 'worsening fever' listed"
+    },
+    {
+      "name": "Scabies",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Permethrin 5% cream once and again in 1-2 weeks", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed antihistamines as needed for itching as well as supportive measures including machine wash and dry clothes, bedding, and items with hot water and heat drying or setting aside for at least 3 days", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up PRN", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Pinworms",
+      "category": "Infectious",
+      "bullets": [
+        {"text": "Pyrantel pamoate today and repeat in 2 weeks", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive measures including clipping fingernails, frequent handwashing, showers, machine wash and dry clothes, bedding, and items with hot water and heat drying", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up PRN", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Exanthem",
+      "category": "Dermatology/Infectious",
+      "bullets": [
+        {"text": "Explained common part of viral syndrome in children; provided reassurance", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration",
+      "notes": "Typo in source: 's ymptoms'"
+    },
+    {
+      "name": "Eczema",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Hydrocortisone 2.5%, Triamcinolone 1%, wet wrap therapy", "has_comma_values": true, "comma_values": ["Hydrocortisone 2.5%", "Triamcinolone 1%", "wet wrap therapy"]},
+        {"text": "Referral to dermatology", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care including importance of frequent moisturization, appropriate use of topical steroids, and return precautions.", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Diaper dermatitis",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Discussed copious amounts of zinc oxide as mainstay of treatment", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Candidal dermatitis",
+      "category": "Dermatology/Infectious",
+      "bullets": [
+        {"text": "Nystatin BID", "has_comma_values": false, "comma_values": []},
+        {"text": "Zinc oxide throughout the day", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up over next week if not improving may need to consider Diflucan; monitor for signs of thrush", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Thrush",
+      "category": "Infectious",
+      "bullets": [
+        {"text": "Nystatin 4x daily", "has_comma_values": false, "comma_values": []},
+        {"text": "Monitor for signs of diaper rash", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Acne vulgaris",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "benzoyl peroxide, retin-A", "has_comma_values": true, "comma_values": ["benzoyl peroxide", "retin-A"]},
+        {"text": "clindamycin 1% gel to add on to benzoyl peroxide", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care with importance of washing face twice daily and avoiding oil-based makeup and skin products", "has_comma_values": false, "comma_values": []},
+        {"text": "Dermatology referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Acute urticaria",
+      "category": "Dermatology/Allergy",
+      "bullets": [
+        {"text": "No clear trigger identified", "has_comma_values": false, "comma_values": []},
+        {"text": "Oral antihistamines; discussed appropriate dose titration; family to call in next 48 hours if adequate symptom control is not achieved", "has_comma_values": false, "comma_values": []},
+        {"text": "Referral to allergist if persists past 6 weeks", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed with family; answered all questions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Seasonal Allergies",
+      "category": "Allergy",
+      "bullets": [
+        {"text": "Flonase", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed role of antihistamines, allergen avoidance, and nasal saline rinses", "has_comma_values": false, "comma_values": []},
+        {"text": "Allergy referral for further evaluation and treatment", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Ankle pain",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR given ottawa ankle rules, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR given ottawa ankle rules", "Given exam findings will obtain XR"]},
+        {"text": "Plan for gradual return to activity if XR is reassuring vs follow-up with orthopedics", "has_comma_values": false, "comma_values": []},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Knee pain",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR given ottawa knee rules, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR given ottawa knee rules", "Given exam findings will obtain XR"]},
+        {"text": "Plan for gradual return to activity if XR is reassuring vs follow-up with orthopedics", "has_comma_values": false, "comma_values": []},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Hip pain",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR after shared decision making, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR after shared decision making", "Given exam findings will obtain XR"]},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Back pain",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR after shared decision making, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR after shared decision making", "Given exam findings will obtain XR"]},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Scoliosis",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Plan to obtain XR given exam findings", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up plan to follow pending results, likely physical therapy referral and follow-up in six months if reassuring vs orthopedics referral if significant angle", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Shoulder pain",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR after shared decision making, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR after shared decision making", "Given exam findings will obtain XR"]},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Neck pain",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR after shared decision making, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR after shared decision making", "Given exam findings will obtain XR"]},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Elbow pain",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR after shared decision making, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR after shared decision making", "Given exam findings will obtain XR"]},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Osgood-Schlatter disease",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Physical therapy", "has_comma_values": false, "comma_values": []},
+        {"text": "Brief period of rest followed by gradual return to activity under guidance of PT", "has_comma_values": false, "comma_values": []},
+        {"text": "Doughnut pad around tubercle, patellar tendon strap, or knee compression sleeve may be helpful", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Calcaneal apophysitis (Sever\u2019s disease)",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Physical therapy", "has_comma_values": false, "comma_values": []},
+        {"text": "Brief period of rest followed by gradual return to activity under guidance of PT", "has_comma_values": false, "comma_values": []},
+        {"text": "Bilateral heel cup may be helpful", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Apophysitis",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Physical therapy", "has_comma_values": false, "comma_values": []},
+        {"text": "Brief period of rest followed by gradual return to activity under guidance of PT", "has_comma_values": false, "comma_values": []},
+        {"text": "Bilateral heel cup may be helpful", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive",
+      "notes": "Same bullet structure as Sever's disease"
+    },
+    {
+      "name": "Nursemaid\u2019s Elbow",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR after shared decision making, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR after shared decision making", "Given exam findings will obtain XR"]},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Hand pain",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Exam reassuring will defer XR after shared decision making, Given exam findings will obtain XR", "has_comma_values": true, "comma_values": ["Exam reassuring will defer XR after shared decision making", "Given exam findings will obtain XR"]},
+        {"text": "Physical therapy referral, Orthopedics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthopedics referral"]}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "injury_supportive"
+    },
+    {
+      "name": "Bacterial Conjunctivitis",
+      "category": "Ophthalmology",
+      "bullets": [
+        {"text": "Ciprofloxacin eye drops 4x daily", "has_comma_values": false, "comma_values": []},
+        {"text": "May return to school tomorrow", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Viral Conjunctivitis",
+      "category": "Ophthalmology",
+      "bullets": [
+        {"text": "Likely part of overall viral picture; discussed should improve as overall viral syndrome improves", "has_comma_values": false, "comma_values": []},
+        {"text": "May return to school once feeling better if fever free for 24 hours", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Allergic Conjunctivitis",
+      "category": "Ophthalmology/Allergy",
+      "bullets": [
+        {"text": "Discussed oral antihistamines vs eye drops", "has_comma_values": false, "comma_values": []},
+        {"text": "Consider allergy referral for further evaluation and treatment if not improving", "has_comma_values": false, "comma_values": []},
+        {"text": "May return to school", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Stye",
+      "category": "Ophthalmology",
+      "bullets": [
+        {"text": "Recommended frequent warm compresses and discussed natural history; provided reassurance", "has_comma_values": false, "comma_values": []},
+        {"text": "Consider ophthalmology referral if not improving", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Conjunctival abrasion",
+      "category": "Ophthalmology",
+      "bullets": [
+        {"text": "Visualized with fluorescin, no foreign body seen", "has_comma_values": false, "comma_values": []},
+        {"text": "Erythromycin ointment", "has_comma_values": false, "comma_values": []},
+        {"text": "Avoid eye rubbing and wearing contacts until healed", "has_comma_values": false, "comma_values": []},
+        {"text": "Ophthalmology referral if worsening or not improved in 48-72 Horus", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "notes": "Typo: 'Horus' should be 'hours'"
+    },
+    {
+      "name": "Tear duct stenosis",
+      "category": "Ophthalmology",
+      "bullets": [
+        {"text": "Recommended gentle massaging of nose near tear duct", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed natural history and provided reassurance", "has_comma_values": false, "comma_values": []},
+        {"text": "Ophthalmology referral at six months if not improved", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Chest Pain",
+      "category": "Cardiovascular",
+      "bullets": [
+        {"text": "Reassuring exam today, no family history of cardiac problems under age 35", "has_comma_values": false, "comma_values": []},
+        {"text": "Given history and exam will trial pepcid and follow-up in 2 weeks if not improving", "has_comma_values": false, "comma_values": []},
+        {"text": "Plan for cardiology referral for further evaluation and treatment", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Costochondritis",
+      "category": "Cardiovascular/Musculoskeletal",
+      "bullets": [
+        {"text": "Reassuring cardiac exam with pain reproduced on palpation of chest wall", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "UTI",
+      "category": "Infectious/Renal",
+      "bullets": [
+        {"text": "Keflex, Augmentin, Rocephin", "has_comma_values": true, "comma_values": ["Keflex", "Augmentin", "Rocephin"]},
+        {"text": "Plan to follow urine culture results for susceptibilities", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow up in 24-48 hours if not improving", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive"
+    },
+    {
+      "name": "Vulvovaginitis",
+      "category": "Gynecology/Infectious",
+      "bullets": [
+        {"text": "UA deferred after shared decision making with family given history, UA negative", "has_comma_values": true, "comma_values": ["UA deferred after shared decision making with family given history", "UA negative"]},
+        {"text": "Discussed supportive care including hydration, avoiding possible irritants such as bubble baths, use of cotton underpants and avoiding tight fitting clothing, proper toilet hygiene", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow up in 2 weeks if not improving or sooner if worsening", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Nocturnal enuresis",
+      "category": "Renal/Sleep",
+      "bullets": [
+        {"text": "Discussed natural history and prevalence; provided reassurance", "has_comma_values": false, "comma_values": []},
+        {"text": "Emphasized that this is a subconscious process and that disciplining patient is not effective", "has_comma_values": false, "comma_values": []},
+        {"text": "UA deferred after shared decision making, negative UA", "has_comma_values": true, "comma_values": ["UA deferred after shared decision making", "negative UA"]},
+        {"text": "Discussed supportive care with bed time alarms, limiting oral intake in evening, goal of 4-7 voids during the day, and motivational therapy", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed role of desmopressin; after shared decision making will prescribe in order for patient to attend social event away from home", "has_comma_values": false, "comma_values": []},
+        {"text": "Plan to follow-up in 1-2 weeks to assess response of desmopressin, Follow-up as needed", "has_comma_values": true, "comma_values": ["Plan to follow-up in 1-2 weeks to assess response of desmopressin", "Follow-up as needed"]},
+        {"text": "Urology referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Umbilical granuloma",
+      "category": "Dermatology/Surgery",
+      "bullets": [
+        {"text": "Treated topically with silver nitrate stick x1 without complication", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow up if needed in one week", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Umbilical hernia",
+      "category": "Surgery",
+      "bullets": [
+        {"text": "Easily reducible", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed natural history and provided reassurance given low risk of strangulation or incarceration; discussed return precautions", "has_comma_values": false, "comma_values": []},
+        {"text": "Peds Surgery referral if not improving by age 5", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Syncope",
+      "category": "Cardiovascular/Neurology",
+      "bullets": [
+        {"text": "Neurologic and cardiac exam is reassuring today; given history seems most likely vasovagal", "has_comma_values": false, "comma_values": []},
+        {"text": "Plan to defer further work up at this time after shared decision making conversation with family", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed supportive care with emphasis on hydration", "has_comma_values": false, "comma_values": []},
+        {"text": "Consider referrals to Neurology and/or Cardiology if recurs", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Febrile seizure",
+      "category": "Neurology",
+      "bullets": [
+        {"text": "Presentation consistent with simple febrile seizure: Generalized, less than five minutes, and no recurrence", "has_comma_values": false, "comma_values": []},
+        {"text": "After shared decision making will defer ED evaluation at this time", "has_comma_values": false, "comma_values": []},
+        {"text": "Continue scheduled Tylenol and Motrin throughout this illness at appropriate weight based doses", "has_comma_values": false, "comma_values": []},
+        {"text": "For any recurrence go to ED and would consider admission vs outpatient neurology follow-up; strict ED precautions given", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Dysmenorrhea",
+      "category": "Gynecology",
+      "bullets": [
+        {"text": "Discussed potential role of hormonal contraception; after shared decision making will defer for now, after shared decision making will start", "has_comma_values": true, "comma_values": ["after shared decision making will defer for now", "after shared decision making will start"]},
+        {"text": "Discussed supportive care with scheduled Motrin 2-3 days prior to onset, heat", "has_comma_values": false, "comma_values": []},
+        {"text": "OB/GYN referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Menorrhagia",
+      "category": "Gynecology",
+      "bullets": [
+        {"text": "CBC, ferritin", "has_comma_values": true, "comma_values": ["CBC", "ferritin"]},
+        {"text": "Discussed potential role of hormonal contraception; after shared decision making will defer for now, after shared decision making will start (no migraines with aura or history of coagulopathy)", "has_comma_values": true, "comma_values": ["after shared decision making will defer for now", "after shared decision making will start"]},
+        {"text": "Discussed supportive care with scheduled Motrin 2-3 days prior to onset, heat", "has_comma_values": false, "comma_values": []},
+        {"text": "OB/GYN referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration"
+    },
+    {
+      "name": "Torticollis",
+      "category": "Musculoskeletal",
+      "bullets": [
+        {"text": "Recommended tummy time during day and changing directions when putting down to sleep while always being on back, flat surface, nothing else around, and in own space", "has_comma_values": false, "comma_values": []},
+        {"text": "Physical therapy", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Plagiocephaly",
+      "category": "Musculoskeletal",
+      "bullets": [
+        {"text": "Recommended tummy time during day and changing directions when putting down to sleep while always being on back, flat surface, nothing else around, and in own space", "has_comma_values": false, "comma_values": []},
+        {"text": "Physical therapy referral, Orthotics referral", "has_comma_values": true, "comma_values": ["Physical therapy referral", "Orthotics referral"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Contact dermatitis",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Avoid trigger", "has_comma_values": false, "comma_values": []},
+        {"text": "Hydrocortisone 2.5% BID PRN", "has_comma_values": false, "comma_values": []},
+        {"text": "Consider allergy or dermatology referral if not improving", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Poison ivy dermatitis",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Orapred, Prednisone", "has_comma_values": true, "comma_values": ["Orapred", "Prednisone"]},
+        {"text": "Discussed supportive care with cool wet compress, oatmeal baths, calamine, Benadryl if needed for sleep", "has_comma_values": false, "comma_values": []},
+        {"text": "No sign of secondary bacterial infection at this time, Given concern for possible secondary infection will start Keflex, Clindamycin", "has_comma_values": true, "comma_values": ["No sign of secondary bacterial infection at this time", "Given concern for possible secondary infection will start Keflex, Clindamycin"]}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Balanitis",
+      "category": "Dermatology/Infectious",
+      "bullets": [
+        {"text": "Bactroban 4x daily", "has_comma_values": false, "comma_values": []},
+        {"text": "Avoid irritants", "has_comma_values": false, "comma_values": []},
+        {"text": "Hydrocortisone 1% BID for no more than one week given severe irritation", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Pes planus",
+      "category": "Orthopedics",
+      "bullets": [
+        {"text": "Recommended trial of inserts", "has_comma_values": false, "comma_values": []},
+        {"text": "Orthotics referral", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Ankyloglossia",
+      "category": "ENT/Surgery",
+      "bullets": [
+        {"text": "Anterior ankyloglossia on exam", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed possible benefit of frenulectomy including improved feeding, possible risks of bleeding, infection, and pain as well as alternatives of watchful waiting or specialist referral. Family agreed to proceed with procedure.", "has_comma_values": false, "comma_values": []},
+        {"text": "Anterior frenulectomy was performed by exposing frenulum with tongue guard. Scissors were used to divide the tight frenulum posteriorly until fully released.", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Milk protein intolerance",
+      "category": "GI/Allergy",
+      "bullets": [
+        {"text": "Given frequent spitting up will trial hydrolyzed formula", "has_comma_values": false, "comma_values": []},
+        {"text": "Follow-up in 2 weeks if not improving", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Cryptorchidism",
+      "category": "Urology",
+      "bullets": [
+        {"text": "Testis not palpable on exam; will refer to urology for further evaluation", "has_comma_values": false, "comma_values": []},
+        {"text": "Testes high in canal and not descended; will refer to Urology at six months if not improved", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Testicular torsion",
+      "category": "Urology/Surgical",
+      "bullets": [
+        {"text": "Concern for testicular torsion due to history of pain, asymmetric lie on exam, swollen tender testis on exam, absent cremasteric reflex", "has_comma_values": false, "comma_values": []},
+        {"text": "ED for immediate evaluation", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Food allergy",
+      "category": "Allergy",
+      "bullets": [
+        {"text": "Referral to allergist for further evaluation and treatment", "has_comma_values": false, "comma_values": []},
+        {"text": "Avoiding offending agent", "has_comma_values": false, "comma_values": []},
+        {"text": "Epipen prescribed and discussed appropriate use including calling 911", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    },
+    {
+      "name": "Pityriasis Rosea",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Discused natural history and antihistamines for itching PRN", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": true,
+      "has_risk_statement": false,
+      "has_special_sections": false,
+      "supportive_care_type": "illness_supportive_no_hydration",
+      "notes": "Typo: 'Discused' should be 'Discussed'"
+    },
+    {
+      "name": "Tinea Versicolor",
+      "category": "Dermatology",
+      "bullets": [
+        {"text": "Ketoconazole 2% shampoo once daily for three days", "has_comma_values": false, "comma_values": []},
+        {"text": "Discussed risk of recurrence; answered all questions", "has_comma_values": false, "comma_values": []}
+      ],
+      "has_supportive_care": false,
+      "has_risk_statement": false,
+      "has_special_sections": false
+    }
+  ]
+}
