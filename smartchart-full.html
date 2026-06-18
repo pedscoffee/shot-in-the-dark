@@ -1536,6 +1536,26 @@ body {
   white-space: nowrap;
   flex-shrink: 0;
 }
+.sc-save-default-btn {
+  opacity: 0.3;
+  margin-left: auto;
+  padding: 2px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-3);
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: opacity 0.12s ease;
+}
+.sc-save-default-btn:hover {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+.sc-dropdown-header:hover .sc-save-default-btn {
+  opacity: 0.6;
+}
 .sc-dropdown-join-picker {
   display: flex;
   gap: 3px;
@@ -1566,6 +1586,45 @@ body {
   color: var(--accent);
 }
 
+.sc-form-defaults-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  min-height: 24px;
+}
+.sc-default-opt-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px 4px 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.1s ease;
+}
+.sc-default-opt-label:hover {
+  border-color: var(--accent);
+  color: var(--text-1);
+}
+.sc-default-opt-label.is-default {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+.sc-default-opt-label input[type="checkbox"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.sc-text-placeholder {
+  font-style: italic;
+  opacity: 0.6;
+}
 
 </style>
 </head>
@@ -1792,6 +1851,12 @@ body {
               <label class="sc-label" for="sc-form-options">Dropdown Options <span class="sc-muted">(one per line)</span></label>
               <textarea id="sc-form-options" class="sc-textarea-settings" rows="5"
                 placeholder="Follow up as needed&#10;Return sooner for worsening symptoms"></textarea>
+            </div>
+            <div class="sc-field-group">
+              <label class="sc-label">Default Options <span class="sc-muted">(pre-selected when template loads)</span></label>
+              <div id="sc-form-defaults-picker" class="sc-form-defaults-picker">
+                <p class="sc-help-text sc-text-placeholder">Enter options above to set defaults</p>
+              </div>
             </div>
             <div class="sc-field-group">
               <label class="sc-label" for="sc-form-join">Default Join</label>
@@ -11042,9 +11107,7 @@ const DEFAULT_TEMPLATES = [
     "options": [
       "Month Year: Doing great! Follow-up at next well child check or as needed."
     ],
-    "defaults": [
-      0
-    ],
+    "defaults": [],
     "priority": 500,
     "category": "Well Child / Development"
   },
@@ -11062,9 +11125,7 @@ const DEFAULT_TEMPLATES = [
       "Poor weight gain",
       "short stature"
     ],
-    "defaults": [
-      0
-    ],
+    "defaults": [],
     "priority": 500,
     "category": "Well Child / Development",
     "prefix": "",
@@ -11087,9 +11148,7 @@ const DEFAULT_TEMPLATES = [
       "personal social delay",
       "MCHAT low medium high risk"
     ],
-    "defaults": [
-      0
-    ],
+    "defaults": [],
     "priority": 500,
     "category": "Well Child / Development",
     "prefix": "",
@@ -11113,9 +11172,7 @@ const DEFAULT_TEMPLATES = [
       "Referral to Psychology",
       "Referral to ABA"
     ],
-    "defaults": [
-      0
-    ],
+    "defaults": [],
     "priority": 500,
     "category": "Well Child / Development",
     "prefix": "",
@@ -11715,7 +11772,25 @@ function renderDropdownControls(dropdowns) {
     headerHint.textContent = selectedValues.length > 0
       ? selectedValues.length + ' selected'
       : (isSingleSelect ? 'tap to choose' : 'tap to toggle');
-    headerRow.append(headerLabel, headerHint);
+
+    // ── Save as default button ──
+    const saveDefaultBtn = document.createElement('button');
+    saveDefaultBtn.type = 'button';
+    saveDefaultBtn.className = 'sc-btn sc-btn-icon sc-save-default-btn';
+    saveDefaultBtn.title = 'Save current selection as default';
+    saveDefaultBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><path d="M12 2v4M12 22v-4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>';
+    const dropdownId = t.id;
+    saveDefaultBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const tpl = state.templates.find(tmpl => tmpl.id === dropdownId);
+      if (!tpl) return;
+      const currentValues = getDropdownSelection(dropdownId).values || [];
+      const indices = currentValues.map(v => (tpl.options || []).indexOf(v)).filter(i => i >= 0);
+      tpl.defaults = indices.length > 0 ? indices : undefined;
+      storage.set(STORAGE_KEYS.TEMPLATES, state.templates);
+      showToast('Default saved for "' + (tpl.label || tpl.name) + '"', 'success');
+    });
+    headerRow.append(headerLabel, headerHint, saveDefaultBtn);
     card.appendChild(headerRow);
 
     // ── Button group ──
@@ -12717,6 +12792,33 @@ window.SmartChart = {
       item.appendChild(div);
     }
 
+    function updateDefaultsPicker(savedDefaults) {
+      const picker = $('sc-form-defaults-picker');
+      if (!picker) return;
+      const lines = (formOptions.value || '').split('\n').map(s => s.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        picker.innerHTML = '<p class="sc-help-text sc-text-placeholder">Enter options above to set defaults</p>';
+        return;
+      }
+      picker.innerHTML = '';
+      lines.forEach((opt, idx) => {
+        const isDefault = Array.isArray(savedDefaults) ? savedDefaults.includes(idx) : false;
+        const label = document.createElement('label');
+        label.className = 'sc-default-opt-label' + (isDefault ? ' is-default' : '');
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = isDefault;
+        cb.dataset.idx = idx;
+        const text = document.createTextNode(' ' + opt);
+        cb.addEventListener('change', () => {
+          label.classList.toggle('is-default', cb.checked);
+        });
+        label.appendChild(cb);
+        label.appendChild(text);
+        picker.appendChild(label);
+      });
+    }
+
     function updateTemplateTypeFields() {
       const isDropdown = formType.value === 'dropdown';
       formDropdownFields.classList.toggle('hidden', !isDropdown);
@@ -12745,6 +12847,7 @@ window.SmartChart = {
       formPriority.value = Math.max(...state.templates.map(t => t.priority ?? 0), 0) + 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = '';
+      updateDefaultsPicker([]);
       updateTemplateTypeFields();
       templateFormEl.classList.remove('hidden');
       templateListEl.classList.add('hidden');
@@ -12774,6 +12877,7 @@ window.SmartChart = {
       formPriority.value = t.priority ?? 10;
       const catEl = $('sc-form-category');
       if (catEl) catEl.value = t.category || '';
+      updateDefaultsPicker(t.defaults || []);
       updateTemplateTypeFields();
       templateFormEl.classList.remove('hidden');
       templateListEl.classList.add('hidden');
@@ -12787,6 +12891,13 @@ window.SmartChart = {
 
     addTemplateBtn.addEventListener('click', openAddForm);
     formType.addEventListener('change', updateTemplateTypeFields);
+    formOptions.addEventListener('input', () => {
+      const picker = $('sc-form-defaults-picker');
+      if (picker) {
+        const checked = Array.from(picker.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.dataset.idx, 10));
+        updateDefaultsPicker(checked);
+      }
+    });
     formCancelBtn.addEventListener('click', closeForm);
     formCloseBtn.addEventListener('click', closeForm);
 
@@ -12815,6 +12926,15 @@ window.SmartChart = {
       const wrapBulletEl = $('sc-form-wrap-bullet');
       const wrapBullet = wrapBulletEl ? wrapBulletEl.checked : false;
 
+      // Collect default indices from the picker
+      const defaultsPicker = $('sc-form-defaults-picker');
+      let defaults = [];
+      if (defaultsPicker) {
+        defaults = Array.from(defaultsPicker.querySelectorAll('input[type="checkbox"]:checked'))
+          .map(cb => parseInt(cb.dataset.idx, 10))
+          .filter(i => !isNaN(i));
+      }
+
       const template = type === 'dropdown'
         ? {
             id, name, type, triggers,
@@ -12826,6 +12946,7 @@ window.SmartChart = {
             singleSelect,
             showLabel,
             wrapBullet,
+            defaults: defaults.length > 0 ? defaults : undefined,
             priority,
             ...(category ? { category } : {}),
           }
