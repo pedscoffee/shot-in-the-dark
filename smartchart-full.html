@@ -11294,6 +11294,7 @@ const DEFAULT_BEHAVIOR = {
   plainTextCopy:   false,
   sourceLabels:    true,
   bulletStyle:     '-',
+  _behaviorVersion: 2,
 };
 
 const state = {
@@ -12050,6 +12051,10 @@ function loadState() {
   const savedBehavior = storage.get(STORAGE_KEYS.BEHAVIOR);
   if (savedBehavior && typeof savedBehavior === 'object') {
     state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, savedBehavior);
+    if (!savedBehavior._behaviorVersion) {
+      state.behavior.sourceLabels = true;
+      state.behavior._behaviorVersion = 2;
+    }
   }
 }
 
@@ -12877,6 +12882,7 @@ window.SmartChart = {
                 plainTextCopy:   typeof b.plainTextCopy   === 'boolean' ? b.plainTextCopy   : DEFAULT_BEHAVIOR.plainTextCopy,
                 sourceLabels:    typeof b.sourceLabels    === 'boolean' ? b.sourceLabels    : DEFAULT_BEHAVIOR.sourceLabels,
                 bulletStyle:     ['-','*','–','disc'].includes(b.bulletStyle) ? b.bulletStyle : DEFAULT_BEHAVIOR.bulletStyle,
+                _behaviorVersion: DEFAULT_BEHAVIOR._behaviorVersion,
               };
               state.behavior = Object.assign({}, DEFAULT_BEHAVIOR, safeBehavior);
               storage.set(STORAGE_KEYS.BEHAVIOR, state.behavior);
