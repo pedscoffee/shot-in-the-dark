@@ -3564,6 +3564,7 @@ const DEFAULT_TEMPLATES = [
       "well child check",
       "well child",
       "well visit",
+      "health maintenance",
       "checkup",
       "physical",
       "wcc",
@@ -11290,6 +11291,20 @@ const DEFAULT_TEMPLATES = [
     ],
     "priority": 950,
     "category": "Shared"
+  },
+  {
+    "id": "shared-pcmh-reminder",
+    "name": "PCMH Reminder",
+    "type": "text",
+    "triggers": [
+      "ADHD",
+      "weight",
+      "obesity",
+      "strep throat"
+    ],
+    "content": "PCMH Reminder",
+    "priority": 700,
+    "category": "Shared"
   }
 ];
 
@@ -11539,18 +11554,20 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
   }
 
   // Multi-line: group each input line with its matched templates
-  // Reuse triggerMatches for consistency with matchTemplates
+  // Use the original input for display text (preserving trigger words),
+  // and render ALL matched templates (including dropdowns) per line.
+  const allMatched = opts.allMatched || matched;
   const lineTemplates = rawLines.map(line => {
     const trimmed = line.trim();
     if (!trimmed) return [];
-    return matched.filter(t =>
+    return allMatched.filter(t =>
       Array.isArray(t.triggers) &&
       t.triggers.some(trigger => triggerMatches(trimmed, trigger))
     );
   });
 
-  // Escape the (modified) input once, preserving newlines in the escaped version
-  const escapedInput = input
+  // Escape the original input for display (not modifiedInput — keep trigger words visible)
+  const escapedInput = originalInput
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
@@ -11584,6 +11601,9 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
   let out = noteTemplate
     .replace(/\{input\}/g, body)
     .replace(/\{templates\}/g, '')
+    // Dropdowns referenced in the note template itself still get processed,
+    // but dropdown content already rendered per-line won't appear here
+    // since we used originalInput (no {dropdown:...} in the body).
     .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContentHtml(getTemplateById(id)));
 
   out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
@@ -11865,6 +11885,7 @@ function updatePreview() {
     sourceLabels: state.behavior.sourceLabels,
     bulletStyle: state.behavior.bulletStyle,
     originalInput: input,
+    allMatched: matched,
   });
 
   if (matched.length > 0) {
