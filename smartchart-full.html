@@ -464,6 +464,12 @@ body {
   margin: 8px 0;
 }
 
+.sc-problem-sep {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 12px 0;
+}
+
 .sc-source-pre {
   font-family: var(--font-mono);
   font-size: 11.5px;
@@ -11492,23 +11498,92 @@ function renderTemplateContentHtml(t, seen = new Set()) {
 
 function renderNote(input, matched, noteTemplate, opts = {}) {
   const showLabels = opts.sourceLabels || false;
+  const originalInput = opts.originalInput || input;
 
-  const templatesHtml = matched.map(t => {
-    const content = renderTemplateContentHtml(t);
-    if (!content.trim()) return '';
-    const label = showLabels ? `<p><strong>[${t.name}]</strong></p>` : '';
-    return label + content;
-  }).filter(Boolean).join('<hr class="sc-template-sep">');
+  // Check if we have multiple lines of input
+  const rawLines = originalInput.split('\n');
+  const multiLine = rawLines.filter(l => l.trim()).length > 1;
 
+  if (!multiLine) {
+    // Single-line: original behaviour
+    const templatesHtml = matched.map(t => {
+      const content = renderTemplateContentHtml(t);
+      if (!content.trim()) return '';
+      const label = showLabels ? `<p><strong>[${t.name}]</strong></p>` : '';
+      return label + content;
+    }).filter(Boolean).join('<hr class="sc-template-sep">');
+
+    const escapedInput = input
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+
+    let out = noteTemplate
+      .replace(/\{input\}/g, escapedInput)
+      .replace(/\{templates\}/g, templatesHtml)
+      .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContentHtml(getTemplateById(id)));
+
+    out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
+
+    const bulletChar = opts.bulletStyle;
+    if (bulletChar && bulletChar !== 'disc') {
+      out = out.replace(/<ul[^>]*>/gi, '<div class="sc-list-hyphen">')
+               .replace(/<\/ul>/gi, '</div>')
+               .replace(/<li[^>]*>/gi, `<div class="sc-hyphen-item">${bulletChar} `)
+               .replace(/<\/li>/gi, '</div>');
+    }
+
+    out = out.replace(/<div>\s*<\/div>/gi, '').replace(/<p>\s*<\/p>/gi, '');
+    return out;
+  }
+
+  // Multi-line: group each input line with its matched templates
+  // Reuse triggerMatches for consistency with matchTemplates
+  const lineTemplates = rawLines.map(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return [];
+    return matched.filter(t =>
+      Array.isArray(t.triggers) &&
+      t.triggers.some(trigger => triggerMatches(trimmed, trigger))
+    );
+  });
+
+  // Escape the (modified) input once, preserving newlines in the escaped version
   const escapedInput = input
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\n/g, '<br>');
+    .replace(/>/g, '&gt;');
+  const escapedLines = escapedInput.split('\n');
+
+  // Build interleaved body
+  let body = '';
+  let prevHadContent = false;
+  for (let i = 0; i < rawLines.length; i++) {
+    const isEmpty = !rawLines[i].trim();
+    if (isEmpty) {
+      if (i < rawLines.length - 1) body += '<br>';
+      continue;
+    }
+
+    if (prevHadContent) body += '<hr class="sc-problem-sep">';
+    body += escapedLines[i] || '';
+
+    const lineTpls = lineTemplates[i];
+    if (lineTpls.length) {
+      const tplHtml = lineTpls.map(t => {
+        const content = renderTemplateContentHtml(t);
+        if (!content.trim()) return '';
+        return (showLabels ? `<p><strong>[${t.name}]</strong></p>` : '') + content;
+      }).filter(Boolean).join('<hr class="sc-template-sep">');
+      body += tplHtml;
+    }
+    prevHadContent = true;
+  }
 
   let out = noteTemplate
-    .replace(/\{input\}/g, escapedInput)
-    .replace(/\{templates\}/g, templatesHtml)
+    .replace(/\{input\}/g, body)
+    .replace(/\{templates\}/g, '')
     .replace(/\{dropdown:([a-zA-Z0-9_-]+)\}/g, (_, id) => renderTemplateContentHtml(getTemplateById(id)));
 
   out = out.replace(/\{static:([^}]*)\}/g, (_, content) => `<span>${content}</span>`);
@@ -11521,9 +11596,7 @@ function renderNote(input, matched, noteTemplate, opts = {}) {
              .replace(/<\/li>/gi, '</div>');
   }
 
-  // Clean up empty wrapping blocks left behind by unselected dropdowns
   out = out.replace(/<div>\s*<\/div>/gi, '').replace(/<p>\s*<\/p>/gi, '');
-
   return out;
 }
 
@@ -11791,6 +11864,7 @@ function updatePreview() {
   const htmlSource = renderNote(modifiedInput, bottomTemplates, nt, {
     sourceLabels: state.behavior.sourceLabels,
     bulletStyle: state.behavior.bulletStyle,
+    originalInput: input,
   });
 
   if (matched.length > 0) {
