@@ -1538,7 +1538,6 @@ body {
 }
 .sc-save-default-btn {
   opacity: 0.3;
-  margin-left: auto;
   padding: 2px;
   border: none;
   background: none;
@@ -1555,6 +1554,12 @@ body {
 }
 .sc-dropdown-header:hover .sc-save-default-btn {
   opacity: 0.6;
+}
+.sc-header-btn-group {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .sc-matched-bar {
   display: flex;
@@ -11831,7 +11836,12 @@ function renderDropdownControls(dropdowns) {
         window.SmartChartSettings.openTemplate(dropdownId);
       }
     });
-    headerRow.append(headerLabel, headerHint, editSettingsBtn, saveDefaultBtn);
+    headerRow.append(headerLabel, headerHint);
+
+    const headerBtnGroup = document.createElement('div');
+    headerBtnGroup.className = 'sc-header-btn-group';
+    headerBtnGroup.append(editSettingsBtn, saveDefaultBtn);
+    headerRow.append(headerBtnGroup);
     card.appendChild(headerRow);
 
     // ── Button group ──
