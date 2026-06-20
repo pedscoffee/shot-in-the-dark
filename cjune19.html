@@ -11729,10 +11729,7 @@ function matchTemplates(input) {
       const reqTpl = getTemplateById(reqId);
       if (!reqTpl) return;
       seen.add(reqId);
-      // Mark this as pulled in transitively (not because its own trigger words
-      // were typed) so updatePreview() never tries to inline-splice it into the
-      // input text — it should always render as its own labeled block.
-      matched.push({ ...reqTpl, _requiredOnly: true });
+      matched.push(reqTpl);
     });
   });
   return matched;
@@ -12224,12 +12221,7 @@ function updatePreview() {
 
   matched.forEach(t => {
     let replaced = false;
-    // Templates pulled in transitively via another template's `requires` link
-    // (e.g. core supportive-care boilerplate attached to a diagnosis) should
-    // always render as their own labeled block — never get spliced inline
-    // into the input text just because one of their own trigger words also
-    // happens to appear there (e.g. "infection" inside "ear infection").
-    if (t.type === 'dropdown' && !t._requiredOnly) {
+    if (t.type === 'dropdown') {
       for (const trigger of t.triggers) {
         if (!trigger) continue;
         const normalized = String(trigger).trim();
@@ -12248,10 +12240,7 @@ function updatePreview() {
   const idsToSearch = new Set();
   collectDropdownIdsFromHtml(nt, idsToSearch, new Set());
   collectDropdownIdsFromHtml(modifiedInput, idsToSearch, new Set());
-  bottomTemplates.forEach(t => {
-    collectDropdownIdsFromHtml(t.content, idsToSearch, new Set());
-    if (isDropdownTemplate(t)) idsToSearch.add(t.id);
-  });
+  bottomTemplates.forEach(t => collectDropdownIdsFromHtml(t.content, idsToSearch, new Set()));
 
   state.activeDropdowns = [...idsToSearch]
     .map(id => getTemplateById(id))
